@@ -4,13 +4,27 @@ syntax = "proto3";
 package statecharts.v1;
 
 // StateChart definition.
-message StateChart {}
+message StateChart {
+  // The top-level states in the statechart.
+  repeated State states = 1;
+}
 
 // A state within a statechart.
-message State {}
+message State {
+  // The label of the state.
+  string label = 1;
+
+  // The sub-states.
+  repeated State children = 2;
+}
 
 // A transition.
-message Transition {}
+message Transition {
+  // The from State reference.
+  string from = 1;
+  // The to State 
+  string to = 2;
+}
 
 // An event.
 message Event {}
