@@ -1,0 +1,16 @@
+// Statecharts.
+syntax = "proto3";
+
+package statecharts.v1;
+
+// StateChart definition.
+message StateChart {}
+
+// A state within a statechart.
+message State {}
+
+// A transition.
+message Transition {}
+
+// An event.
+message Event {}
