@@ -1,2 +1,4 @@
-# sc is a Go module for defining, testing, and running statechart-based machines.
+# sc
+
+sc is a Go package for defining, testing, and running statechart-based machines.
 
