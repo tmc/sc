@@ -3,5 +3,8 @@
 
 package tools
 
-// buf
-import _ "github.com/bufbuild/buf/cmd/buf"
+import (
+	// buf
+	_ "github.com/bufbuild/buf/cmd/buf"
+	_ "github.com/tmc/protoc-gen-apidocs"
+)
