@@ -14,6 +14,7 @@ syntax = "proto3";
 package statecharts.v1;
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 // StateChart definition.
 message StateChart {
@@ -128,14 +129,18 @@ message Machine {
 message EventHistoryEntry {
   // The event that occurred.
   string event = 1;
+  // The timestamp of the transition.
+  google.protobuf.Timestamp timestamp = 2;
   // The context of the event.
-  google.protobuf.Struct context = 2;
+  google.protobuf.Struct context = 3;
 }
 
 // A transition history entry.
 message TransitionHistoryEntry {
   // The transition that occurred.
   string transition = 1;
+  // The timestamp of the transition.
+  google.protobuf.Timestamp timestamp = 2;
   // The context of the transition.
-  google.protobuf.Struct context = 2;
+  google.protobuf.Struct context = 3;
 }
