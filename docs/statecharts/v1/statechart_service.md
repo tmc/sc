@@ -27,25 +27,25 @@ Statechart service.
 
 
 
-<a name="statecharts-v1-StateChartRegistry"></a>
+<a name="statecharts-v1-StatechartRegistry"></a>
 
-### StateChartRegistry
+### StatechartRegistry
 
-A registry of statecharts.
+A registry of Statecharts.
 
 
 
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| statecharts |[StateChartRegistry.StatechartsEntry](#statecharts-v1-StateChartRegistry-StatechartsEntry)| The registry of statecharts.   |
+| statecharts |[StatechartRegistry.StatechartsEntry](#statecharts-v1-StatechartRegistry-StatechartsEntry)| The registry of Statecharts.   |
 
 
 
 
 
 
-<a name="statecharts-v1-StateChartRegistry-StatechartsEntry"></a>
+<a name="statecharts-v1-StatechartRegistry-StatechartsEntry"></a>
 
 ### StatechartsEntry
 
@@ -56,7 +56,7 @@ A registry of statecharts.
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | key |string|   |
-| value |[StateChart](./statecharts.md#statecharts-v1-StateChart)|   |
+| value |[Statechart](./statecharts.md#statecharts-v1-Statechart)|   |
 
 
 

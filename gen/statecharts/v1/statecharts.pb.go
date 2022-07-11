@@ -34,7 +34,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// The type of the state.
+// StateType describes the type of a state.
 type StateType int32
 
 const (
@@ -99,7 +99,7 @@ func (StateType) EnumDescriptor() ([]byte, []int) {
 	return file_statecharts_v1_statecharts_proto_rawDescGZIP(), []int{0}
 }
 
-// The possible states a machine can be in.
+// MachineState encodes the high-level state of a statechart.
 type MachineState int32
 
 const (
@@ -152,8 +152,8 @@ func (MachineState) EnumDescriptor() ([]byte, []int) {
 	return file_statecharts_v1_statecharts_proto_rawDescGZIP(), []int{1}
 }
 
-// StateChart definition.
-type StateChart struct {
+// Statechart definition.
+type Statechart struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -166,8 +166,8 @@ type StateChart struct {
 	Events []*Event `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"`
 }
 
-func (x *StateChart) Reset() {
-	*x = StateChart{}
+func (x *Statechart) Reset() {
+	*x = Statechart{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_statecharts_v1_statecharts_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -175,13 +175,13 @@ func (x *StateChart) Reset() {
 	}
 }
 
-func (x *StateChart) String() string {
+func (x *Statechart) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StateChart) ProtoMessage() {}
+func (*Statechart) ProtoMessage() {}
 
-func (x *StateChart) ProtoReflect() protoreflect.Message {
+func (x *Statechart) ProtoReflect() protoreflect.Message {
 	mi := &file_statecharts_v1_statecharts_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -193,33 +193,33 @@ func (x *StateChart) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StateChart.ProtoReflect.Descriptor instead.
-func (*StateChart) Descriptor() ([]byte, []int) {
+// Deprecated: Use Statechart.ProtoReflect.Descriptor instead.
+func (*Statechart) Descriptor() ([]byte, []int) {
 	return file_statecharts_v1_statecharts_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *StateChart) GetStates() []*State {
+func (x *Statechart) GetStates() []*State {
 	if x != nil {
 		return x.States
 	}
 	return nil
 }
 
-func (x *StateChart) GetTransistions() []*Transition {
+func (x *Statechart) GetTransistions() []*Transition {
 	if x != nil {
 		return x.Transistions
 	}
 	return nil
 }
 
-func (x *StateChart) GetEvents() []*Event {
+func (x *Statechart) GetEvents() []*Event {
 	if x != nil {
 		return x.Events
 	}
 	return nil
 }
 
-// A state within a statechart.
+// State is a state in a statechart.
 type State struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -286,7 +286,7 @@ func (x *State) GetType() StateType {
 	return StateType_STATE_TYPE_UNSPECIFIED
 }
 
-// A transition.
+// Transition is a transition between states in a statechart.
 type Transition struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -371,7 +371,7 @@ func (x *Transition) GetActions() []*Action {
 	return nil
 }
 
-// An event.
+// Event is an event in a statechart.
 type Event struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -420,7 +420,7 @@ func (x *Event) GetLabel() string {
 	return ""
 }
 
-// A guard.
+// Guard is a guard for a transition.
 type Guard struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -469,7 +469,7 @@ func (x *Guard) GetExpression() string {
 	return ""
 }
 
-// An action.
+// Action is an action for a transition.
 type Action struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -518,7 +518,7 @@ func (x *Action) GetLabel() string {
 	return ""
 }
 
-// A reference to a state.
+// StateRef is a reference to a state.
 type StateRef struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -567,7 +567,7 @@ func (x *StateRef) GetLabel() string {
 	return ""
 }
 
-// A configuration is a subset of states in a statechart representing the current state of the machine.
+// Configuration is a configuration for a statechart which is defined by a subset of the states that are active.
 type Configuration struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -616,7 +616,7 @@ func (x *Configuration) GetStates() []*StateRef {
 	return nil
 }
 
-// A Machine is an instance of a statechart.
+// Machine is an instance of a statechart.
 type Machine struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -629,7 +629,7 @@ type Machine struct {
 	// The context of the machine.
 	Context *structpb.Struct `protobuf:"bytes,3,opt,name=context,proto3" json:"context,omitempty"`
 	// The statechart definition.
-	Statechart *StateChart `protobuf:"bytes,4,opt,name=statechart,proto3" json:"statechart,omitempty"`
+	Statechart *Statechart `protobuf:"bytes,4,opt,name=statechart,proto3" json:"statechart,omitempty"`
 	// The current configuration of the machine.
 	Configuration *Configuration `protobuf:"bytes,5,opt,name=configuration,proto3" json:"configuration,omitempty"`
 	// The history of events that have occurred on the machine.
@@ -691,7 +691,7 @@ func (x *Machine) GetContext() *structpb.Struct {
 	return nil
 }
 
-func (x *Machine) GetStatechart() *StateChart {
+func (x *Machine) GetStatechart() *Statechart {
 	if x != nil {
 		return x.Statechart
 	}
@@ -719,7 +719,7 @@ func (x *Machine) GetTransitionHistory() []*TransitionHistoryEntry {
 	return nil
 }
 
-// An event history entry.
+// EventHistoryEntry is an entry in the event history of a machine.
 type EventHistoryEntry struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -786,7 +786,7 @@ func (x *EventHistoryEntry) GetContext() *structpb.Struct {
 	return nil
 }
 
-// A transition history entry.
+// TransitionHistoryEntry is an entry in the transition history of a machine.
 type TransitionHistoryEntry struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -863,7 +863,7 @@ var file_statecharts_v1_statecharts_proto_rawDesc = []byte{
 	0x62, 0x75, 0x66, 0x2f, 0x73, 0x74, 0x72, 0x75, 0x63, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x1a, 0x1f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
 	0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0xaa, 0x01, 0x0a, 0x0a, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x61, 0x72, 0x74,
+	0x6f, 0x22, 0xaa, 0x01, 0x0a, 0x0a, 0x53, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74,
 	0x12, 0x2d, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
 	0x32, 0x15, 0x2e, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x2e, 0x76,
 	0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73, 0x12,
@@ -916,7 +916,7 @@ var file_statecharts_v1_statecharts_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x12, 0x3a, 0x0a, 0x0a, 0x73, 0x74, 0x61, 0x74, 0x65,
 	0x63, 0x68, 0x61, 0x72, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x73, 0x74,
 	0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61,
-	0x74, 0x65, 0x43, 0x68, 0x61, 0x72, 0x74, 0x52, 0x0a, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68,
+	0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x52, 0x0a, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68,
 	0x61, 0x72, 0x74, 0x12, 0x43, 0x0a, 0x0d, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61,
 	0x74, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x73, 0x74, 0x61,
 	0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
@@ -999,7 +999,7 @@ var file_statecharts_v1_statecharts_proto_msgTypes = make([]protoimpl.MessageInf
 var file_statecharts_v1_statecharts_proto_goTypes = []interface{}{
 	(StateType)(0),                 // 0: statecharts.v1.StateType
 	(MachineState)(0),              // 1: statecharts.v1.MachineState
-	(*StateChart)(nil),             // 2: statecharts.v1.StateChart
+	(*Statechart)(nil),             // 2: statecharts.v1.Statechart
 	(*State)(nil),                  // 3: statecharts.v1.State
 	(*Transition)(nil),             // 4: statecharts.v1.Transition
 	(*Event)(nil),                  // 5: statecharts.v1.Event
@@ -1014,9 +1014,9 @@ var file_statecharts_v1_statecharts_proto_goTypes = []interface{}{
 	(*timestamppb.Timestamp)(nil),  // 14: google.protobuf.Timestamp
 }
 var file_statecharts_v1_statecharts_proto_depIdxs = []int32{
-	3,  // 0: statecharts.v1.StateChart.states:type_name -> statecharts.v1.State
-	4,  // 1: statecharts.v1.StateChart.transistions:type_name -> statecharts.v1.Transition
-	5,  // 2: statecharts.v1.StateChart.events:type_name -> statecharts.v1.Event
+	3,  // 0: statecharts.v1.Statechart.states:type_name -> statecharts.v1.State
+	4,  // 1: statecharts.v1.Statechart.transistions:type_name -> statecharts.v1.Transition
+	5,  // 2: statecharts.v1.Statechart.events:type_name -> statecharts.v1.Event
 	3,  // 3: statecharts.v1.State.children:type_name -> statecharts.v1.State
 	0,  // 4: statecharts.v1.State.type:type_name -> statecharts.v1.StateType
 	6,  // 5: statecharts.v1.Transition.guard:type_name -> statecharts.v1.Guard
@@ -1024,7 +1024,7 @@ var file_statecharts_v1_statecharts_proto_depIdxs = []int32{
 	8,  // 7: statecharts.v1.Configuration.states:type_name -> statecharts.v1.StateRef
 	1,  // 8: statecharts.v1.Machine.state:type_name -> statecharts.v1.MachineState
 	13, // 9: statecharts.v1.Machine.context:type_name -> google.protobuf.Struct
-	2,  // 10: statecharts.v1.Machine.statechart:type_name -> statecharts.v1.StateChart
+	2,  // 10: statecharts.v1.Machine.statechart:type_name -> statecharts.v1.Statechart
 	9,  // 11: statecharts.v1.Machine.configuration:type_name -> statecharts.v1.Configuration
 	11, // 12: statecharts.v1.Machine.event_history:type_name -> statecharts.v1.EventHistoryEntry
 	12, // 13: statecharts.v1.Machine.transition_history:type_name -> statecharts.v1.TransitionHistoryEntry
@@ -1046,7 +1046,7 @@ func file_statecharts_v1_statecharts_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_statecharts_v1_statecharts_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StateChart); i {
+			switch v := v.(*Statechart); i {
 			case 0:
 				return &v.state
 			case 1:

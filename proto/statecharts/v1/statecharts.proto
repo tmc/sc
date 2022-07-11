@@ -16,8 +16,8 @@ package statecharts.v1;
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-// StateChart definition.
-message StateChart {
+// Statechart definition.
+message Statechart {
   // The top-level states in the statechart.
   repeated State states = 1;
   // Transitions is the set of transitions that connect the states.
@@ -26,7 +26,7 @@ message StateChart {
   repeated Event events = 3;
 }
 
-// The type of the state.
+// StateType describes the type of a state.
 enum StateType {
   // Unspecified state type.
   STATE_TYPE_UNSPECIFIED = 0;
@@ -42,7 +42,7 @@ enum StateType {
   STATE_TYPE_FINAL = 5;
 }
 
-// A state within a statechart.
+// State is a state in a statechart.
 message State {
   // The label of the state.
   string label = 1;
@@ -52,7 +52,7 @@ message State {
   StateType type = 3;
 }
 
-// A transition.
+// Transition is a transition between states in a statechart.
 message Transition {
   // The from State reference.
   string from = 1;
@@ -66,38 +66,39 @@ message Transition {
   repeated Action actions = 5;
 }
 
-// An event.
+// Event is an event in a statechart.
 message Event {
   // The label of the event.
   string label = 1;
 }
 
-// A guard.
+// Guard is a guard for a transition.
 message Guard {
   // The guard expression.
   string expression = 1;
 }
 
-// An action.
+// Action is an action for a transition.
 message Action {
   // The label of the action.
   string label = 1;
 }
 
-// A reference to a state.
+// StateRef is a reference to a state.
 message StateRef {
   // The label of the state.
   string label = 1;
 }
 
-// A configuration is a subset of states in a statechart representing the current state of the machine.
+
+// Configuration is a configuration for a statechart which is defined by a subset of the states that are active.
 message Configuration {
   // The set of states in the configuration.
   repeated StateRef states = 1;
 }
 
 
-// The possible states a machine can be in.
+// MachineState encodes the high-level state of a statechart.
 enum MachineState {
   // The machine is in an unspecified state.
   MACHINE_STATE_UNSPECIFIED = 0;
@@ -107,7 +108,7 @@ enum MachineState {
   MACHINE_STATE_STOPPED = 2;
 }
 
-// A Machine is an instance of a statechart.
+// Machine is an instance of a statechart.
 message Machine {
   // The id of the machine.
   string id = 1;
@@ -116,16 +117,16 @@ message Machine {
   // The context of the machine.
   google.protobuf.Struct context = 3;
   // The statechart definition.
-  StateChart statechart = 4;
+  Statechart statechart = 4;
   // The current configuration of the machine.
   Configuration configuration = 5;
-// The history of events that have occurred on the machine.
+  // The history of events that have occurred on the machine.
   repeated EventHistoryEntry event_history = 6;
-// The history of transitions that have occurred on the machine.
+  // The history of transitions that have occurred on the machine.
   repeated TransitionHistoryEntry transition_history = 7;
 }
 
-// An event history entry.
+// EventHistoryEntry is an entry in the event history of a machine.
 message EventHistoryEntry {
   // The event that occurred.
   string event = 1;
@@ -135,7 +136,7 @@ message EventHistoryEntry {
   google.protobuf.Struct context = 3;
 }
 
-// A transition history entry.
+// TransitionHistoryEntry is an entry in the transition history of a machine.
 message TransitionHistoryEntry {
   // The transition that occurred.
   string transition = 1;

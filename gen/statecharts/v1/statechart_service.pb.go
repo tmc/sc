@@ -27,18 +27,18 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// A registry of statecharts.
-type StateChartRegistry struct {
+// A registry of Statecharts.
+type StatechartRegistry struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The registry of statecharts.
-	Statecharts map[string]*StateChart `protobuf:"bytes,1,rep,name=statecharts,proto3" json:"statecharts,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// The registry of Statecharts.
+	Statecharts map[string]*Statechart `protobuf:"bytes,1,rep,name=statecharts,proto3" json:"statecharts,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
-func (x *StateChartRegistry) Reset() {
-	*x = StateChartRegistry{}
+func (x *StatechartRegistry) Reset() {
+	*x = StatechartRegistry{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_statecharts_v1_statechart_service_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -46,13 +46,13 @@ func (x *StateChartRegistry) Reset() {
 	}
 }
 
-func (x *StateChartRegistry) String() string {
+func (x *StatechartRegistry) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StateChartRegistry) ProtoMessage() {}
+func (*StatechartRegistry) ProtoMessage() {}
 
-func (x *StateChartRegistry) ProtoReflect() protoreflect.Message {
+func (x *StatechartRegistry) ProtoReflect() protoreflect.Message {
 	mi := &file_statecharts_v1_statechart_service_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -64,12 +64,12 @@ func (x *StateChartRegistry) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StateChartRegistry.ProtoReflect.Descriptor instead.
-func (*StateChartRegistry) Descriptor() ([]byte, []int) {
+// Deprecated: Use StatechartRegistry.ProtoReflect.Descriptor instead.
+func (*StatechartRegistry) Descriptor() ([]byte, []int) {
 	return file_statecharts_v1_statechart_service_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *StateChartRegistry) GetStatecharts() map[string]*StateChart {
+func (x *StatechartRegistry) GetStatecharts() map[string]*Statechart {
 	if x != nil {
 		return x.Statecharts
 	}
@@ -311,18 +311,18 @@ var file_statecharts_v1_statechart_service_proto_rawDesc = []byte{
 	0x72, 0x70, 0x63, 0x2f, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x1a, 0x20, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x2f, 0x76, 0x31,
 	0x2f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0xc7, 0x01, 0x0a, 0x12, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x61, 0x72,
+	0x74, 0x6f, 0x22, 0xc7, 0x01, 0x0a, 0x12, 0x53, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72,
 	0x74, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x12, 0x55, 0x0a, 0x0b, 0x73, 0x74, 0x61,
 	0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x33,
 	0x2e, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x2e,
-	0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x61, 0x72, 0x74, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
+	0x53, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
 	0x72, 0x79, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x45, 0x6e,
 	0x74, 0x72, 0x79, 0x52, 0x0b, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73,
 	0x1a, 0x5a, 0x0a, 0x10, 0x53, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72, 0x74, 0x73, 0x45,
 	0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x30, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61,
-	0x72, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x61, 0x72,
+	0x72, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61, 0x72,
 	0x74, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x6e, 0x0a, 0x14,
 	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x73, 0x74, 0x61, 0x74, 0x65, 0x63, 0x68, 0x61,
@@ -387,24 +387,24 @@ func file_statecharts_v1_statechart_service_proto_rawDescGZIP() []byte {
 
 var file_statecharts_v1_statechart_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_statecharts_v1_statechart_service_proto_goTypes = []interface{}{
-	(*StateChartRegistry)(nil),    // 0: statecharts.v1.StateChartRegistry
+	(*StatechartRegistry)(nil),    // 0: statecharts.v1.StatechartRegistry
 	(*CreateMachineRequest)(nil),  // 1: statecharts.v1.CreateMachineRequest
 	(*CreateMachineResponse)(nil), // 2: statecharts.v1.CreateMachineResponse
 	(*StepRequest)(nil),           // 3: statecharts.v1.StepRequest
 	(*StepResponse)(nil),          // 4: statecharts.v1.StepResponse
-	nil,                           // 5: statecharts.v1.StateChartRegistry.StatechartsEntry
+	nil,                           // 5: statecharts.v1.StatechartRegistry.StatechartsEntry
 	(*structpb.Struct)(nil),       // 6: google.protobuf.Struct
 	(*Machine)(nil),               // 7: statecharts.v1.Machine
 	(*rpc.Status)(nil),            // 8: google.rpc.Status
-	(*StateChart)(nil),            // 9: statecharts.v1.StateChart
+	(*Statechart)(nil),            // 9: statecharts.v1.Statechart
 }
 var file_statecharts_v1_statechart_service_proto_depIdxs = []int32{
-	5, // 0: statecharts.v1.StateChartRegistry.statecharts:type_name -> statecharts.v1.StateChartRegistry.StatechartsEntry
+	5, // 0: statecharts.v1.StatechartRegistry.statecharts:type_name -> statecharts.v1.StatechartRegistry.StatechartsEntry
 	6, // 1: statecharts.v1.CreateMachineRequest.context:type_name -> google.protobuf.Struct
 	7, // 2: statecharts.v1.CreateMachineResponse.machine:type_name -> statecharts.v1.Machine
 	7, // 3: statecharts.v1.StepResponse.machine:type_name -> statecharts.v1.Machine
 	8, // 4: statecharts.v1.StepResponse.result:type_name -> google.rpc.Status
-	9, // 5: statecharts.v1.StateChartRegistry.StatechartsEntry.value:type_name -> statecharts.v1.StateChart
+	9, // 5: statecharts.v1.StatechartRegistry.StatechartsEntry.value:type_name -> statecharts.v1.Statechart
 	1, // 6: statecharts.v1.StatechartService.CreateMachine:input_type -> statecharts.v1.CreateMachineRequest
 	3, // 7: statecharts.v1.StatechartService.Step:input_type -> statecharts.v1.StepRequest
 	2, // 8: statecharts.v1.StatechartService.CreateMachine:output_type -> statecharts.v1.CreateMachineResponse
@@ -424,7 +424,7 @@ func file_statecharts_v1_statechart_service_proto_init() {
 	file_statecharts_v1_statecharts_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_statecharts_v1_statechart_service_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StateChartRegistry); i {
+			switch v := v.(*StatechartRegistry); i {
 			case 0:
 				return &v.state
 			case 1:

@@ -19,10 +19,10 @@ service StatechartService {
   rpc Step(StepRequest) returns (StepResponse) {}
 }
 
-// A registry of statecharts.
-message StateChartRegistry {
-  // The registry of statecharts.
-  map<string,StateChart> statecharts = 1;
+// A registry of Statecharts.
+message StatechartRegistry {
+  // The registry of Statecharts.
+  map<string,Statechart> statecharts = 1;
 }
 
 // A request to create a new machine.
