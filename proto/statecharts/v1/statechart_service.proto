@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package statecharts.v1;
 
+option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartsv1";
+
 import "google/protobuf/struct.proto";
 import "google/rpc/status.proto";
 

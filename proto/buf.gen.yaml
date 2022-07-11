@@ -2,7 +2,9 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/tmc/xstate
+    default: github.com/tmc/sc
+    except:
+      - buf.build/googleapis/googleapis
 plugins:
   - name: go
     out: ../gen

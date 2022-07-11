@@ -8,8 +8,8 @@ type StateType = v1.StateType
 // MachineState encodes the high-level state of a statechart.
 type MachineState = v1.MachineState
 
-// StateChart defines a Statechart.
-type StateChart = v1.StateChart
+// Statechart defines a Statechart.
+type Statechart = v1.Statechart
 
 // State defines a state in a Statechart.
 type State = v1.State
