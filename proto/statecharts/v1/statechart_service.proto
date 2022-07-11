@@ -1,0 +1,57 @@
+// Statechart Service.
+//
+// This file defines a service to execute statechart semantics.
+//
+syntax = "proto3";
+
+package statecharts.v1;
+
+import "google/protobuf/struct.proto";
+import "google/rpc/status.proto";
+
+import "statecharts/v1/statecharts.proto";
+
+// Statechart service.
+service StatechartService {
+  // Create a new machine.
+  rpc CreateMachine(CreateMachineRequest) returns (CreateMachineResponse) {};
+  // Step a statechart through a single iteration.
+  rpc Step(StepRequest) returns (StepResponse) {}
+}
+
+// A registry of statecharts.
+message StateChartRegistry {
+  // The registry of statecharts.
+  map<string,StateChart> statecharts = 1;
+}
+
+// A request to create a new machine.
+message CreateMachineRequest {
+  // The ID of the statechart to create an instance from.
+  string statechart_id = 1;
+  // The initial context of the machine.
+  google.protobuf.Struct context = 2;
+}
+
+// A response to a create machine request.
+message CreateMachineResponse {
+  // The created machine.
+  statecharts.v1.Machine machine = 1;
+}
+
+// StepRequest is the request message for the Step method.
+message StepRequest {
+  // The id of the statechart to step.
+  string statechart_id = 1;
+  // The event to step the statechart with.
+  string event = 2;
+  // The context attached to the Event.
+}
+
+// StepResponse is the response message for the Step method.
+message StepResponse {
+  // The statechart's current state.
+  statecharts.v1.Machine machine = 1;
+  // The result of the step operation.
+  google.rpc.Status result = 2;
+}
