@@ -9,6 +9,6 @@ plugins:
   - name: go
     out: ../gen
     opt: paths=source_relative
-  - name: apidocs
+  - remote: buf.build/tmc/plugins/protoc-gen-apidocs:v1.0.0
     out: ../docs
     opt: paths=source_relative
