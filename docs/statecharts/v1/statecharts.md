@@ -48,8 +48,10 @@ State is a state in a statechart.
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | label |string| The label of the state.   |
-| children[] |[State](#statecharts-v1-State)| The sub-states. If a state has no sub-states, it is considered a BASIC state.   |
 | type |[StateType](#statecharts-v1-StateType)| The type of the state.   |
+| children[] |[State](#statecharts-v1-State)| The sub-states. If a state has no sub-states, it is considered a BASIC state.   |
+| is_initial |bool| The state is the initial state of its parent state.   |
+| is_final |bool| The state is the final state of its parent state.   |
 
 
 
@@ -180,18 +182,18 @@ StateRef is a reference to a state.
 
 
 
-<a name="statecharts-v1-Configuration"></a>
+<a name="statecharts-v1-StatechartStatus"></a>
 
-### Configuration
+### StatechartStatus
 
-Configuration is a configuration for a statechart which is defined by a subset of the states that are active.
+StatechartStatus is a status for a statechart which is defined by a subset of the states that are active.
 
 
 
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| states[] |[StateRef](#statecharts-v1-StateRef)| The set of states in the configuration.   |
+| states[] |[StateRef](#statecharts-v1-StateRef)| The set of states in the status.   |
 
 
 
@@ -218,7 +220,7 @@ Machine is an instance of a statechart.
 | state |[MachineState](#statecharts-v1-MachineState)| The overall state of the machine.   |
 | context |Struct| The context of the machine.   |
 | statechart |[Statechart](#statecharts-v1-Statechart)| The statechart definition.   |
-| configuration |[Configuration](#statecharts-v1-Configuration)| The current configuration of the machine.   |
+| status |[StatechartStatus](#statecharts-v1-StatechartStatus)| The current status of the machine.   |
 | event_history[] |[EventHistoryEntry](#statecharts-v1-EventHistoryEntry)| The history of events that have occurred on the machine.   |
 | transition_history[] |[TransitionHistoryEntry](#statecharts-v1-TransitionHistoryEntry)| The history of transitions that have occurred on the machine.   |
 
@@ -298,8 +300,6 @@ StateType describes the type of a state.
 | STATE_TYPE_BASIC | 1 | A basic state (has no sub-states).   |
 | STATE_TYPE_NORMAL | 2 | A normal state (has sub-states related by XOR semantics).   |
 | STATE_TYPE_PARALLEL | 3 | A parallel state (has sub-states related by AND semantics).   |
-| STATE_TYPE_INITIAL | 4 | An initial state.   |
-| STATE_TYPE_FINAL | 5 | A final state.   |
 
 
 

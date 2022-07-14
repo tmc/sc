@@ -36,20 +36,20 @@ enum StateType {
   STATE_TYPE_NORMAL = 2;
   // A parallel state (has sub-states related by AND semantics).
   STATE_TYPE_PARALLEL = 3;
-  // An initial state.
-  STATE_TYPE_INITIAL = 4;
-  // A final state.
-  STATE_TYPE_FINAL = 5;
 }
 
 // State is a state in a statechart.
 message State {
   // The label of the state.
   string label = 1;
-  // The sub-states. If a state has no sub-states, it is considered a BASIC state.
-  repeated State children = 2;
   // The type of the state.
-  StateType type = 3;
+  StateType type = 2;
+  // The sub-states. If a state has no sub-states, it is considered a BASIC state.
+  repeated State children = 3;
+  // The state is the initial state of its parent state.
+  bool is_initial = 4;
+  // The state is the final state of its parent state.
+  bool is_final = 5;
 }
 
 // Transition is a transition between states in a statechart.
@@ -91,9 +91,9 @@ message StateRef {
 }
 
 
-// Configuration is a configuration for a statechart which is defined by a subset of the states that are active.
-message Configuration {
-  // The set of states in the configuration.
+// StatechartStatus is a status for a statechart which is defined by a subset of the states that are active.
+message StatechartStatus {
+  // The set of states in the status.
   repeated StateRef states = 1;
 }
 
@@ -118,8 +118,8 @@ message Machine {
   google.protobuf.Struct context = 3;
   // The statechart definition.
   Statechart statechart = 4;
-  // The current configuration of the machine.
-  Configuration configuration = 5;
+  // The current status of the machine.
+  StatechartStatus status = 5;
   // The history of events that have occurred on the machine.
   repeated EventHistoryEntry event_history = 6;
   // The history of transitions that have occurred on the machine.
