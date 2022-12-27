@@ -68,14 +68,15 @@ State is a state in a statechart.
 ### Transition
 
 Transition is a transition between states in a statechart.
+A transition connects source to target states.
 
 
 
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| from |string| The from State reference.   |
-| to |string| The to State   |
+| from[] |string| The from State reference.   |
+| to[] |string| The to State   |
 | event |string| The label of the event that triggers the transition.   |
 | guard |[Guard](#statecharts-v1-Guard)| The guard of the transition.   |
 | actions[] |[Action](#statecharts-v1-Action)| The action(s) of the transition.   |
@@ -299,7 +300,7 @@ StateType describes the type of a state.
 | STATE_TYPE_UNSPECIFIED | 0 | Unspecified state type.   |
 | STATE_TYPE_BASIC | 1 | A basic state (has no sub-states).   |
 | STATE_TYPE_NORMAL | 2 | A normal state (has sub-states related by XOR semantics).   |
-| STATE_TYPE_PARALLEL | 3 | A parallel state (has sub-states related by AND semantics).   |
+| STATE_TYPE_PARALLEL | 3 | A parallel state (has sub-states related by AND semantics). Also known in the literature as an "orthogonal state".   |
 
 
 
