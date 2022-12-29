@@ -23,7 +23,7 @@ Statechart definition.
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | states[] |[State](#statecharts-v1-State)| The top-level states in the statechart.   |
-| transistions[] |[Transition](#statecharts-v1-Transition)| Transitions is the set of transitions that connect the states.   |
+| transitions[] |[Transition](#statecharts-v1-Transition)| Transitions is the set of transitions that connect the states.   |
 | events[] |[Event](#statecharts-v1-Event)| Events is the set of events that transitions are triggered by.   |
 
 
@@ -75,6 +75,7 @@ A transition connects source to target states.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
+| label |string| The label of the transition.   |
 | from[] |string| The from State reference.   |
 | to[] |string| The to State   |
 | event |string| The label of the event that triggers the transition.   |
@@ -183,11 +184,11 @@ StateRef is a reference to a state.
 
 
 
-<a name="statecharts-v1-StatechartStatus"></a>
+<a name="statecharts-v1-Configuration"></a>
 
-### StatechartStatus
+### Configuration
 
-StatechartStatus is a status for a statechart which is defined by a subset of the states that are active.
+Configuration is a status for a statechart which is defined by a subset of the states that are active.
 
 
 
@@ -221,9 +222,8 @@ Machine is an instance of a statechart.
 | state |[MachineState](#statecharts-v1-MachineState)| The overall state of the machine.   |
 | context |Struct| The context of the machine.   |
 | statechart |[Statechart](#statecharts-v1-Statechart)| The statechart definition.   |
-| status |[StatechartStatus](#statecharts-v1-StatechartStatus)| The current status of the machine.   |
-| event_history[] |[EventHistoryEntry](#statecharts-v1-EventHistoryEntry)| The history of events that have occurred on the machine.   |
-| transition_history[] |[TransitionHistoryEntry](#statecharts-v1-TransitionHistoryEntry)| The history of transitions that have occurred on the machine.   |
+| configuration |[Configuration](#statecharts-v1-Configuration)| The current configuration of the machine.   |
+| step_history[] |[Step](#statecharts-v1-Step)| The history of steps that have been carried out by the machine.   |
 
 
 
@@ -235,45 +235,22 @@ Machine is an instance of a statechart.
 
 
 
-<a name="statecharts-v1-EventHistoryEntry"></a>
+<a name="statecharts-v1-Step"></a>
 
-### EventHistoryEntry
+### Step
 
-EventHistoryEntry is an entry in the event history of a machine.
+Step is a step in the execution of a statechart.
 
 
 
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| event |string| The event that occurred.   |
-| timestamp |Timestamp| The timestamp of the transition.   |
+| events[] |[Event](#statecharts-v1-Event)| The events that occurred.   |
+| transitions[] |[Transition](#statecharts-v1-Transition)| The transitions that occurred.   |
+| starting_configuration |[Configuration](#statecharts-v1-Configuration)| The starting configuration.   |
+| resulting_configuration |[Configuration](#statecharts-v1-Configuration)| The resulting configuration.   |
 | context |Struct| The context of the event.   |
-
-
-
-
- <!-- end nested messages -->
-
- <!-- end nested enums -->
-
-
-
-
-<a name="statecharts-v1-TransitionHistoryEntry"></a>
-
-### TransitionHistoryEntry
-
-TransitionHistoryEntry is an entry in the transition history of a machine.
-
-
-
-
-| Field | Type | Description |
-| ----- | ---- | ----------- |
-| transition |string| The transition that occurred.   |
-| timestamp |Timestamp| The timestamp of the transition.   |
-| context |Struct| The context of the transition.   |
 
 
 

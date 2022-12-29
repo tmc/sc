@@ -23,7 +23,7 @@ message Statechart {
   // The top-level states in the statechart.
   repeated State states = 1;
   // Transitions is the set of transitions that connect the states.
-  repeated Transition transistions = 2;
+  repeated Transition transitions = 2;
   // Events is the set of events that transitions are triggered by.
   repeated Event events = 3;
 }
@@ -57,16 +57,18 @@ message State {
 // Transition is a transition between states in a statechart.
 // A transition connects source to target states.
 message Transition {
+  // The label of the transition.
+  string label = 1;
   // The from State reference.
-  repeated string from = 1;
+  repeated string from = 2;
   // The to State 
-  repeated string to = 2;
+  repeated string to = 3;
   // The label of the event that triggers the transition.
-  string event = 3;
+  string event = 4;
   // The guard of the transition.
-  Guard guard = 4;
+  Guard guard = 5;
   // The action(s) of the transition.
-  repeated Action actions = 5;
+  repeated Action actions = 6;
 }
 
 // Event is an event in a statechart.
@@ -93,8 +95,8 @@ message StateRef {
   string label = 1;
 }
 
-// StatechartStatus is a status for a statechart which is defined by a subset of the states that are active.
-message StatechartStatus {
+// Configuration is a status for a statechart which is defined by a subset of the states that are active.
+message Configuration {
   // The set of states in the status.
   repeated StateRef states = 1;
 }
@@ -119,30 +121,22 @@ message Machine {
   google.protobuf.Struct context = 3;
   // The statechart definition.
   Statechart statechart = 4;
-  // The current status of the machine.
-  StatechartStatus status = 5;
-  // The history of events that have occurred on the machine.
-  repeated EventHistoryEntry event_history = 6;
-  // The history of transitions that have occurred on the machine.
-  repeated TransitionHistoryEntry transition_history = 7;
+  // The current configuration of the machine.
+  Configuration configuration = 5;
+  // The history of steps that have been carried out by the machine.
+  repeated Step step_history = 6;
 }
 
-// EventHistoryEntry is an entry in the event history of a machine.
-message EventHistoryEntry {
-  // The event that occurred.
-  string event = 1;
-  // The timestamp of the transition.
-  google.protobuf.Timestamp timestamp = 2;
+// Step is a step in the execution of a statechart.
+message Step {
+  // The events that occurred.
+  repeated Event events = 1;
+  // The transitions that occurred.
+  repeated Transition transitions = 2;
+  // The starting configuration.
+  Configuration starting_configuration = 3;
+  // The resulting configuration.
+  Configuration resulting_configuration = 4;
   // The context of the event.
-  google.protobuf.Struct context = 3;
-}
-
-// TransitionHistoryEntry is an entry in the transition history of a machine.
-message TransitionHistoryEntry {
-  // The transition that occurred.
-  string transition = 1;
-  // The timestamp of the transition.
-  google.protobuf.Timestamp timestamp = 2;
-  // The context of the transition.
-  google.protobuf.Struct context = 3;
+  google.protobuf.Struct context = 5;
 }
