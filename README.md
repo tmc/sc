@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/tmc/sc.svg)](https://pkg.go.dev/github.com/tmc/sc)
 
-sc is a Go package for defining, testing, and running statechart-based machines.
+`sc` is a language-neutral standardization of types and tools to support the development, testing, and running of statechart-based machines.
 
 See [docs/statecharts/v1/statecharts.md](./docs/statecharts/v1/statecharts.md) for documentation.
 
