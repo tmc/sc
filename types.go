@@ -35,8 +35,9 @@ type Configuration = v1.Configuration
 // Machine describes an instance of a Statechart.
 type Machine = v1.Machine
 
-// EventHistoryEntry describes an event that has occurred.
-type EventHistoryEntry = v1.EventHistoryEntry
-
-// TransitionHistoryEntry describes a transition that has been taken.
-type TransitionHistoryEntry = v1.TransitionHistoryEntry
+const (
+	StateTypeUnspecified = v1.StateType_STATE_TYPE_UNSPECIFIED
+	StateTypeBasic       = v1.StateType_STATE_TYPE_BASIC
+	StateTypeNormal      = v1.StateType_STATE_TYPE_NORMAL
+	StateTypeParallel    = v1.StateType_STATE_TYPE_PARALLEL
+)
