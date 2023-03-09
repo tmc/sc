@@ -1,6 +1,14 @@
 package semantics
 
-import "github.com/tmc/sc"
+import (
+	"github.com/tmc/sc"
+	"golang.org/x/exp/slices"
+)
+
+// statesContains returns true if the given slice of states contains the given state.
+func statesContains(states []StateLabel, state StateLabel) bool {
+	return slices.Contains(states, state)
+}
 
 // Children returns the immediate children of the given state.
 func (c *Statechart) Children(state StateLabel) ([]StateLabel, error) {
@@ -37,6 +45,40 @@ func (c *Statechart) ChildrenStar(state StateLabel) ([]StateLabel, error) {
 	}
 	result = append(result, children...)
 	return result, nil
+}
+
+// Descendant returns true if the given state is a descendant of the given potential ancestor.
+func (c *Statechart) Descendant(state StateLabel, potentialAncestor StateLabel) (bool, error) {
+	rtClosure, err := c.ChildrenStar(potentialAncestor)
+	if err != nil {
+		return false, err
+	}
+	return statesContains(rtClosure, state), nil
+}
+
+// Ancestor returns true if the given state is an ancestor of the given potential descendant.
+func (c *Statechart) Ancestor(state StateLabel, potentialDescendant StateLabel) (bool, error) {
+	rtClosure, err := c.ChildrenStar(state)
+	if err != nil {
+		return false, err
+	}
+	return statesContains(rtClosure, potentialDescendant), nil
+}
+
+// AncesterallyRelated returns true if the given states are ancestorally related.
+func (c *Statechart) AncestrallyRelated(state1 StateLabel, state2 StateLabel) (bool, error) {
+	ancestor, err := c.Ancestor(state1, state2)
+	if err != nil {
+		return false, err
+	}
+	if ancestor {
+		return true, nil
+	}
+	descendant, err := c.Descendant(state2, state1)
+	if err != nil {
+		return false, err
+	}
+	return descendant, nil
 }
 
 func (s *Statechart) childrenPlus(state *sc.State) ([]StateLabel, error) {

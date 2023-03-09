@@ -5,7 +5,9 @@ package semantics
 // If the statechart is not well-formed, an error is returned.
 func (s *Statechart) Validate() error {
 	// validateNonOverlappingStateLabels
-	// validateSingleRootState
+	// validateRootState
+	// validateStateTypeAgreesWithChildren
 	// validateParentChildRelationships
+	// validateParentStatesHaveSingleDefaults
 	return nil
 }

@@ -88,3 +88,31 @@ func TestStatechart_ChildrenPlus(t *testing.T) {
 		})
 	}
 }
+
+func TestStatechart_AncestorallyRelated(t *testing.T) {
+	tests := []struct {
+		name           string
+		chart          *Statechart
+		state1, state2 StateLabel
+		want           bool
+		wantErr        bool
+	}{
+		{"invalid", exampleStatechart1, StateLabel("this state does not exist"), StateLabel("On"), false, true},
+		{"not related", exampleStatechart1, StateLabel("On"), StateLabel("Off"), false, false},
+		{"related (self)", exampleStatechart1, StateLabel("On"), StateLabel("On"), true, false},
+		{"related", exampleStatechart1, StateLabel("On"), StateLabel("Ready"), true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.chart
+			got, err := c.AncestrallyRelated(tt.state1, tt.state2)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Statechart.AncestorallyRelated() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Statechart.AncestorallyRelated() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
