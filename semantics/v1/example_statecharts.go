@@ -3,7 +3,7 @@ package semantics
 import "github.com/tmc/sc"
 
 // This is the example chart from the R. Eshuis paper.
-var exampleStatechart1 = &Statechart{&sc.Statechart{
+var exampleStatechart1 = NewStatechart(&sc.Statechart{
 	RootState: &sc.State{
 		Children: []*sc.State{
 			{
@@ -30,4 +30,4 @@ var exampleStatechart1 = &Statechart{&sc.Statechart{
 			},
 		},
 	},
-}}
+})
