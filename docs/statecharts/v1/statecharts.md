@@ -22,7 +22,7 @@ Statechart definition.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| states[] |[State](#statecharts-v1-State)| The top-level states in the statechart.   |
+| root_state |[State](#statecharts-v1-State)| The root state of the statechart.   |
 | transitions[] |[Transition](#statecharts-v1-Transition)| Transitions is the set of transitions that connect the states.   |
 | events[] |[Event](#statecharts-v1-Event)| Events is the set of events that transitions are triggered by.   |
 
