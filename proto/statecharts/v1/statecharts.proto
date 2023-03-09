@@ -19,8 +19,8 @@ import "google/protobuf/struct.proto";
 
 // Statechart definition.
 message Statechart {
-  // The top-level states in the statechart.
-  repeated State states = 1;
+  // The root state of the statechart.
+  State root_state  = 1;
   // Transitions is the set of transitions that connect the states.
   repeated Transition transitions = 2;
   // Events is the set of events that transitions are triggered by.
