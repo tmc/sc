@@ -1,3 +1,3 @@
 .PHONY: generate
 generate:
-	$(MAKE) -C proto generate
+	@$(MAKE) -C proto generate

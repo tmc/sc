@@ -16,7 +16,6 @@ syntax = "proto3";
 package statecharts.v1;
 
 import "google/protobuf/struct.proto";
-import "google/protobuf/timestamp.proto";
 
 // Statechart definition.
 message Statechart {
