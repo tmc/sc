@@ -7,7 +7,8 @@ var exampleStatechart1 = &Statechart{&sc.Statechart{
 	RootState: &sc.State{
 		Children: []*sc.State{
 			{
-				Label: "Off",
+				Label:     "Off",
+				IsInitial: true,
 			},
 			{
 				Label: "On",
@@ -18,6 +19,12 @@ var exampleStatechart1 = &Statechart{&sc.Statechart{
 					},
 					{
 						Label: "Card Reader Control",
+						Children: []*sc.State{
+							{
+								Label:     "Ready",
+								IsInitial: true,
+							},
+						},
 					},
 				},
 			},
