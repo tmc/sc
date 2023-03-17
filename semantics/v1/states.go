@@ -81,6 +81,12 @@ func (c *Statechart) AncestrallyRelated(state1 StateLabel, state2 StateLabel) (b
 	return descendant, nil
 }
 
+// LeastCommonAncestor returns the least common ancestor of the given states.
+func (c *Statechart) LeastCommonAncestor(states ...StateLabel) StateLabel {
+
+	// return root
+}
+
 func (s *Statechart) childrenPlus(state *sc.State) ([]StateLabel, error) {
 	result := make([]StateLabel, len(state.Children))
 	for i, child := range state.Children {
