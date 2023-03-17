@@ -17,7 +17,8 @@ package statecharts.v1;
 
 import "google/protobuf/struct.proto";
 
-// Statechart definition.
+// Statechart is the main data structure representing a statechart.
+// It consists of a root state, a set of transitions, and a set of events.
 message Statechart {
   // The root state of the statechart.
   State root_state  = 1;
@@ -28,6 +29,7 @@ message Statechart {
 }
 
 // StateType describes the type of a state.
+// It can be a basic state, normal state, or parallel (orthogonal) state.
 enum StateType {
   // Unspecified state type.
   STATE_TYPE_UNSPECIFIED = 0;
@@ -39,7 +41,8 @@ enum StateType {
   STATE_TYPE_PARALLEL = 3;
 }
 
-// State is a state in a statechart.
+// State represents a state in a statechart.
+// Each state has a label, type, and optionally sub-states (children).
 message State {
   // The label of the state.
   string label = 1;
@@ -47,54 +50,58 @@ message State {
   StateType type = 2;
   // The sub-states. If a state has no sub-states, it is considered a BASIC state.
   repeated State children = 3;
-  // The state is the initial state of its parent state.
+  // Indicates if the state is the initial state of its parent state.
   bool is_initial = 4;
-  // The state is the final state of its parent state.
+  // Indicates if the state is the final state of its parent state.
   bool is_final = 5;
 }
 
-// Transition is a transition between states in a statechart.
-// A transition connects source to target states.
+// Transition represents a transition between states in a statechart.
+// It connects source (from) states to target (to) states and is triggered by an event.
 message Transition {
   // The label of the transition.
   string label = 1;
-  // The from State reference.
+  // The source (from) State reference(s).
   repeated string from = 2;
-  // The to State 
+  // The target (to) State reference(s).
   repeated string to = 3;
   // The label of the event that triggers the transition.
   string event = 4;
-  // The guard of the transition.
+  // The guard of the transition, a condition for the transition to occur.
   Guard guard = 5;
-  // The action(s) of the transition.
+  // The action(s) associated with the transition.
   repeated Action actions = 6;
 }
 
-// Event is an event in a statechart.
+// Event represents an event in a statechart.
+// Each event has a label that identifies it.
 message Event {
   // The label of the event.
   string label = 1;
 }
 
 // Guard is a guard for a transition.
+// It represents a condition that must be satisfied for the transition to occur.
 message Guard {
   // The guard expression.
   string expression = 1;
 }
 
-// Action is an action for a transition.
+// Action is an action associated with a transition.
+// Each action has a label that identifies it.
 message Action {
   // The label of the action.
   string label = 1;
 }
 
 // StateRef is a reference to a state.
+// It contains the label of the referenced state.
 message StateRef {
   // The label of the state.
   string label = 1;
 }
 
-// Configuration is a status for a statechart which is defined by a subset of the states that are active.
+// Configuration is a status for a statechart, which is defined by a subset of the states that are active.
 message Configuration {
   // The set of states in the status.
   repeated StateRef states = 1;

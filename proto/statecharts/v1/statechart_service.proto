@@ -11,7 +11,8 @@ import "google/rpc/status.proto";
 
 import "statecharts/v1/statecharts.proto";
 
-// Statechart service.
+// StatechartService defines the main service for interacting with statecharts.
+// It allows creating a new machine and stepping a statechart through a single iteration.
 service StatechartService {
   // Create a new machine.
   rpc CreateMachine(CreateMachineRequest) returns (CreateMachineResponse) {};
@@ -19,13 +20,14 @@ service StatechartService {
   rpc Step(StepRequest) returns (StepResponse) {}
 }
 
-// A registry of Statecharts.
+// StatechartRegistry maintains a collection of Statecharts.
 message StatechartRegistry {
   // The registry of Statecharts.
   map<string,Statechart> statecharts = 1;
 }
 
-// A request to create a new machine.
+// CreateMachineRequest is the request message for creating a new machine.
+// It requires a statechart ID.
 message CreateMachineRequest {
   // The ID of the statechart to create an instance from.
   string statechart_id = 1;
@@ -33,24 +35,28 @@ message CreateMachineRequest {
   google.protobuf.Struct context = 2;
 }
 
-// A response to a create machine request.
+// CreateMachineResponse is the response message for creating a new machine.
+// It returns the created machine.
 message CreateMachineResponse {
   // The created machine.
   statecharts.v1.Machine machine = 1;
 }
 
 // StepRequest is the request message for the Step method.
+// It is defined a statechart ID, an event, and an optional context.
 message StepRequest {
   // The id of the statechart to step.
   string statechart_id = 1;
   // The event to step the statechart with.
   string event = 2;
   // The context attached to the Event.
+  google.protobuf.Struct context = 3;
 }
 
 // StepResponse is the response message for the Step method.
+// It returns the current state of the statechart and the result of the step operation.
 message StepResponse {
-  // The statechart's current state.
+  // The statechart's current state (machine).
   statecharts.v1.Machine machine = 1;
   // The result of the step operation.
   google.rpc.Status result = 2;
