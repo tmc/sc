@@ -15,7 +15,8 @@ description: API Specification for the statecharts.v1 package.
 
 ### Statechart
 
-Statechart definition.
+Statechart is the main data structure representing a statechart.
+It consists of a root state, a set of transitions, and a set of events.
 
 
 
@@ -40,7 +41,8 @@ Statechart definition.
 
 ### State
 
-State is a state in a statechart.
+State represents a state in a statechart.
+Each state has a label, type, and optionally sub-states (children).
 
 
 
@@ -50,8 +52,8 @@ State is a state in a statechart.
 | label |string| The label of the state.   |
 | type |[StateType](#statecharts-v1-StateType)| The type of the state.   |
 | children[] |[State](#statecharts-v1-State)| The sub-states. If a state has no sub-states, it is considered a BASIC state.   |
-| is_initial |bool| The state is the initial state of its parent state.   |
-| is_final |bool| The state is the final state of its parent state.   |
+| is_initial |bool| Indicates if the state is the initial state of its parent state.   |
+| is_final |bool| Indicates if the state is the final state of its parent state.   |
 
 
 
@@ -67,8 +69,8 @@ State is a state in a statechart.
 
 ### Transition
 
-Transition is a transition between states in a statechart.
-A transition connects source to target states.
+Transition represents a transition between states in a statechart.
+It connects source (from) states to target (to) states and is triggered by an event.
 
 
 
@@ -76,11 +78,11 @@ A transition connects source to target states.
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | label |string| The label of the transition.   |
-| from[] |string| The from State reference.   |
-| to[] |string| The to State   |
+| from[] |string| The source (from) State reference(s).   |
+| to[] |string| The target (to) State reference(s).   |
 | event |string| The label of the event that triggers the transition.   |
-| guard |[Guard](#statecharts-v1-Guard)| The guard of the transition.   |
-| actions[] |[Action](#statecharts-v1-Action)| The action(s) of the transition.   |
+| guard |[Guard](#statecharts-v1-Guard)| The guard of the transition, a condition for the transition to occur.   |
+| actions[] |[Action](#statecharts-v1-Action)| The action(s) associated with the transition.   |
 
 
 
@@ -96,7 +98,8 @@ A transition connects source to target states.
 
 ### Event
 
-Event is an event in a statechart.
+Event represents an event in a statechart.
+Each event has a label that identifies it.
 
 
 
@@ -120,6 +123,7 @@ Event is an event in a statechart.
 ### Guard
 
 Guard is a guard for a transition.
+It represents a condition that must be satisfied for the transition to occur.
 
 
 
@@ -142,7 +146,8 @@ Guard is a guard for a transition.
 
 ### Action
 
-Action is an action for a transition.
+Action is an action associated with a transition.
+Each action has a label that identifies it.
 
 
 
@@ -166,6 +171,7 @@ Action is an action for a transition.
 ### StateRef
 
 StateRef is a reference to a state.
+It contains the label of the referenced state.
 
 
 
@@ -188,7 +194,7 @@ StateRef is a reference to a state.
 
 ### Configuration
 
-Configuration is a status for a statechart which is defined by a subset of the states that are active.
+Configuration is a status for a statechart, which is defined by a subset of the states that are active.
 
 
 
@@ -269,6 +275,7 @@ Step is a step in the execution of a statechart.
 
 ### StateType
 StateType describes the type of a state.
+It can be a basic state, normal state, or parallel (orthogonal) state.
 
 
 

@@ -12,7 +12,8 @@ description: API Specification for the statecharts.v1 package.
 
 ### StatechartService
 
-Statechart service.
+StatechartService defines the main service for interacting with statecharts.
+It allows creating a new machine and stepping a statechart through a single iteration.
 
 
 
@@ -31,7 +32,7 @@ Statechart service.
 
 ### StatechartRegistry
 
-A registry of Statecharts.
+StatechartRegistry maintains a collection of Statecharts.
 
 
 
@@ -77,7 +78,8 @@ A registry of Statecharts.
 
 ### CreateMachineRequest
 
-A request to create a new machine.
+CreateMachineRequest is the request message for creating a new machine.
+It requires a statechart ID.
 
 
 
@@ -101,7 +103,8 @@ A request to create a new machine.
 
 ### CreateMachineResponse
 
-A response to a create machine request.
+CreateMachineResponse is the response message for creating a new machine.
+It returns the created machine.
 
 
 
@@ -125,6 +128,7 @@ A response to a create machine request.
 ### StepRequest
 
 StepRequest is the request message for the Step method.
+It is defined a statechart ID, an event, and an optional context.
 
 
 
@@ -132,7 +136,8 @@ StepRequest is the request message for the Step method.
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | statechart_id |string| The id of the statechart to step.   |
-| event |string| The event to step the statechart with.  The context attached to the Event.  |
+| event |string| The event to step the statechart with.   |
+| context |Struct| The context attached to the Event.   |
 
 
 
@@ -149,13 +154,14 @@ StepRequest is the request message for the Step method.
 ### StepResponse
 
 StepResponse is the response message for the Step method.
+It returns the current state of the statechart and the result of the step operation.
 
 
 
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| machine |[Machine](./statecharts.md#statecharts-v1-Machine)| The statechart's current state.   |
+| machine |[Machine](./statecharts.md#statecharts-v1-Machine)| The statechart's current state (machine).   |
 | result |Status| The result of the step operation.   |
 
 

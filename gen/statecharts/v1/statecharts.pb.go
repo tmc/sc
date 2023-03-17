@@ -36,6 +36,7 @@ const (
 )
 
 // StateType describes the type of a state.
+// It can be a basic state, normal state, or parallel (orthogonal) state.
 type StateType int32
 
 const (
@@ -145,7 +146,8 @@ func (MachineState) EnumDescriptor() ([]byte, []int) {
 	return file_statecharts_v1_statecharts_proto_rawDescGZIP(), []int{1}
 }
 
-// Statechart definition.
+// Statechart is the main data structure representing a statechart.
+// It consists of a root state, a set of transitions, and a set of events.
 type Statechart struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -212,7 +214,8 @@ func (x *Statechart) GetEvents() []*Event {
 	return nil
 }
 
-// State is a state in a statechart.
+// State represents a state in a statechart.
+// Each state has a label, type, and optionally sub-states (children).
 type State struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -224,9 +227,9 @@ type State struct {
 	Type StateType `protobuf:"varint,2,opt,name=type,proto3,enum=statecharts.v1.StateType" json:"type,omitempty"`
 	// The sub-states. If a state has no sub-states, it is considered a BASIC state.
 	Children []*State `protobuf:"bytes,3,rep,name=children,proto3" json:"children,omitempty"`
-	// The state is the initial state of its parent state.
+	// Indicates if the state is the initial state of its parent state.
 	IsInitial bool `protobuf:"varint,4,opt,name=is_initial,json=isInitial,proto3" json:"is_initial,omitempty"`
-	// The state is the final state of its parent state.
+	// Indicates if the state is the final state of its parent state.
 	IsFinal bool `protobuf:"varint,5,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`
 }
 
@@ -297,8 +300,8 @@ func (x *State) GetIsFinal() bool {
 	return false
 }
 
-// Transition is a transition between states in a statechart.
-// A transition connects source to target states.
+// Transition represents a transition between states in a statechart.
+// It connects source (from) states to target (to) states and is triggered by an event.
 type Transition struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -306,15 +309,15 @@ type Transition struct {
 
 	// The label of the transition.
 	Label string `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
-	// The from State reference.
+	// The source (from) State reference(s).
 	From []string `protobuf:"bytes,2,rep,name=from,proto3" json:"from,omitempty"`
-	// The to State
+	// The target (to) State reference(s).
 	To []string `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`
 	// The label of the event that triggers the transition.
 	Event string `protobuf:"bytes,4,opt,name=event,proto3" json:"event,omitempty"`
-	// The guard of the transition.
+	// The guard of the transition, a condition for the transition to occur.
 	Guard *Guard `protobuf:"bytes,5,opt,name=guard,proto3" json:"guard,omitempty"`
-	// The action(s) of the transition.
+	// The action(s) associated with the transition.
 	Actions []*Action `protobuf:"bytes,6,rep,name=actions,proto3" json:"actions,omitempty"`
 }
 
@@ -392,7 +395,8 @@ func (x *Transition) GetActions() []*Action {
 	return nil
 }
 
-// Event is an event in a statechart.
+// Event represents an event in a statechart.
+// Each event has a label that identifies it.
 type Event struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -442,6 +446,7 @@ func (x *Event) GetLabel() string {
 }
 
 // Guard is a guard for a transition.
+// It represents a condition that must be satisfied for the transition to occur.
 type Guard struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -490,7 +495,8 @@ func (x *Guard) GetExpression() string {
 	return ""
 }
 
-// Action is an action for a transition.
+// Action is an action associated with a transition.
+// Each action has a label that identifies it.
 type Action struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -540,6 +546,7 @@ func (x *Action) GetLabel() string {
 }
 
 // StateRef is a reference to a state.
+// It contains the label of the referenced state.
 type StateRef struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -588,7 +595,7 @@ func (x *StateRef) GetLabel() string {
 	return ""
 }
 
-// Configuration is a status for a statechart which is defined by a subset of the states that are active.
+// Configuration is a status for a statechart, which is defined by a subset of the states that are active.
 type Configuration struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
