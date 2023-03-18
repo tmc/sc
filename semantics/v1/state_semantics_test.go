@@ -25,7 +25,7 @@ type stateSemanticsTestCase struct {
 func TestStatechart_Children(t *testing.T) {
 	tests := []stateSemanticsTestCase{
 		{"invalid", exampleStatechart1, StateLabel("this state does not exist"), nil, true},
-		{"valid but not toplevel", exampleStatechart1, StateLabel("Turnstile Control"), nil, false},
+		{"valid but not toplevel", exampleStatechart1, StateLabel("Turnstile Control"), []StateLabel{"Blocked", "Unblocked"}, false},
 		{"Off", exampleStatechart1, StateLabel("Off"), nil, false},
 		{"On", exampleStatechart1, StateLabel("On"), labels("Turnstile Control", "Card Reader Control"), false},
 	}
@@ -48,11 +48,11 @@ func TestStatechart_ChildrenStar(t *testing.T) {
 	tests := []stateSemanticsTestCase{
 		{"invalid", exampleStatechart1, StateLabel("this state does not exist"), nil, true},
 		{"valid but not toplevel", exampleStatechart1, StateLabel("Turnstile Control"),
-			labels("Turnstile Control"), false},
+			labels("Turnstile Control", "Blocked", "Unblocked"), false},
 		{"Off", exampleStatechart1, StateLabel("Off"),
 			labels("Off"), false},
 		{"On", exampleStatechart1, StateLabel("On"),
-			labels("On", "Turnstile Control", "Card Reader Control", "Ready"), false},
+			labels("On", "Turnstile Control", "Card Reader Control", "Blocked", "Unblocked", "Ready", "Card Entered", "Turnstile Unblocked"), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestStatechart_ChildrenStar(t *testing.T) {
 func TestStatechart_ChildrenPlus(t *testing.T) {
 	tests := []stateSemanticsTestCase{
 		{"On", exampleStatechart1, StateLabel("On"),
-			labels("Turnstile Control", "Card Reader Control", "Ready"), false},
+			labels("Turnstile Control", "Card Reader Control", "Blocked", "Unblocked", "Ready", "Card Entered", "Turnstile Unblocked"), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
