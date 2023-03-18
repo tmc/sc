@@ -16,6 +16,15 @@ var exampleStatechart1 = NewStatechart(&sc.Statechart{
 				Children: []*sc.State{
 					{
 						Label: "Turnstile Control",
+						Children: []*sc.State{
+							{
+								Label:     "Blocked",
+								IsInitial: true,
+							},
+							{
+								Label: "Unblocked",
+							},
+						},
 					},
 					{
 						Label: "Card Reader Control",
@@ -23,6 +32,12 @@ var exampleStatechart1 = NewStatechart(&sc.Statechart{
 							{
 								Label:     "Ready",
 								IsInitial: true,
+							},
+							{
+								Label: "Card Entered",
+							},
+							{
+								Label: "Turnstile Unblocked",
 							},
 						},
 					},

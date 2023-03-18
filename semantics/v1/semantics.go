@@ -8,6 +8,8 @@ import (
 
 type StateLabel string
 
+const RootState StateLabel = ""
+
 var (
 	ErrNotFound = errors.New("not found")
 )
@@ -20,4 +22,11 @@ type Statechart struct {
 // NewStatechart creates a new statechart from a statechart definition.
 func NewStatechart(sc *sc.Statechart) *Statechart {
 	return &Statechart{sc}
+}
+
+func (s StateLabel) String() string {
+	if s == RootState {
+		return "root"
+	}
+	return string(s)
 }

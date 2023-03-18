@@ -1,6 +1,9 @@
 package semantics
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/tmc/sc"
 	"golang.org/x/exp/slices"
 )
@@ -81,6 +84,101 @@ func (c *Statechart) AncestrallyRelated(state1 StateLabel, state2 StateLabel) (b
 	return descendant, nil
 }
 
+// LeastCommonAncestor returns the least common ancestor of the given states.
+func (c *Statechart) LeastCommonAncestor(states ...StateLabel) (StateLabel, error) {
+	if len(states) == 0 {
+		return "", errors.New("no states provided")
+	}
+	if len(states) == 1 {
+		_, err := c.findState(states[0])
+		if err != nil {
+			return "", err
+		}
+		return states[0], nil
+	}
+	ancestors := make([][]StateLabel, len(states))
+	for i, state := range states {
+		stateAncestors, err := c.findAncestors(state)
+		if err != nil {
+			return "", fmt.Errorf("failed to find ancestors of %s: %v", state, err)
+		}
+		ancestors[i] = stateAncestors
+	}
+	// Find the first ancestor that is common to all states.
+	var lca StateLabel
+	minAncestorsLength := len(ancestors[0])
+	minAncestors := ancestors[0]
+	for _, otherAncestors := range ancestors[1:] {
+		if len(otherAncestors) < minAncestorsLength {
+			minAncestorsLength = len(otherAncestors)
+			minAncestors = otherAncestors
+		}
+	}
+
+	for _, ancestor := range minAncestors {
+		allContain := true
+		for _, otherAncestors := range ancestors {
+			if !statesContains(otherAncestors, ancestor) {
+				allContain = false
+				break
+			}
+		}
+		if allContain {
+			lca = ancestor
+			break
+		}
+	}
+	return lca, nil
+}
+
+// GetParent returns the parent state of the given state.
+func (c *Statechart) GetParent(state StateLabel) (*sc.State, error) {
+	s, err := c.findState(state)
+	if err != nil {
+		return nil, err
+	}
+	// recurse down the tree until we find the root state.
+	return c.getParent(s, c.RootState)
+}
+
+// getParent returns the parent of the given state.
+func (c *Statechart) getParent(needle *sc.State, haystack *sc.State) (*sc.State, error) {
+	if haystack == nil {
+		return nil, fmt.Errorf("nil haystack")
+	}
+	for _, child := range haystack.Children {
+		if child == needle {
+			return haystack, nil
+		}
+		parent, err := c.getParent(needle, child)
+		if err == nil {
+			return parent, nil
+		}
+	}
+	return nil, errors.New("no parent found")
+}
+
+// findAncestors returns the ancestors of the given state.
+func (c *Statechart) findAncestors(state StateLabel) ([]StateLabel, error) {
+	ancestors := []StateLabel{state}
+	currentState := state
+
+	for {
+		parent, err := c.GetParent(currentState)
+		if err != nil {
+			return nil, err
+		}
+		ancestors = append(ancestors, StateLabel(parent.Label))
+		currentState = StateLabel(parent.Label)
+		if parent.Label == c.RootState.Label {
+			break
+		}
+	}
+
+	return ancestors, nil
+}
+
+// childrenPlus returns the transitive closure of the children of the given state.
 func (s *Statechart) childrenPlus(state *sc.State) ([]StateLabel, error) {
 	result := make([]StateLabel, len(state.Children))
 	for i, child := range state.Children {
