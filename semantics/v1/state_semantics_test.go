@@ -116,3 +116,87 @@ func TestStatechart_AncestorallyRelated(t *testing.T) {
 		})
 	}
 }
+func TestStatechart_LeastCommonAncestor(t *testing.T) {
+	tests := []struct {
+		name    string
+		chart   *Statechart
+		states  []StateLabel
+		want    StateLabel
+		wantErr bool
+	}{
+		{
+			name:  "invalid",
+			chart: exampleStatechart1,
+			states: []StateLabel{
+				StateLabel("this state does not exist"),
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:  "one state",
+			chart: exampleStatechart1,
+			states: []StateLabel{
+				StateLabel("Off"),
+			},
+			want:    StateLabel("Off"),
+			wantErr: false,
+		},
+		{
+			name:  "two unrelated states",
+			chart: exampleStatechart1,
+			states: []StateLabel{
+				StateLabel("Off"),
+				StateLabel("On"),
+			},
+			want:    RootState,
+			wantErr: false,
+		},
+		{
+			name:  "two related states",
+			chart: exampleStatechart1,
+			states: []StateLabel{
+				StateLabel("On"),
+				StateLabel("Ready"),
+			},
+			want:    StateLabel("On"),
+			wantErr: false,
+		},
+		{
+			name:  "multiple related states",
+			chart: exampleStatechart1,
+			states: []StateLabel{
+				StateLabel("On"),
+				StateLabel("Ready"),
+				StateLabel("Card Entered"),
+			},
+			want:    StateLabel("On"),
+			wantErr: false,
+		},
+		{
+			name:  "multiple unrelated states",
+			chart: exampleStatechart1,
+			states: []StateLabel{
+				StateLabel("Off"),
+				StateLabel("On"),
+				StateLabel("Ready"),
+			},
+			want:    RootState,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.chart
+			got, err := c.LeastCommonAncestor(tt.states...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Statechart.LeastCommonAncestor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Statechart.LeastCommonAncestor() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
