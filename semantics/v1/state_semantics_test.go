@@ -227,3 +227,31 @@ func TestDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestOrthogonal(t *testing.T) {
+	tests := []struct {
+		name    string
+		chart   *Statechart
+		state1  StateLabel
+		state2  StateLabel
+		want    bool
+		wantErr bool
+	}{
+		{"invalid", exampleStatechart1, StateLabel("this state does not exist"), StateLabel("On"), false, true},
+		{"not orthogonal", exampleStatechart1, StateLabel("On"), StateLabel("Off"), false, false},
+		{"orthogonal", exampleStatechart1, StateLabel("Blocked"), StateLabel("Card Reader Control"), true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.chart
+			got, err := c.Orthogonal(tt.state1, tt.state2)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Statechart.Orthogonal() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !cmp.Equal(tt.want, got) {
+				t.Errorf("(-want +got):\n%s", cmp.Diff(tt.want, got))
+			}
+		})
+	}
+}

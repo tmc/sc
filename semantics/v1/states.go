@@ -223,3 +223,28 @@ func (s *Statechart) Default(state StateLabel) (StateLabel, error) {
 	}
 	return "", errors.New("no default state found")
 }
+
+// Orthogonal returns true if the given state is orthogonal.
+// Two states x, y, are orthogonal, written x⊥y, if x and y are not ancestrally related, and their lca is an AND state.
+func (s *Statechart) Orthogonal(state1, state2 StateLabel) (bool, error) {
+	state1Obj, err := s.findState(state1)
+	if err != nil {
+		return false, err
+	}
+	state2Obj, err := s.findState(state2)
+	if err != nil {
+		return false, err
+	}
+	if state1Obj == state2Obj {
+		return false, nil
+	}
+	lca, err := s.LeastCommonAncestor(state1, state2)
+	if err != nil {
+		return false, err
+	}
+	lcaObj, err := s.findState(lca)
+	if err != nil {
+		return false, err
+	}
+	return lcaObj.Type == sc.StateTypeParallel, nil
+}
