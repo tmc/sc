@@ -158,6 +158,7 @@ func (c *Statechart) getParent(needle *sc.State, haystack *sc.State) (*sc.State,
 	return nil, errors.New("no parent found")
 }
 
+// findAncestors returns the ancestors of the given state.
 func (c *Statechart) findAncestors(state StateLabel) ([]StateLabel, error) {
 	ancestors := []StateLabel{state}
 	currentState := state
@@ -176,6 +177,8 @@ func (c *Statechart) findAncestors(state StateLabel) ([]StateLabel, error) {
 
 	return ancestors, nil
 }
+
+// childrenPlus returns the transitive closure of the children of the given state.
 func (s *Statechart) childrenPlus(state *sc.State) ([]StateLabel, error) {
 	result := make([]StateLabel, len(state.Children))
 	for i, child := range state.Children {
