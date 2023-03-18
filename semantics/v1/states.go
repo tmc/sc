@@ -248,3 +248,30 @@ func (s *Statechart) Orthogonal(state1, state2 StateLabel) (bool, error) {
 	}
 	return lcaObj.Type == sc.StateTypeParallel, nil
 }
+
+// Consistent returns true if the given set of states is consistent.
+// A set X of states is consistent if for every x, y ∈ X, either x and y are ancestrally related or x⊥y (orthogonal).
+func (s *Statechart) Consistent(states ...StateLabel) (bool, error) {
+	for i, state1 := range states {
+		// cehck that states are valid/present.
+		if _, err := s.findState(state1); err != nil {
+			return false, err
+		}
+		for _, state2 := range states[i+1:] {
+			ancestrallyRelated, err := s.AncestrallyRelated(state1, state2)
+			if err != nil {
+				return false, err
+			}
+			if !ancestrallyRelated {
+				orthogonal, err := s.Orthogonal(state1, state2)
+				if err != nil {
+					return false, err
+				}
+				if !orthogonal {
+					return false, nil
+				}
+			}
+		}
+	}
+	return true, nil
+}

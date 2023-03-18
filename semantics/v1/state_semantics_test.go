@@ -255,3 +255,30 @@ func TestOrthogonal(t *testing.T) {
 		})
 	}
 }
+
+func TestConsistent(t *testing.T) {
+	tests := []struct {
+		name    string
+		chart   *Statechart
+		states  []StateLabel
+		want    bool
+		wantErr bool
+	}{
+		{"invalid", exampleStatechart1, []StateLabel{StateLabel("this state does not exist")}, false, true},
+		{"consistent", exampleStatechart1, []StateLabel{StateLabel("On"), StateLabel("Ready")}, true, false},
+		{"inconsistent", exampleStatechart1, []StateLabel{StateLabel("On"), StateLabel("Off")}, false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.chart
+			got, err := c.Consistent(tt.states...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Statechart.Consistent() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !cmp.Equal(tt.want, got) {
+				t.Errorf("(-want +got):\n%s", cmp.Diff(tt.want, got))
+			}
+		})
+	}
+}
