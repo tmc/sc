@@ -200,3 +200,30 @@ func TestStatechart_LeastCommonAncestor(t *testing.T) {
 		})
 	}
 }
+
+func TestDefault(t *testing.T) {
+	tests := []struct {
+		name    string
+		chart   *Statechart
+		state   StateLabel
+		want    StateLabel
+		wantErr bool
+	}{
+		{"invalid", exampleStatechart1, StateLabel("this state does not exist"), "", true},
+		{"default", exampleStatechart1, RootState, StateLabel("Off"), false},
+		{"no default", exampleStatechart1, StateLabel("Off"), "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := tt.chart
+			got, err := c.Default(tt.state)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Statechart.Default() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Statechart.Default() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -209,3 +209,17 @@ func (s *Statechart) _findState(state *sc.State, label StateLabel) (*sc.State, e
 	}
 	return nil, ErrNotFound
 }
+
+// Default returns the default state of the given state.
+func (s *Statechart) Default(state StateLabel) (StateLabel, error) {
+	stateObj, err := s.findState(state)
+	if err != nil {
+		return "", err
+	}
+	for _, child := range stateObj.Children {
+		if child.IsInitial {
+			return StateLabel(child.Label), nil
+		}
+	}
+	return "", errors.New("no default state found")
+}
