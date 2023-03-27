@@ -291,61 +291,77 @@ func (s *Statechart) DefaultCompletion(states ...StateLabel) ([]StateLabel, erro
 	if !c {
 		return nil, ErrInconsistent
 	}
-
 	return s.defaultCompletion(states...)
 }
 
-// defaultCompletion
+// defaultCompletion returns the default completion of the given state.
 //
-// Given a consistent set X of nodes, the default completion dcomp(X) is the smallest set D such that:
-// • X ⊆ D
+// The default completion of a state x is the set of states that are active when x is entered.
+//
+// From the paper:
+// • states ⊆ D
 // • if s ∈ D and type(s) = AND then children(s) ⊆ D
-// • if s ∈ D and type(s) = OR and children(s) ∩ X = ∅ then default(s) ∈ D
+// • if s ∈ D and type(s) = OR and children(s) ∩ states = ∅ then default(s) ∈ D
 // • if s ∈ D and s != root then parent(s) ∈ D.
 func (s *Statechart) defaultCompletion(states ...StateLabel) ([]StateLabel, error) {
-	// Initialize the result to the input states.
-	result := make([]StateLabel, len(states))
-	copy(result, states)
-
-	// Calculate the default completion for each OR state in the input states.
-	// Add it if and only if children of a candidate state are not already present.
-	for _, state := range states {
-		if st, err := s.getState(state); err == nil && st.Type == sc.StateTypeOr {
-			children := st.Children
-			if s.Contains(children, s.Intersect(children, states)) {
-				defState, err := s.DefaultState(state)
-				if err != nil {
-					return nil, err
+	var activeStates []StateLabel
+	var defaultCompletion func(state *sc.State) error
+	defaultCompletion = func(state *sc.State) error {
+		// if state already in activeStates, skip.
+		for _, activeState := range activeStates {
+			if StateLabel(state.Label) == activeState {
+				return nil
+			}
+		}
+		activeStates = append(activeStates, StateLabel(state.Label))
+		if state.Type == sc.StateTypeNormal {
+			addDefault := true
+			for _, child := range state.Children {
+				for _, activeState := range activeStates {
+					if StateLabel(child.Label) == activeState {
+						addDefault = false
+						break
+					}
 				}
-				result = append(result, defState)
+			}
+			if addDefault {
+				defaultState, err := s.Default(StateLabel(state.Label))
+				if err != nil {
+					return err
+				}
+				activeStates = append(activeStates, defaultState)
+			}
+		} else if state.Type == sc.StateTypeParallel {
+			for _, child := range state.Children {
+				if err := defaultCompletion(child); err != nil {
+					return err
+				}
 			}
 		}
-	}
-
-	// Add the ancestors of the input states to the result, unless they're already present.
-	for _, state := range states {
-		for _, ancestor := range s.GetAncestors(state) {
-			if !s.Contains(result, ancestor) {
-				result = append(result, ancestor)
+		if state.Label != s.RootState.Label {
+			parent, err := s.GetParent(StateLabel(state.Label))
+			if err != nil {
+				return err
+			}
+			if err := defaultCompletion(parent); err != nil {
+				return err
 			}
 		}
+
+		return nil
 	}
 
-	// Add the parent of each input state to the result, unless they're already present.
-	for _, state := range states {
-		parent, _, err := s.GetParent(state)
+	for _, stateLabel := range states {
+		state, err := s.findState(stateLabel)
 		if err != nil {
 			return nil, err
 		}
-		if !s.Contains(result, parent) {
-			result = append(result, parent)
+
+		err = defaultCompletion(state)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	// Add the root state to the result.
-	if !s.Contains(result, StateLabel(s.RootState.Label)) {
-		result = append(result, StateLabel(s.RootState.Label))
-	}
-
-	return result, nil
+	return activeStates, nil
 }

@@ -292,12 +292,23 @@ func TestDefaultCompletion(t *testing.T) {
 		wantErr bool
 	}{
 		{"invalid", exampleStatechart1, []StateLabel{StateLabel("this state does not exist")}, nil, true},
-		{"off", exampleStatechart1, []StateLabel{StateLabel("Off")}, []StateLabel{StateLabel("Off")}, false},
-		{"unblocked", exampleStatechart1, []StateLabel{StateLabel("Unblocked")}, labels("Unblocked", "Turnstile Control", "Ready", "Card Reader Control", "On", ""), false},
+		{"off", exampleStatechart1, []StateLabel{StateLabel("Off")}, labels("Off", ""), false},
+		{"unblocked", exampleStatechart1, []StateLabel{StateLabel("Unblocked")}, labels(
+			"Unblocked",
+			"Turnstile Control",
+			"On",
+			"Card Reader Control",
+			"Ready",
+			"",
+		), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.chart
+			if err := c.Normalize(); err != nil {
+				t.Errorf("Statechart.Normalize() error = %v", err)
+				return
+			}
 			got, err := c.DefaultCompletion(tt.state...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Statechart.DefaultCompletion() error = %v, wantErr %v", err, tt.wantErr)
