@@ -8,6 +8,11 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+var (
+	// ErrInconsistent is returned if a Statechart is inconsistent.
+	ErrInconsistent = errors.New("inconsistent")
+)
+
 // statesContains returns true if the given slice of states contains the given state.
 func statesContains(states []StateLabel, state StateLabel) bool {
 	return slices.Contains(states, state)
@@ -277,50 +282,70 @@ func (s *Statechart) Consistent(states ...StateLabel) (bool, error) {
 }
 
 // DefaultCompletion returns the default completion of the given state.
+func (s *Statechart) DefaultCompletion(states ...StateLabel) ([]StateLabel, error) {
+	// First check if the input states are consistent.
+	c, err := s.Consistent(states...)
+	if err != nil {
+		return nil, err
+	}
+	if !c {
+		return nil, ErrInconsistent
+	}
+
+	return s.defaultCompletion(states...)
+}
+
+// defaultCompletion
 //
 // Given a consistent set X of nodes, the default completion dcomp(X) is the smallest set D such that:
 // • X ⊆ D
 // • if s ∈ D and type(s) = AND then children(s) ⊆ D
 // • if s ∈ D and type(s) = OR and children(s) ∩ X = ∅ then default(s) ∈ D
 // • if s ∈ D and s != root then parent(s) ∈ D.
-func (s *Statechart) DefaultCompletion(states ...StateLabel) ([]StateLabel, error) {
-	consistent, err := s.Consistent(states...)
-	if err != nil {
-		return nil, err
-	}
-	if !consistent {
-		return nil, errors.New("states are not consistent")
-	}
+func (s *Statechart) defaultCompletion(states ...StateLabel) ([]StateLabel, error) {
+	// Initialize the result to the input states.
 	result := make([]StateLabel, len(states))
+	copy(result, states)
 
-	for i, state := range states {
-		stateObj, err := s.findState(state)
+	// Calculate the default completion for each OR state in the input states.
+	// Add it if and only if children of a candidate state are not already present.
+	for _, state := range states {
+		if st, err := s.getState(state); err == nil && st.Type == sc.StateTypeOr {
+			children := st.Children
+			if s.Contains(children, s.Intersect(children, states)) {
+				defState, err := s.DefaultState(state)
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, defState)
+			}
+		}
+	}
+
+	// Add the ancestors of the input states to the result, unless they're already present.
+	for _, state := range states {
+		for _, ancestor := range s.GetAncestors(state) {
+			if !s.Contains(result, ancestor) {
+				result = append(result, ancestor)
+			}
+		}
+	}
+
+	// Add the parent of each input state to the result, unless they're already present.
+	for _, state := range states {
+		parent, _, err := s.GetParent(state)
 		if err != nil {
 			return nil, err
 		}
-		if stateObj.Type == sc.StateTypeParallel {
-			children, err := s.childrenPlus(stateObj)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, children...)
+		if !s.Contains(result, parent) {
+			result = append(result, parent)
 		}
-		result[i] = state
 	}
 
-	// add parents
-	for i := 0; i < len(result); i++ {
-		stateObj, err := s.findState(result[i])
-		if err != nil {
-			return nil, err
-		}
-		if stateObj.Label != s.RootState.Label {
-			parent, err := s.GetParent(result[i])
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, StateLabel(parent.Label))
-		}
+	// Add the root state to the result.
+	if !s.Contains(result, StateLabel(s.RootState.Label)) {
+		result = append(result, StateLabel(s.RootState.Label))
 	}
+
 	return result, nil
 }
