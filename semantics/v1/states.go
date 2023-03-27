@@ -8,6 +8,11 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+var (
+	// ErrInconsistent is returned if a Statechart is inconsistent.
+	ErrInconsistent = errors.New("inconsistent")
+)
+
 // statesContains returns true if the given slice of states contains the given state.
 func statesContains(states []StateLabel, state StateLabel) bool {
 	return slices.Contains(states, state)
@@ -274,4 +279,89 @@ func (s *Statechart) Consistent(states ...StateLabel) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+// DefaultCompletion returns the default completion of the given state.
+func (s *Statechart) DefaultCompletion(states ...StateLabel) ([]StateLabel, error) {
+	// First check if the input states are consistent.
+	c, err := s.Consistent(states...)
+	if err != nil {
+		return nil, err
+	}
+	if !c {
+		return nil, ErrInconsistent
+	}
+	return s.defaultCompletion(states...)
+}
+
+// defaultCompletion returns the default completion of the given state.
+//
+// The default completion of a state x is the set of states that are active when x is entered.
+//
+// From the paper:
+// • states ⊆ D
+// • if s ∈ D and type(s) = AND then children(s) ⊆ D
+// • if s ∈ D and type(s) = OR and children(s) ∩ states = ∅ then default(s) ∈ D
+// • if s ∈ D and s != root then parent(s) ∈ D.
+func (s *Statechart) defaultCompletion(states ...StateLabel) ([]StateLabel, error) {
+	var activeStates []StateLabel
+	var defaultCompletion func(state *sc.State) error
+	defaultCompletion = func(state *sc.State) error {
+		// if state already in activeStates, skip.
+		for _, activeState := range activeStates {
+			if StateLabel(state.Label) == activeState {
+				return nil
+			}
+		}
+		activeStates = append(activeStates, StateLabel(state.Label))
+		if state.Type == sc.StateTypeNormal {
+			addDefault := true
+			for _, child := range state.Children {
+				for _, activeState := range activeStates {
+					if StateLabel(child.Label) == activeState {
+						addDefault = false
+						break
+					}
+				}
+			}
+			if addDefault {
+				defaultState, err := s.Default(StateLabel(state.Label))
+				if err != nil {
+					return err
+				}
+				activeStates = append(activeStates, defaultState)
+			}
+		} else if state.Type == sc.StateTypeParallel {
+			for _, child := range state.Children {
+				if err := defaultCompletion(child); err != nil {
+					return err
+				}
+			}
+		}
+		if state.Label != s.RootState.Label {
+			parent, err := s.GetParent(StateLabel(state.Label))
+			if err != nil {
+				return err
+			}
+			if err := defaultCompletion(parent); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	for _, stateLabel := range states {
+		state, err := s.findState(stateLabel)
+		if err != nil {
+			return nil, err
+		}
+
+		err = defaultCompletion(state)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return activeStates, nil
 }
