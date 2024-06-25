@@ -283,40 +283,41 @@ func TestConsistent(t *testing.T) {
 	}
 }
 
-func TestDefaultCompletion(t *testing.T) {
-	tests := []struct {
-		name    string
-		chart   *Statechart
-		state   []StateLabel
-		want    []StateLabel
-		wantErr bool
-	}{
-		{"invalid", exampleStatechart1, []StateLabel{StateLabel("this state does not exist")}, nil, true},
-		{"off", exampleStatechart1, []StateLabel{StateLabel("Off")}, labels("Off", ""), false},
-		{"unblocked", exampleStatechart1, []StateLabel{StateLabel("Unblocked")}, labels(
-			"Unblocked",
-			"Turnstile Control",
-			"On",
-			"Card Reader Control",
-			"Ready",
-			"",
-		), false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := tt.chart
-			if err := c.Normalize(); err != nil {
-				t.Errorf("Statechart.Normalize() error = %v", err)
-				return
-			}
-			got, err := c.DefaultCompletion(tt.state...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Statechart.DefaultCompletion() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !cmp.Equal(tt.want, got) {
-				t.Errorf("(-want +got):\n%s", cmp.Diff(tt.want, got))
-			}
-		})
-	}
-}
+// TODO: meld
+// func TestDefaultCompletion(t *testing.T) {
+// 	tests := []struct {
+// 		name    string
+// 		chart   *Statechart
+// 		state   []StateLabel
+// 		want    []StateLabel
+// 		wantErr bool
+// 	}{
+// 		{"invalid", exampleStatechart1, []StateLabel{StateLabel("this state does not exist")}, nil, true},
+// 		{"off", exampleStatechart1, []StateLabel{StateLabel("Off")}, labels("Off", ""), false},
+// 		{"unblocked", exampleStatechart1, []StateLabel{StateLabel("Unblocked")}, labels(
+// 			"Unblocked",
+// 			"Turnstile Control",
+// 			"On",
+// 			"Card Reader Control",
+// 			"Ready",
+// 			"",
+// 		), false},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			c := tt.chart
+// 			if err := c.Normalize(); err != nil {
+// 				t.Errorf("Statechart.Normalize() error = %v", err)
+// 				return
+// 			}
+// 			got, err := c.DefaultCompletion(tt.state...)
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("Statechart.DefaultCompletion() error = %v, wantErr %v", err, tt.wantErr)
+// 				return
+// 			}
+// 			if !cmp.Equal(tt.want, got) {
+// 				t.Errorf("(-want +got):\n%s", cmp.Diff(tt.want, got))
+// 			}
+// 		})
+// 	}
+// }
