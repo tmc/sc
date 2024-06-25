@@ -3,22 +3,22 @@ package semantics
 import (
 	"testing"
 
-	statecharts "github.com/tmc/sc/gen/statecharts/v1"
+	"github.com/tmc/sc"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestMachineCreation(t *testing.T) {
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:    "test-machine",
-		State: statecharts.MachineState_MACHINE_STATE_RUNNING,
+		State: sc.MachineStateRunning,
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"count": structpb.NewNumberValue(0),
 			},
 		},
 		Statechart: exampleStatechart1.Statechart,
-		Configuration: &statecharts.Configuration{
-			States: []*statecharts.StateRef{
+		Configuration: &sc.Configuration{
+			States: []*sc.StateRef{
 				{Label: "Off"},
 			},
 		},
@@ -28,7 +28,7 @@ func TestMachineCreation(t *testing.T) {
 		t.Errorf("Expected machine ID 'test-machine', got '%s'", machine.Id)
 	}
 
-	if machine.State != statecharts.MachineState_MACHINE_STATE_RUNNING {
+	if machine.State != sc.MachineStateRunning {
 		t.Errorf("Expected machine state RUNNING, got %v", machine.State)
 	}
 
@@ -43,17 +43,17 @@ func TestMachineCreation(t *testing.T) {
 }
 
 func TestMachineStep(t *testing.T) {
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:    "test-machine",
-		State: statecharts.MachineState_MACHINE_STATE_RUNNING,
+		State: sc.MachineStateRunning,
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"count": structpb.NewNumberValue(0),
 			},
 		},
 		Statechart: exampleStatechart1.Statechart,
-		Configuration: &statecharts.Configuration{
-			States: []*statecharts.StateRef{
+		Configuration: &sc.Configuration{
+			States: []*sc.StateRef{
 				{Label: "Off"},
 			},
 		},
@@ -84,26 +84,26 @@ func TestMachineStep(t *testing.T) {
 }
 
 func TestMachineState(t *testing.T) {
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:         "test-machine",
-		State:      statecharts.MachineState_MACHINE_STATE_RUNNING,
+		State:      sc.MachineStateRunning,
 		Statechart: exampleStatechart1.Statechart,
 	}
 
-	if machine.State != statecharts.MachineState_MACHINE_STATE_RUNNING {
+	if machine.State != sc.MachineStateRunning {
 		t.Errorf("Expected machine state RUNNING, got %v", machine.State)
 	}
 
-	machine.State = statecharts.MachineState_MACHINE_STATE_STOPPED
-	if machine.State != statecharts.MachineState_MACHINE_STATE_STOPPED {
+	machine.State = sc.MachineStateStopped
+	if machine.State != sc.MachineStateStopped {
 		t.Errorf("Expected machine state STOPPED, got %v", machine.State)
 	}
 }
 
 func TestMachineContext(t *testing.T) {
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:    "test-machine",
-		State: statecharts.MachineState_MACHINE_STATE_RUNNING,
+		State: sc.MachineStateRunning,
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"count": structpb.NewNumberValue(0),
@@ -139,11 +139,11 @@ func TestMachineContext(t *testing.T) {
 }
 
 // Helper function to simulate a step
-func stepMachine(machine *statecharts.Machine, event string) error {
+func stepMachine(machine *sc.Machine, event string) error {
 	// This is a simplified step function. In a real implementation,
 	// you would use the actual statechart execution logic here.
-	machine.Configuration = &statecharts.Configuration{
-		States: []*statecharts.StateRef{
+	machine.Configuration = &sc.Configuration{
+		States: []*sc.StateRef{
 			{Label: "On"},
 			{Label: "Blocked"},
 			{Label: "Ready"},

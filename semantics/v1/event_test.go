@@ -3,27 +3,27 @@ package semantics
 import (
 	"testing"
 
-	statecharts "github.com/tmc/sc/gen/statecharts/v1"
+	sc "github.com/tmc/sc"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestEventHandling(t *testing.T) {
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:    "test-machine",
-		State: statecharts.MachineState_MACHINE_STATE_RUNNING,
+		State: sc.MachineStateRunning,
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"count": structpb.NewNumberValue(0),
 			},
 		},
-		Statechart: &statecharts.Statechart{
-			RootState: &statecharts.State{
-				Children: []*statecharts.State{
+		Statechart: &sc.Statechart{
+			RootState: &sc.State{
+				Children: []*sc.State{
 					{Label: "Off"},
 					{Label: "On"},
 				},
 			},
-			Transitions: []*statecharts.Transition{
+			Transitions: []*sc.Transition{
 				{
 					Label: "turn_on",
 					From:  []string{"Off"},
@@ -38,44 +38,44 @@ func TestEventHandling(t *testing.T) {
 				},
 			},
 		},
-		Configuration: &statecharts.Configuration{
-			States: []*statecharts.StateRef{{Label: "Off"}},
+		Configuration: &sc.Configuration{
+			States: []*sc.StateRef{{Label: "Off"}},
 		},
 	}
 
 	tests := []struct {
-		name           string
-		event          string
-		expectedState  string
-		expectedCount  int
+		name             string
+		event            string
+		expectedState    string
+		expectedCount    int
 		expectTransition bool
 	}{
 		{
-			name:           "Turn On",
-			event:          "TURN_ON",
-			expectedState:  "On",
-			expectedCount:  1,
+			name:             "Turn On",
+			event:            "TURN_ON",
+			expectedState:    "On",
+			expectedCount:    1,
 			expectTransition: true,
 		},
 		{
-			name:           "Already On",
-			event:          "TURN_ON",
-			expectedState:  "On",
-			expectedCount:  1,
+			name:             "Already On",
+			event:            "TURN_ON",
+			expectedState:    "On",
+			expectedCount:    1,
 			expectTransition: false,
 		},
 		{
-			name:           "Turn Off",
-			event:          "TURN_OFF",
-			expectedState:  "Off",
-			expectedCount:  1,
+			name:             "Turn Off",
+			event:            "TURN_OFF",
+			expectedState:    "Off",
+			expectedCount:    1,
 			expectTransition: true,
 		},
 		{
-			name:           "Unhandled Event",
-			event:          "UNKNOWN_EVENT",
-			expectedState:  "Off",
-			expectedCount:  1,
+			name:             "Unhandled Event",
+			event:            "UNKNOWN_EVENT",
+			expectedState:    "Off",
+			expectedCount:    1,
 			expectTransition: false,
 		},
 	}
@@ -104,18 +104,18 @@ func TestEventHandling(t *testing.T) {
 }
 
 func TestEventPriority(t *testing.T) {
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:    "test-machine",
-		State: statecharts.MachineState_MACHINE_STATE_RUNNING,
-		Statechart: &statecharts.Statechart{
-			RootState: &statecharts.State{
-				Children: []*statecharts.State{
+		State: sc.MachineStateRunning,
+		Statechart: &sc.Statechart{
+			RootState: &sc.State{
+				Children: []*sc.State{
 					{Label: "S1"},
 					{Label: "S2"},
 					{Label: "S3"},
 				},
 			},
-			Transitions: []*statecharts.Transition{
+			Transitions: []*sc.Transition{
 				{
 					Label: "t1",
 					From:  []string{"S1"},
@@ -130,8 +130,8 @@ func TestEventPriority(t *testing.T) {
 				},
 			},
 		},
-		Configuration: &statecharts.Configuration{
-			States: []*statecharts.StateRef{{Label: "S1"}},
+		Configuration: &sc.Configuration{
+			States: []*sc.StateRef{{Label: "S1"}},
 		},
 	}
 
@@ -150,7 +150,7 @@ func TestEventPriority(t *testing.T) {
 }
 
 // Helper function (this would be implemented in your actual code)
-func handleEvent(machine *statecharts.Machine, event string) (bool, error) {
+func handleEvent(machine *sc.Machine, event string) (bool, error) {
 	for _, transition := range machine.Statechart.Transitions {
 		if transition.Event == event && contains(transition.From, machine.Configuration.States[0].Label) {
 			// Execute transition

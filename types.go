@@ -41,3 +41,9 @@ const (
 	StateTypeNormal      = v1.StateType_STATE_TYPE_NORMAL
 	StateTypeParallel    = v1.StateType_STATE_TYPE_PARALLEL
 )
+
+const (
+	MachineStateUnspecified = v1.MachineState_MACHINE_STATE_UNSPECIFIED
+	MachineStateRunning     = v1.MachineState_MACHINE_STATE_RUNNING
+	MachineStateStopped     = v1.MachineState_MACHINE_STATE_STOPPED
+)

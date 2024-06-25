@@ -5,35 +5,35 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	statecharts "github.com/tmc/sc/gen/statecharts/v1"
+	"github.com/tmc/sc"
 )
 
 func TestConfigurationValidity(t *testing.T) {
-	statechart := &statecharts.Statechart{
-		RootState: &statecharts.State{
+	statechart := &sc.Statechart{
+		RootState: &sc.State{
 			Label: "Root",
-			Children: []*statecharts.State{
+			Children: []*sc.State{
 				{
 					Label: "A",
-					Children: []*statecharts.State{
+					Children: []*sc.State{
 						{Label: "A1"},
 						{Label: "A2"},
 					},
 				},
 				{
 					Label: "B",
-					Type:  statecharts.StateType_STATE_TYPE_PARALLEL,
-					Children: []*statecharts.State{
+					Type:  sc.StateTypeParallel,
+					Children: []*sc.State{
 						{
 							Label: "B1",
-							Children: []*statecharts.State{
+							Children: []*sc.State{
 								{Label: "B1a"},
 								{Label: "B1b"},
 							},
 						},
 						{
 							Label: "B2",
-							Children: []*statecharts.State{
+							Children: []*sc.State{
 								{Label: "B2a"},
 								{Label: "B2b"},
 							},
@@ -46,13 +46,13 @@ func TestConfigurationValidity(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		config    *statecharts.Configuration
+		config    *sc.Configuration
 		wantValid bool
 	}{
 		{
 			name: "Valid configuration",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -61,8 +61,8 @@ func TestConfigurationValidity(t *testing.T) {
 		},
 		{
 			name: "Valid parallel configuration",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -74,8 +74,8 @@ func TestConfigurationValidity(t *testing.T) {
 		},
 		{
 			name: "Invalid: multiple children of XOR state",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "A"},
 					{Label: "A1"},
 					{Label: "A2"},
@@ -85,8 +85,8 @@ func TestConfigurationValidity(t *testing.T) {
 		},
 		{
 			name: "Invalid: incomplete parallel state",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -96,8 +96,8 @@ func TestConfigurationValidity(t *testing.T) {
 		},
 		{
 			name: "Invalid: nonexistent state",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "NonexistentState"},
 				},
 			},
@@ -116,16 +116,16 @@ func TestConfigurationValidity(t *testing.T) {
 }
 
 func TestConfigurationTransitions(t *testing.T) {
-	statechart := &statecharts.Statechart{
-		RootState: &statecharts.State{
+	statechart := &sc.Statechart{
+		RootState: &sc.State{
 			Label: "Root",
-			Children: []*statecharts.State{
+			Children: []*sc.State{
 				{Label: "A"},
 				{Label: "B"},
 				{Label: "C"},
 			},
 		},
-		Transitions: []*statecharts.Transition{
+		Transitions: []*sc.Transition{
 			{From: []string{"A"}, To: []string{"B"}, Event: "AB"},
 			{From: []string{"B"}, To: []string{"C"}, Event: "BC"},
 			{From: []string{"C"}, To: []string{"A"}, Event: "CA"},
@@ -134,41 +134,41 @@ func TestConfigurationTransitions(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		initialConfig  *statecharts.Configuration
+		initialConfig  *sc.Configuration
 		event          string
-		wantNewConfig  *statecharts.Configuration
+		wantNewConfig  *sc.Configuration
 		wantTransition bool
 	}{
 		{
 			name: "A to B",
-			initialConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "A"}},
+			initialConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "A"}},
 			},
 			event: "AB",
-			wantNewConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "B"}},
+			wantNewConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "B"}},
 			},
 			wantTransition: true,
 		},
 		{
 			name: "B to C",
-			initialConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "B"}},
+			initialConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "B"}},
 			},
 			event: "BC",
-			wantNewConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "C"}},
+			wantNewConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "C"}},
 			},
 			wantTransition: true,
 		},
 		{
 			name: "No transition",
-			initialConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "A"}},
+			initialConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "A"}},
 			},
 			event: "BC",
-			wantNewConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "A"}},
+			wantNewConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "A"}},
 			},
 			wantTransition: false,
 		},
@@ -189,17 +189,17 @@ func TestConfigurationTransitions(t *testing.T) {
 
 // Helper functions (these would be implemented in your actual code)
 
-func isValidConfiguration(statechart *statecharts.Statechart, config *statecharts.Configuration) bool {
+func isValidConfiguration(statechart *sc.Statechart, config *sc.Configuration) bool {
 	// This is a simplified validity check. A real implementation would be more complex.
 	stateMap := make(map[string]bool)
 	for _, state := range config.States {
 		stateMap[state.Label] = true
 	}
 
-	var dfs func(*statecharts.State) bool
-	dfs = func(state *statecharts.State) bool {
+	var dfs func(*sc.State) bool
+	dfs = func(state *sc.State) bool {
 		if stateMap[state.Label] {
-			if state.Type == statecharts.StateType_STATE_TYPE_PARALLEL {
+			if state.Type == sc.StateTypeParallel {
 				for _, child := range state.Children {
 					if !dfs(child) {
 						return false
@@ -224,11 +224,11 @@ func isValidConfiguration(statechart *statecharts.Statechart, config *statechart
 	return dfs(statechart.RootState)
 }
 
-func transitionConfiguration(statechart *statecharts.Statechart, config *statecharts.Configuration, event string) (*statecharts.Configuration, bool) {
+func transitionConfiguration(statechart *sc.Statechart, config *sc.Configuration, event string) (*sc.Configuration, bool) {
 	for _, transition := range statechart.Transitions {
 		if transition.Event == event && contains(transition.From, config.States[0].Label) {
-			return &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: transition.To[0]}},
+			return &sc.Configuration{
+				States: []*sc.StateRef{{Label: transition.To[0]}},
 			}, true
 		}
 	}
@@ -236,31 +236,31 @@ func transitionConfiguration(statechart *statecharts.Statechart, config *statech
 }
 
 func TestConfigurationConsistency(t *testing.T) {
-	statechart := &statecharts.Statechart{
-		RootState: &statecharts.State{
+	statechart := &sc.Statechart{
+		RootState: &sc.State{
 			Label: "Root",
-			Children: []*statecharts.State{
+			Children: []*sc.State{
 				{
 					Label: "A",
-					Children: []*statecharts.State{
+					Children: []*sc.State{
 						{Label: "A1"},
 						{Label: "A2"},
 					},
 				},
 				{
 					Label: "B",
-					Type:  statecharts.StateType_STATE_TYPE_PARALLEL,
-					Children: []*statecharts.State{
+					Type:  sc.StateTypeParallel,
+					Children: []*sc.State{
 						{
 							Label: "B1",
-							Children: []*statecharts.State{
+							Children: []*sc.State{
 								{Label: "B1a"},
 								{Label: "B1b"},
 							},
 						},
 						{
 							Label: "B2",
-							Children: []*statecharts.State{
+							Children: []*sc.State{
 								{Label: "B2a"},
 								{Label: "B2b"},
 							},
@@ -273,13 +273,13 @@ func TestConfigurationConsistency(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		config         *statecharts.Configuration
+		config         *sc.Configuration
 		wantConsistent bool
 	}{
 		{
 			name: "Consistent configuration",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -288,8 +288,8 @@ func TestConfigurationConsistency(t *testing.T) {
 		},
 		{
 			name: "Consistent parallel configuration",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -301,8 +301,8 @@ func TestConfigurationConsistency(t *testing.T) {
 		},
 		{
 			name: "Inconsistent: multiple children of XOR state",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "A"},
 					{Label: "A1"},
 					{Label: "A2"},
@@ -312,8 +312,8 @@ func TestConfigurationConsistency(t *testing.T) {
 		},
 		{
 			name: "Inconsistent: incomplete parallel state",
-			config: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			config: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -334,31 +334,31 @@ func TestConfigurationConsistency(t *testing.T) {
 }
 
 func TestConfigurationCompletion(t *testing.T) {
-	statechart := &statecharts.Statechart{
-		RootState: &statecharts.State{
+	statechart := &sc.Statechart{
+		RootState: &sc.State{
 			Label: "Root",
-			Children: []*statecharts.State{
+			Children: []*sc.State{
 				{
 					Label: "A",
-					Children: []*statecharts.State{
+					Children: []*sc.State{
 						{Label: "A1", IsInitial: true},
 						{Label: "A2"},
 					},
 				},
 				{
 					Label: "B",
-					Type:  statecharts.StateType_STATE_TYPE_PARALLEL,
-					Children: []*statecharts.State{
+					Type:  sc.StateTypeParallel,
+					Children: []*sc.State{
 						{
 							Label: "B1",
-							Children: []*statecharts.State{
+							Children: []*sc.State{
 								{Label: "B1a", IsInitial: true},
 								{Label: "B1b"},
 							},
 						},
 						{
 							Label: "B2",
-							Children: []*statecharts.State{
+							Children: []*sc.State{
 								{Label: "B2a", IsInitial: true},
 								{Label: "B2b"},
 							},
@@ -371,16 +371,16 @@ func TestConfigurationCompletion(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		initialConfig *statecharts.Configuration
-		wantConfig    *statecharts.Configuration
+		initialConfig *sc.Configuration
+		wantConfig    *sc.Configuration
 	}{
 		{
 			name: "Complete A",
-			initialConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "A"}},
+			initialConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "A"}},
 			},
-			wantConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			wantConfig: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -388,11 +388,11 @@ func TestConfigurationCompletion(t *testing.T) {
 		},
 		{
 			name: "Complete B",
-			initialConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{{Label: "B"}},
+			initialConfig: &sc.Configuration{
+				States: []*sc.StateRef{{Label: "B"}},
 			},
-			wantConfig: &statecharts.Configuration{
-				States: []*statecharts.StateRef{
+			wantConfig: &sc.Configuration{
+				States: []*sc.StateRef{
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -415,17 +415,17 @@ func TestConfigurationCompletion(t *testing.T) {
 
 // Helper functions (these would be implemented in your actual code)
 
-func isConsistentConfiguration(statechart *statecharts.Statechart, config *statecharts.Configuration) bool {
+func isConsistentConfiguration(statechart *sc.Statechart, config *sc.Configuration) bool {
 	// This is a simplified consistency check. A real implementation would be more complex.
 	stateMap := make(map[string]bool)
 	for _, state := range config.States {
 		stateMap[state.Label] = true
 	}
 
-	var dfs func(*statecharts.State) bool
-	dfs = func(state *statecharts.State) bool {
+	var dfs func(*sc.State) bool
+	dfs = func(state *sc.State) bool {
 		if stateMap[state.Label] {
-			if state.Type == statecharts.StateType_STATE_TYPE_PARALLEL {
+			if state.Type == sc.StateTypeParallel {
 				for _, child := range state.Children {
 					if !dfs(child) {
 						return false
@@ -449,18 +449,18 @@ func isConsistentConfiguration(statechart *statecharts.Statechart, config *state
 
 	return dfs(statechart.RootState)
 }
-func completeConfiguration(statechart *statecharts.Statechart, config *statecharts.Configuration) *statecharts.Configuration {
-	completedStates := make([]*statecharts.StateRef, 0)
+func completeConfiguration(statechart *sc.Statechart, config *sc.Configuration) *sc.Configuration {
+	completedStates := make([]*sc.StateRef, 0)
 	stateMap := make(map[string]bool)
 	for _, state := range config.States {
 		stateMap[state.Label] = true
 		completedStates = append(completedStates, state)
 	}
 
-	var complete func(*statecharts.State)
-	complete = func(state *statecharts.State) {
+	var complete func(*sc.State)
+	complete = func(state *sc.State) {
 		if stateMap[state.Label] {
-			if state.Type == statecharts.StateType_STATE_TYPE_PARALLEL {
+			if state.Type == sc.StateTypeParallel {
 				for _, child := range state.Children {
 					complete(child)
 				}
@@ -468,7 +468,7 @@ func completeConfiguration(statechart *statecharts.Statechart, config *statechar
 				for _, child := range state.Children {
 					if child.IsInitial && !stateMap[child.Label] {
 						stateMap[child.Label] = true
-						completedStates = append(completedStates, &statecharts.StateRef{Label: child.Label})
+						completedStates = append(completedStates, &sc.StateRef{Label: child.Label})
 						complete(child)
 						break
 					}
@@ -479,26 +479,26 @@ func completeConfiguration(statechart *statecharts.Statechart, config *statechar
 
 	complete(statechart.RootState)
 
-	return &statecharts.Configuration{
+	return &sc.Configuration{
 		States: completedStates,
 	}
 }
 
 func TestConfigurationLeastCommonAncestor(t *testing.T) {
-	statechart := &statecharts.Statechart{
-		RootState: &statecharts.State{
+	statechart := &sc.Statechart{
+		RootState: &sc.State{
 			Label: "Root",
-			Children: []*statecharts.State{
+			Children: []*sc.State{
 				{
 					Label: "A",
-					Children: []*statecharts.State{
+					Children: []*sc.State{
 						{Label: "A1"},
 						{Label: "A2"},
 					},
 				},
 				{
 					Label: "B",
-					Children: []*statecharts.State{
+					Children: []*sc.State{
 						{Label: "B1"},
 						{Label: "B2"},
 					},
@@ -554,21 +554,21 @@ func TestConfigurationLeastCommonAncestor(t *testing.T) {
 }
 
 func TestConfigurationOrthogonality(t *testing.T) {
-	statechart := &statecharts.Statechart{
-		RootState: &statecharts.State{
+	statechart := &sc.Statechart{
+		RootState: &sc.State{
 			Label: "Root",
-			Children: []*statecharts.State{
+			Children: []*sc.State{
 				{
 					Label: "A",
-					Type:  statecharts.StateType_STATE_TYPE_PARALLEL,
-					Children: []*statecharts.State{
+					Type:  sc.StateTypeParallel,
+					Children: []*sc.State{
 						{Label: "A1"},
 						{Label: "A2"},
 					},
 				},
 				{
 					Label: "B",
-					Children: []*statecharts.State{
+					Children: []*sc.State{
 						{Label: "B1"},
 						{Label: "B2"},
 					},
@@ -630,9 +630,9 @@ func TestConfigurationOrthogonality(t *testing.T) {
 
 // Helper functions (these would be implemented in your actual code)
 
-func leastCommonAncestor(statechart *statecharts.Statechart, states ...string) (string, error) {
-	var findPath func(*statecharts.State, string) ([]string, bool)
-	findPath = func(state *statecharts.State, target string) ([]string, bool) {
+func leastCommonAncestor(statechart *sc.Statechart, states ...string) (string, error) {
+	var findPath func(*sc.State, string) ([]string, bool)
+	findPath = func(state *sc.State, target string) ([]string, bool) {
 		if state.Label == target {
 			return []string{state.Label}, true
 		}
@@ -674,14 +674,14 @@ func leastCommonAncestor(statechart *statecharts.Statechart, states ...string) (
 	return paths[0][minLen-1], nil
 }
 
-func areOrthogonal(statechart *statecharts.Statechart, state1, state2 string) (bool, error) {
+func areOrthogonal(statechart *sc.Statechart, state1, state2 string) (bool, error) {
 	lca, err := leastCommonAncestor(statechart, state1, state2)
 	if err != nil {
 		return false, err
 	}
 
-	var findState func(*statecharts.State, string) *statecharts.State
-	findState = func(state *statecharts.State, target string) *statecharts.State {
+	var findState func(*sc.State, string) *sc.State
+	findState = func(state *sc.State, target string) *sc.State {
 		if state.Label == target {
 			return state
 		}
@@ -694,5 +694,5 @@ func areOrthogonal(statechart *statecharts.Statechart, state1, state2 string) (b
 	}
 
 	lcaState := findState(statechart.RootState, lca)
-	return lcaState != nil && lcaState.Type == statecharts.StateType_STATE_TYPE_PARALLEL, nil
+	return lcaState != nil && lcaState.Type == sc.StateTypeParallel, nil
 }

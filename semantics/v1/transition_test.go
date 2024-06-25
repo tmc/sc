@@ -3,20 +3,20 @@ package semantics
 import (
 	"testing"
 
-	statecharts "github.com/tmc/sc/gen/statecharts/v1"
+	sc "github.com/tmc/sc"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestTransitionExecution(t *testing.T) {
-	transition := &statecharts.Transition{
+	transition := &sc.Transition{
 		Label: "turn_on",
 		From:  []string{"Off"},
 		To:    []string{"On"},
 		Event: "TURN_ON",
-		Guard: &statecharts.Guard{
+		Guard: &sc.Guard{
 			Expression: "context.count < 5",
 		},
-		Actions: []*statecharts.Action{
+		Actions: []*sc.Action{
 			{Label: "increment_count"},
 		},
 	}
@@ -27,21 +27,21 @@ func TestTransitionExecution(t *testing.T) {
 		},
 	}
 
-	machine := &statecharts.Machine{
+	machine := &sc.Machine{
 		Id:      "test-machine",
-		State:   statecharts.MachineState_MACHINE_STATE_RUNNING,
+		State:   sc.MachineStateRunning,
 		Context: context,
-		Statechart: &statecharts.Statechart{
-			RootState: &statecharts.State{
-				Children: []*statecharts.State{
+		Statechart: &sc.Statechart{
+			RootState: &sc.State{
+				Children: []*sc.State{
 					{Label: "Off"},
 					{Label: "On"},
 				},
 			},
-			Transitions: []*statecharts.Transition{transition},
+			Transitions: []*sc.Transition{transition},
 		},
-		Configuration: &statecharts.Configuration{
-			States: []*statecharts.StateRef{{Label: "Off"}},
+		Configuration: &sc.Configuration{
+			States: []*sc.StateRef{{Label: "Off"}},
 		},
 	}
 
@@ -63,7 +63,7 @@ func TestTransitionExecution(t *testing.T) {
 }
 
 func TestGuardEvaluation(t *testing.T) {
-	guard := &statecharts.Guard{
+	guard := &sc.Guard{
 		Expression: "context.count < 5",
 	}
 
@@ -106,7 +106,7 @@ func TestGuardEvaluation(t *testing.T) {
 }
 
 func TestActionExecution(t *testing.T) {
-	action := &statecharts.Action{
+	action := &sc.Action{
 		Label: "increment_count",
 	}
 
@@ -129,7 +129,7 @@ func TestActionExecution(t *testing.T) {
 
 // Helper functions (these would be implemented in your actual code)
 
-func executeTransition(machine *statecharts.Machine, transition *statecharts.Transition) error {
+func executeTransition(machine *sc.Machine, transition *sc.Transition) error {
 	// Check guard
 	guardPasses, err := evaluateGuard(transition.Guard, machine.Context)
 	if err != nil {
@@ -140,8 +140,8 @@ func executeTransition(machine *statecharts.Machine, transition *statecharts.Tra
 	}
 
 	// Update configuration
-	machine.Configuration = &statecharts.Configuration{
-		States: []*statecharts.StateRef{{Label: transition.To[0]}},
+	machine.Configuration = &sc.Configuration{
+		States: []*sc.StateRef{{Label: transition.To[0]}},
 	}
 
 	// Execute actions
@@ -154,7 +154,7 @@ func executeTransition(machine *statecharts.Machine, transition *statecharts.Tra
 	return nil
 }
 
-func evaluateGuard(guard *statecharts.Guard, context *structpb.Struct) (bool, error) {
+func evaluateGuard(guard *sc.Guard, context *structpb.Struct) (bool, error) {
 	// This is a simplified guard evaluation.
 	// In a real implementation, you would parse and evaluate the guard expression.
 	if guard.Expression == "context.count < 5" {
@@ -167,7 +167,7 @@ func evaluateGuard(guard *statecharts.Guard, context *structpb.Struct) (bool, er
 	return true, nil
 }
 
-func executeAction(action *statecharts.Action, context *structpb.Struct) error {
+func executeAction(action *sc.Action, context *structpb.Struct) error {
 	// This is a simplified action execution.
 	// In a real implementation, you would have a way to map action labels to actual functions.
 	if action.Label == "increment_count" {
