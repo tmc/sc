@@ -74,8 +74,8 @@ func ExampleStatechart_Consistent() {
 }
 
 func ExampleStatechart_DefaultCompletion() {
-	chart := exampleStatechart1
-	if err := chart.Normalize(); err != nil {
+	chart, err := exampleStatechart1.Normalize()
+	if err != nil {
 		fmt.Println("Error normalizing chart:", err)
 		return
 	}

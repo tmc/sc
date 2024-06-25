@@ -18,16 +18,14 @@ func TestNormalize(t *testing.T) {
 			statechart: exampleStatechart1,
 			wantErr:    false,
 		},
-		// Add more test cases here
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.statechart.Normalize()
+			_, err := tt.statechart.Normalize()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Normalize() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			// Add assertions to check if the statechart was normalized correctly
 		})
 	}
 }
@@ -62,7 +60,7 @@ func TestNormalizeStateTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := normalizeStateTypes(tt.statechart)
+			err := normalizeStateTypes(tt.statechart.Statechart)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("normalizeStateTypes() error = %v, wantErr %v", err, tt.wantErr)
 			}

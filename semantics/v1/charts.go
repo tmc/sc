@@ -5,16 +5,18 @@ import "github.com/tmc/sc"
 // Normalize normalizes the statechart.
 // It attaches values to the statechart that are derived from the statechart's
 // structure.
-func (s *Statechart) Normalize() error {
-	if err := normalizeStateTypes(s); err != nil {
-		return err
+// Normalize returns a new normalized Statechart.
+func (s *Statechart) Normalize() (*Statechart, error) {
+	newInternal := s.Statechart // Create a shallow copy
+	if err := normalizeStateTypes(newInternal); err != nil {
+		return nil, &StatechartError{Op: "Normalize", Err: err}
 	}
-	return nil
+	return NewStatechart(newInternal), nil
 }
 
 // normalizeStateTypes normalizes the state types.
 // It sets the state type of each state based on the state's children
-func normalizeStateTypes(s *Statechart) error {
+func normalizeStateTypes(s *sc.Statechart) error {
 	return visitStates(s.RootState, func(state *sc.State) error {
 		if len(state.Children) == 0 {
 			state.Type = sc.StateTypeBasic
