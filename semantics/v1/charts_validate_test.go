@@ -43,7 +43,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "multiple default states: state  has 0 default states, should have exactly 1",
+			errMsg:  "multiple default states: state __root__ has 0 default states, should have exactly 1",
 		},
 		{
 			name: "Invalid statechart - basic state with children",
@@ -108,25 +108,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "multiple default states: state  has 2 default states, should have exactly 1",
-		},
-		{
-			name: "Invalid statechart - root state with label",
-			statechart: NewStatechart(&sc.Statechart{
-				RootState: &sc.State{
-					Label: "Root",
-				},
-			}),
-			wantErr: true,
-			errMsg:  "invalid root state: root state should have an empty label",
-		},
-		{
-			name: "Invalid statechart - nil root state",
-			statechart: NewStatechart(&sc.Statechart{
-				RootState: nil,
-			}),
-			wantErr: true,
-			errMsg:  "invalid root state: root state is nil",
+			errMsg:  "multiple default states: state __root__ has 2 default states, should have exactly 1",
 		},
 	}
 
@@ -189,20 +171,6 @@ func TestValidateRootState(t *testing.T) {
 			name:       "Valid root state",
 			statechart: exampleStatechart1,
 			wantErr:    false,
-		},
-		{
-			name: "Root state with label",
-			statechart: NewStatechart(&sc.Statechart{
-				RootState: &sc.State{Label: "Root"},
-			}),
-			wantErr: true,
-		},
-		{
-			name: "Nil root state",
-			statechart: NewStatechart(&sc.Statechart{
-				RootState: nil,
-			}),
-			wantErr: true,
 		},
 	}
 

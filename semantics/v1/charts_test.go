@@ -108,7 +108,7 @@ func TestVisitStates(t *testing.T) {
 		t.Errorf("visitStates() returned unexpected error: %v", err)
 	}
 
-	expectedVisited := []string{"Root", "A", "B", "B1", "B2"}
+	expectedVisited := []string{"__root__", "A", "B", "B1", "B2"}
 	for _, label := range expectedVisited {
 		if !visited[label] {
 			t.Errorf("State %s was not visited", label)
@@ -154,7 +154,7 @@ func TestStatechart_findState(t *testing.T) {
 		wantErr bool
 	}{
 		{"Find existing state", "Blocked", false},
-		{"Find root state", "", false},
+		{"Find root state", "__root__", false},
 		{"Non-existent state", "NonExistent", true},
 	}
 

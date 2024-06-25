@@ -50,8 +50,8 @@ func (s *Statechart) validateRootState() error {
 	if s.RootState == nil {
 		return fmt.Errorf("root state is nil")
 	}
-	if s.RootState.Label != "" {
-		return fmt.Errorf("root state should have an empty label")
+	if s.RootState.Label != RootState.String() {
+		return fmt.Errorf("root state has an unexpected label of '%s' (expected '%s')", s.RootState.Label, RootState.String())
 	}
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 func TestValidateConfiguration(t *testing.T) {
 	statechart := NewStatechart(&sc.Statechart{
 		RootState: &sc.State{
-			Label: "Root",
+			Label: "__root__",
 			Type:  sc.StateTypeNormal,
 			Children: []*sc.State{
 				{
@@ -57,7 +57,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Valid configuration - OR-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -68,7 +68,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Valid configuration - AND-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -82,7 +82,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Invalid - multiple children of OR-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 					{Label: "A2"},
@@ -94,7 +94,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Invalid - incomplete AND-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -115,7 +115,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Invalid - nonexistent state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "NonexistentState"},
 				},
 			},
@@ -125,7 +125,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Invalid - incomplete parallel state (missing child of substate)",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B2"},
@@ -138,7 +138,7 @@ func TestValidateConfiguration(t *testing.T) {
 			name: "Invalid - incomplete parallel state (partial substate)",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -164,7 +164,7 @@ func TestValidateConfiguration(t *testing.T) {
 func TestDefaultCompletionToplevel(t *testing.T) {
 	statechart := NewStatechart(&sc.Statechart{
 		RootState: &sc.State{
-			Label: "Root",
+			Label: "__root__",
 			Type:  sc.StateTypeNormal,
 			Children: []*sc.State{
 				{
@@ -228,7 +228,7 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 			},
 			expected: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -241,7 +241,7 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 			},
 			expected: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -254,14 +254,14 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 			name: "Already complete configuration",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 				},
 			},
 			expected: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -274,7 +274,7 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 			},
 			expected: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "C"},
 					{Label: "C1"},
 				},
@@ -290,7 +290,7 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 			},
 			expected: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 					{Label: "B"},
@@ -308,7 +308,7 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 			},
 			expected: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "C"},
 					{Label: "C2"},
 					{Label: "C2a"},
@@ -342,7 +342,7 @@ func TestDefaultCompletionToplevel(t *testing.T) {
 func TestIsConsistentConfiguration(t *testing.T) {
 	statechart := NewStatechart(&sc.Statechart{
 		RootState: &sc.State{
-			Label: "Root",
+			Label: "__root__",
 			Type:  sc.StateTypeNormal,
 			Children: []*sc.State{
 				{
@@ -389,7 +389,7 @@ func TestIsConsistentConfiguration(t *testing.T) {
 			name: "Consistent configuration - OR-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 				},
@@ -401,7 +401,7 @@ func TestIsConsistentConfiguration(t *testing.T) {
 			name: "Consistent configuration - AND-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -416,7 +416,7 @@ func TestIsConsistentConfiguration(t *testing.T) {
 			name: "Inconsistent - incomplete default completion",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 				},
 			},
@@ -427,7 +427,7 @@ func TestIsConsistentConfiguration(t *testing.T) {
 			name: "Inconsistent - multiple children of OR-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "A"},
 					{Label: "A1"},
 					{Label: "A2"},
@@ -440,7 +440,7 @@ func TestIsConsistentConfiguration(t *testing.T) {
 			name: "Inconsistent - incomplete AND-state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "B"},
 					{Label: "B1"},
 					{Label: "B1a"},
@@ -463,7 +463,7 @@ func TestIsConsistentConfiguration(t *testing.T) {
 			name: "Inconsistent - nonexistent state",
 			config: &sc.Configuration{
 				States: []*sc.StateRef{
-					{Label: "Root"},
+					{Label: "__root__"},
 					{Label: "NonexistentState"},
 				},
 			},

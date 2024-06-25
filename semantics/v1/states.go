@@ -211,7 +211,7 @@ func (s *Statechart) findState(label StateLabel) (*sc.State, error) {
 
 		queue = append(queue, state.Children...)
 	}
-	return nil, fmt.Errorf("state %s not found", label)
+	return nil, fmt.Errorf("state '%s' not found", label)
 }
 
 // Default returns the default state of the given state.

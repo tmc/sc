@@ -13,7 +13,7 @@ func TestChildren(t *testing.T) {
 		want    []StateLabel
 		wantErr bool
 	}{
-		{"Root children", "", []StateLabel{"Off", "On"}, false},
+		{"Root children", "__root__", []StateLabel{"Off", "On"}, false},
 		{"On children", "On", []StateLabel{"Turnstile Control", "Card Reader Control"}, false},
 		{"Off children", "Off", nil, false},
 		{"Non-existent state", "NonExistent", nil, true},

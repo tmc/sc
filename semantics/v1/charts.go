@@ -3,13 +3,11 @@ package semantics
 import "github.com/tmc/sc"
 
 // Normalize normalizes the statechart.
-// It attaches values to the statechart that are derived from the statechart's
-// structure.
 // Normalize returns a new normalized Statechart.
 func (s *Statechart) Normalize() (*Statechart, error) {
 	newInternal := s.Statechart // Create a shallow copy
 	if err := normalizeStateTypes(newInternal); err != nil {
-		return nil, &StatechartError{Op: "Normalize", Err: err}
+		return nil, err
 	}
 	return NewStatechart(newInternal), nil
 }

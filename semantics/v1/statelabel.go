@@ -14,7 +14,7 @@ func (sl StateLabel) String() string {
 }
 
 // RootState represents the root state of the statechart.
-var RootState = NewStateLabel("__ROOT__")
+var RootState = NewStateLabel("__root__")
 
 // CreateStateLabels converts a variadic list of strings into a slice of StateLabel.
 // It provides a convenient way to create multiple StateLabel instances at once.
