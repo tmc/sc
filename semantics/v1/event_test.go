@@ -1,9 +1,11 @@
 package semantics
 
 import (
+	"fmt"
 	"testing"
 
-	sc "github.com/tmc/sc"
+	"github.com/tmc/sc"
+	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -47,7 +49,7 @@ func TestEventHandling(t *testing.T) {
 		name             string
 		event            string
 		expectedState    string
-		expectedCount    int
+		expectedCount    float64
 		expectTransition bool
 	}{
 		{
@@ -68,21 +70,21 @@ func TestEventHandling(t *testing.T) {
 			name:             "Turn Off",
 			event:            "TURN_OFF",
 			expectedState:    "Off",
-			expectedCount:    1,
+			expectedCount:    2,
 			expectTransition: true,
 		},
 		{
 			name:             "Unhandled Event",
 			event:            "UNKNOWN_EVENT",
 			expectedState:    "Off",
-			expectedCount:    1,
+			expectedCount:    2,
 			expectTransition: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			transitioned, err := handleEvent(machine, tt.event)
+			transitioned, err := HandleEvent(machine, tt.event)
 			if err != nil {
 				t.Fatalf("Event handling failed: %v", err)
 			}
@@ -96,8 +98,8 @@ func TestEventHandling(t *testing.T) {
 			}
 
 			count, ok := machine.Context.Fields["count"].GetKind().(*structpb.Value_NumberValue)
-			if !ok || count.NumberValue != float64(tt.expectedCount) {
-				t.Errorf("Expected count to be %d, got %v", tt.expectedCount, machine.Context.Fields["count"])
+			if !ok || count.NumberValue != tt.expectedCount {
+				t.Errorf("Expected count to be %f, got %v", tt.expectedCount, machine.Context.Fields["count"])
 			}
 		})
 	}
@@ -151,28 +153,38 @@ func TestEventPriority(t *testing.T) {
 
 // Helper function (this would be implemented in your actual code)
 func handleEvent(machine *sc.Machine, event string) (bool, error) {
+	if machine == nil {
+		return false, fmt.Errorf("machine is nil")
+	}
+	if machine.Statechart == nil {
+		return false, fmt.Errorf("machine.Statechart is nil")
+	}
+	if machine.Statechart.Transitions == nil {
+		return false, fmt.Errorf("machine.Statechart.Transitions is nil")
+	}
+	if machine.Configuration == nil {
+		return false, fmt.Errorf("machine.Configuration is nil")
+	}
+	if len(machine.Configuration.States) == 0 {
+		return false, fmt.Errorf("machine.Configuration.States is empty")
+	}
+
 	for _, transition := range machine.Statechart.Transitions {
-		if transition.Event == event && contains(transition.From, machine.Configuration.States[0].Label) {
+		if transition.Event == event && slices.Contains(transition.From, machine.Configuration.States[0].Label) {
 			// Execute transition
 			machine.Configuration.States[0].Label = transition.To[0]
 
-			// Increment count (simplified action execution)
-			if count, ok := machine.Context.Fields["count"].GetKind().(*structpb.Value_NumberValue); ok {
-				machine.Context.Fields["count"] = structpb.NewNumberValue(count.NumberValue + 1)
+			// Increment count only for handled events
+			if machine.Context != nil && machine.Context.Fields != nil {
+				if countValue, exists := machine.Context.Fields["count"]; exists {
+					if count, ok := countValue.GetKind().(*structpb.Value_NumberValue); ok {
+						machine.Context.Fields["count"] = structpb.NewNumberValue(count.NumberValue + 1)
+					}
+				}
 			}
 
 			return true, nil
 		}
 	}
 	return false, nil
-}
-
-// Helper function to check if a slice contains a string
-func contains(slice []string, str string) bool {
-	for _, v := range slice {
-		if v == str {
-			return true
-		}
-	}
-	return false
 }

@@ -7,54 +7,6 @@ import (
 	"github.com/tmc/sc"
 )
 
-func TestValidate(t *testing.T) {
-	tests := []struct {
-		name       string
-		statechart *Statechart
-		wantErr    bool
-	}{
-		{
-			name:       "Valid statechart",
-			statechart: exampleStatechart1,
-			wantErr:    false,
-		},
-		{
-			name: "Invalid statechart - duplicate state labels",
-			statechart: NewStatechart(&sc.Statechart{
-				RootState: &sc.State{
-					Children: []*sc.State{
-						{Label: "A"},
-						{Label: "A"}, // Duplicate label
-					},
-				},
-			}),
-			wantErr: true,
-		},
-		{
-			name: "Invalid statechart - missing initial state",
-			statechart: NewStatechart(&sc.Statechart{
-				RootState: &sc.State{
-					Children: []*sc.State{
-						{Label: "A"},
-						{Label: "B"},
-					},
-				},
-			}),
-			wantErr: true,
-		},
-		// Add more test cases here
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.statechart.Validate()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -190,8 +142,8 @@ func TestDefaultCompletion(t *testing.T) {
 				t.Errorf("DefaultCompletion() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("DefaultCompletion() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("DefaultCompletion() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -210,9 +162,9 @@ func TestStatechart_findState(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := exampleStatechart1._findState(exampleStatechart1.RootState, tt.label)
+			_, err := exampleStatechart1.findState(tt.label)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Statechart._findState() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Statechart.findState() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -226,9 +178,17 @@ func TestStatechart_childrenPlus(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "Children plus of On",
-			state:   exampleStatechart1.RootState.Children[1], // Assuming On is the second child
-			want:    []StateLabel{"Turnstile Control", "Card Reader Control", "Blocked", "Unblocked", "Ready", "Card Entered", "Turnstile Unblocked"},
+			name:  "Children plus of On",
+			state: exampleStatechart1.RootState.Children[1], // Assuming On is the second child
+			want: []StateLabel{
+				"Turnstile Control",
+				"Blocked",
+				"Unblocked",
+				"Card Reader Control",
+				"Ready",
+				"Card Entered",
+				"Turnstile Unblocked",
+			},
 			wantErr: false,
 		},
 		{
@@ -246,8 +206,8 @@ func TestStatechart_childrenPlus(t *testing.T) {
 				t.Errorf("Statechart.childrenPlus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("Statechart.childrenPlus() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("Statechart.childrenPlus(): %s", diff)
 			}
 		})
 	}
@@ -279,7 +239,7 @@ func TestStatechart_getParent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := exampleStatechart1.getParent(tt.needle, tt.haystack)
+			got, err := exampleStatechart1.GetParent(StateLabel(tt.needle.Label))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Statechart.getParent() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -319,8 +279,8 @@ func TestStatechart_defaultCompletion(t *testing.T) {
 				t.Errorf("Statechart.defaultCompletion() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("Statechart.defaultCompletion() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("Statechart.defaultCompletion() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

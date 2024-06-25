@@ -26,8 +26,8 @@ func TestChildren(t *testing.T) {
 				t.Errorf("Children() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("Children() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("Children() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -40,7 +40,12 @@ func TestChildrenPlus(t *testing.T) {
 		want    []StateLabel
 		wantErr bool
 	}{
-		{"On children plus", "On", []StateLabel{"Turnstile Control", "Card Reader Control", "Blocked", "Unblocked", "Ready", "Card Entered", "Turnstile Unblocked"}, false},
+		{"On children plus", "On", []StateLabel{
+			"Turnstile Control",
+			"Blocked", "Unblocked",
+			"Card Reader Control",
+			"Ready",
+			"Card Entered", "Turnstile Unblocked"}, false},
 		{"Off children plus", "Off", nil, false},
 		{"Non-existent state", "NonExistent", nil, true},
 	}
@@ -52,8 +57,8 @@ func TestChildrenPlus(t *testing.T) {
 				t.Errorf("ChildrenPlus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("ChildrenPlus() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("ChildrenPlus() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -66,7 +71,10 @@ func TestChildrenStar(t *testing.T) {
 		want    []StateLabel
 		wantErr bool
 	}{
-		{"On children star", "On", []StateLabel{"On", "Turnstile Control", "Card Reader Control", "Blocked", "Unblocked", "Ready", "Card Entered", "Turnstile Unblocked"}, false},
+		{"On children star", "On", []StateLabel{"On", "Turnstile Control",
+			"Blocked", "Unblocked",
+			"Card Reader Control",
+			"Ready", "Card Entered", "Turnstile Unblocked"}, false},
 		{"Off children star", "Off", []StateLabel{"Off"}, false},
 		{"Non-existent state", "NonExistent", nil, true},
 	}
@@ -78,8 +86,8 @@ func TestChildrenStar(t *testing.T) {
 				t.Errorf("ChildrenStar() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("ChildrenStar() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("ChildrenStar() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

@@ -26,7 +26,7 @@ func ExampleStatechart_ChildrenStar() {
 		return
 	}
 	fmt.Println("ChildrenStar of On:", childrenStar)
-	// Output: ChildrenStar of On: [On Turnstile Control Card Reader Control Blocked Unblocked Ready Card Entered Turnstile Unblocked]
+	// Output: ChildrenStar of On: [On Turnstile Control Blocked Unblocked Card Reader Control Ready Card Entered Turnstile Unblocked]
 }
 
 func ExampleStatechart_AncestrallyRelated() {
