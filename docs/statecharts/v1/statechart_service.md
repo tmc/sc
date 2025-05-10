@@ -32,14 +32,14 @@ It allows creating a new machine and stepping a statechart through a single iter
 
 ### StatechartRegistry
 
-StatechartRegistry maintains a collection of Statecharts.
+StatechartRegistry maintains a collection of Statecharts. 
 
 
 
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| statecharts |[StatechartRegistry.StatechartsEntry](#statecharts-v1-StatechartRegistry-StatechartsEntry)| The registry of Statecharts.   |
+| statecharts |[StatechartRegistry.StatechartsEntry](#statecharts-v1-StatechartRegistry-StatechartsEntry)|  The registry of Statecharts.  |
 
 
 
@@ -86,8 +86,8 @@ It requires a statechart ID.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| statechart_id |string| The ID of the statechart to create an instance from.   |
-| context |Struct| The initial context of the machine.   |
+| statechart_id |string|  The ID of the statechart to create an instance from.  |
+| context |Struct|  The initial context of the machine.  |
 
 
 
@@ -111,7 +111,7 @@ It returns the created machine.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| machine |[Machine](./statecharts.md#statecharts-v1-Machine)| The created machine.   |
+| machine |[Machine](./statecharts.md#statecharts-v1-Machine)|  The created machine.  |
 
 
 
@@ -135,9 +135,9 @@ It is defined a statechart ID, an event, and an optional context.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| statechart_id |string| The id of the statechart to step.   |
-| event |string| The event to step the statechart with.   |
-| context |Struct| The context attached to the Event.   |
+| statechart_id |string|  The id of the statechart to step.  |
+| event |string|  The event to step the statechart with.  |
+| context |Struct|  The context attached to the Event.  |
 
 
 
@@ -161,8 +161,8 @@ It returns the current state of the statechart and the result of the step operat
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| machine |[Machine](./statecharts.md#statecharts-v1-Machine)| The statechart's current state (machine).   |
-| result |Status| The result of the step operation.   |
+| machine |[Machine](./statecharts.md#statecharts-v1-Machine)|  The statechart's current state (machine).  |
+| result |Status|  The result of the step operation.  |
 
 
 

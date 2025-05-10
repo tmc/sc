@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package statecharts.validation.v1;
+
+import "google/protobuf/struct.proto";
+import "google/rpc/status.proto";
+import "statecharts/v1/statecharts.proto";
+
+option go_package = "github.com/tmc/sc/gen/validation/v1;validationv1";
+
+// ─────────────────────── Semantic rule validator ──────────────────────────
+
+/**
+ * SemanticValidator service provides methods to validate statecharts and traces.
+ * It applies semantic validation rules to ensure correctness of statechart definitions.
+ */
+service SemanticValidator {
+  // ValidateChart validates a statechart definition against semantic rules.
+  rpc ValidateChart(ValidateChartRequest) returns (ValidateChartResponse);
+
+  // ValidateTrace validates a statechart and a trace of machine states.
+  rpc ValidateTrace(ValidateTraceRequest) returns (ValidateTraceResponse);
+}
+
+/**
+ * ValidateChartRequest is the request message for validating a statechart.
+ * It contains the statechart to validate and an optional list of rules to ignore.
+ */
+message ValidateChartRequest {
+  statecharts.v1.Statechart chart        = 1;  // The statechart to validate.
+  repeated RuleId           ignore_rules = 2;  // Optional list of rules to ignore during validation.
+}
+
+/**
+ * ValidateTraceRequest is the request message for validating a trace.
+ * It contains the statechart and trace to validate, and an optional list of rules to ignore.
+ */
+message ValidateTraceRequest {
+  statecharts.v1.Statechart       chart        = 1;  // The statechart definition.
+  repeated statecharts.v1.Machine trace        = 2;  // The trace of machine states to validate.
+  repeated RuleId                 ignore_rules = 3;  // Optional list of rules to ignore during validation.
+}
+
+/**
+ * ValidateChartResponse is the response message for chart validation.
+ * It contains a status and a list of violations found during validation.
+ */
+message ValidateChartResponse {
+  google.rpc.Status status     = 1;       // The overall validation status.
+  repeated Violation violations = 2;       // List of violations found, if any.
+}
+
+/**
+ * ValidateTraceResponse is the response message for trace validation.
+ * It contains a status and a list of violations found during validation.
+ */
+message ValidateTraceResponse {
+  google.rpc.Status status     = 1;       // The overall validation status.
+  repeated Violation violations = 2;       // List of violations found, if any.
+}
+
+/**
+ * Severity defines the severity level of a validation violation.
+ */
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;  // Unspecified severity.
+  INFO = 1;                 // Informational message, not a violation.
+  WARNING = 2;              // Warning, potentially problematic but not critical.
+  ERROR = 3;                // Error, severe violation that must be fixed.
+}
+
+/**
+ * RuleId identifies specific validation rules for statecharts.
+ */
+enum RuleId {
+  RULE_UNSPECIFIED                   = 0;  // Unspecified rule.
+  UNIQUE_STATE_LABELS                = 1;  // All state labels must be unique.
+  SINGLE_DEFAULT_CHILD               = 2;  // XOR composite states must have exactly one default child.
+  BASIC_HAS_NO_CHILDREN              = 3;  // Basic states cannot have children.
+  COMPOUND_HAS_CHILDREN              = 4;  // Compound states must have children.
+  DETERMINISTIC_TRANSITION_SELECTION = 5;  // Transition selection must be deterministic.
+  NO_EVENT_BROADCAST_CYCLES          = 6;  // Event broadcast must not create cycles.
+}
+
+/**
+ * Violation represents a rule violation found during validation.
+ * It includes the rule that was violated, the severity, a message, and optional location hints.
+ */
+message Violation {
+  RuleId   rule     = 1;  // The rule that was violated.
+  Severity severity = 2;  // The severity of the violation.
+  string   message  = 3;  // A human-readable message describing the violation.
+  repeated string   xpath   = 4; // Location hints (optional).
+}

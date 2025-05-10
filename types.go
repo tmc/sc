@@ -40,6 +40,8 @@ const (
 	StateTypeBasic       = v1.StateType_STATE_TYPE_BASIC
 	StateTypeNormal      = v1.StateType_STATE_TYPE_NORMAL
 	StateTypeParallel    = v1.StateType_STATE_TYPE_PARALLEL
+	// StateTypeOrthogonal is an alias for StateTypeParallel for compatibility with academic literature
+	StateTypeOrthogonal  = v1.StateType_STATE_TYPE_ORTHOGONAL
 )
 
 const (

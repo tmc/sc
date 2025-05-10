@@ -9,6 +9,9 @@ plugins:
   - name: go
     out: ../gen
     opt: paths=source_relative
+  - name: go-grpc
+    out: ../gen
+    opt: paths=source_relative
   - name: apidocs
     out: ../docs
     opt: paths=source_relative

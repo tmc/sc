@@ -1,63 +1,59 @@
-// Statechart Service.
-//
-// This file defines a service to execute statechart semantics.
-//
 syntax = "proto3";
 
 package statecharts.v1;
 
 import "google/protobuf/struct.proto";
 import "google/rpc/status.proto";
-
 import "statecharts/v1/statecharts.proto";
 
-// StatechartService defines the main service for interacting with statecharts.
-// It allows creating a new machine and stepping a statechart through a single iteration.
+option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartspb";
+
+// ─────────────────────────── Execution API ────────────────────────────────
+
+/**
+ * StatechartService defines the main service for interacting with statecharts.
+ * It allows creating a new machine and stepping a statechart through a single iteration.
+ */
 service StatechartService {
   // Create a new machine.
-  rpc CreateMachine(CreateMachineRequest) returns (CreateMachineResponse) {};
+  rpc CreateMachine(CreateMachineRequest) returns (CreateMachineResponse);
   // Step a statechart through a single iteration.
-  rpc Step(StepRequest) returns (StepResponse) {}
+  rpc Step         (StepRequest)          returns (StepResponse);
 }
 
-// StatechartRegistry maintains a collection of Statecharts.
+/** StatechartRegistry maintains a collection of Statecharts. */
 message StatechartRegistry {
-  // The registry of Statecharts.
-  map<string,Statechart> statecharts = 1;
+  map<string, Statechart> statecharts = 1;  // The registry of Statecharts.
 }
 
-// CreateMachineRequest is the request message for creating a new machine.
-// It requires a statechart ID.
+/** CreateMachineRequest is the request message for creating a new machine.
+ * It requires a statechart ID.
+ */
 message CreateMachineRequest {
-  // The ID of the statechart to create an instance from.
-  string statechart_id = 1;
-  // The initial context of the machine.
-  google.protobuf.Struct context = 2;
+  string                 statechart_id = 1;  // The ID of the statechart to create an instance from.
+  google.protobuf.Struct context       = 2;  // The initial context of the machine.
 }
 
-// CreateMachineResponse is the response message for creating a new machine.
-// It returns the created machine.
+/** CreateMachineResponse is the response message for creating a new machine.
+ * It returns the created machine.
+ */
 message CreateMachineResponse {
-  // The created machine.
-  statecharts.v1.Machine machine = 1;
+  Machine machine = 1;  // The created machine.
 }
 
-// StepRequest is the request message for the Step method.
-// It is defined a statechart ID, an event, and an optional context.
+/** StepRequest is the request message for the Step method.
+ * It is defined a statechart ID, an event, and an optional context.
+ */
 message StepRequest {
-  // The id of the statechart to step.
-  string statechart_id = 1;
-  // The event to step the statechart with.
-  string event = 2;
-  // The context attached to the Event.
-  google.protobuf.Struct context = 3;
+  string                 statechart_id = 1;  // The id of the statechart to step.
+  string                 event         = 2;  // The event to step the statechart with.
+  google.protobuf.Struct context       = 3;  // The context attached to the Event.
 }
 
-// StepResponse is the response message for the Step method.
-// It returns the current state of the statechart and the result of the step operation.
+/** StepResponse is the response message for the Step method.
+ * It returns the current state of the statechart and the result of the step operation.
+ */
 message StepResponse {
-  // The statechart's current state (machine).
-  statecharts.v1.Machine machine = 1;
-  // The result of the step operation.
-  google.rpc.Status result = 2;
+  Machine          machine = 1;  // The statechart's current state (machine).
+  google.rpc.Status result  = 2;  // The result of the step operation.
 }
