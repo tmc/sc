@@ -622,7 +622,7 @@ func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 		}
 	}
 	
-	if len(eq.events) == 0 || eq.closed {
+	if len(eq.events) == 0 {
 		return ProcessedEvent{}, false
 	}
 	

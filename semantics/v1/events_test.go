@@ -494,7 +494,8 @@ func createOrthogonalTestMachine() *sc.Machine {
 func TestEventQueue_ConcurrentAccess(t *testing.T) {
 	queue := NewEventQueue()
 	
-	var wg sync.WaitGroup
+	var producerWg sync.WaitGroup
+	var consumerWg sync.WaitGroup
 	numProducers := 5
 	numConsumers := 3
 	eventsPerProducer := 20
@@ -504,10 +505,10 @@ func TestEventQueue_ConcurrentAccess(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	
-	wg.Add(numConsumers)
+	consumerWg.Add(numConsumers)
 	for i := 0; i < numConsumers; i++ {
 		go func() {
-			defer wg.Done()
+			defer consumerWg.Done()
 			for {
 				event, ok := queue.Dequeue(ctx)
 				if !ok {
@@ -519,10 +520,10 @@ func TestEventQueue_ConcurrentAccess(t *testing.T) {
 	}
 	
 	// Start producers
-	wg.Add(numProducers)
+	producerWg.Add(numProducers)
 	for i := 0; i < numProducers; i++ {
 		go func(producerID int) {
-			defer wg.Done()
+			defer producerWg.Done()
 			for j := 0; j < eventsPerProducer; j++ {
 				event := ProcessedEvent{
 					Event: &sc.Event{Label: fmt.Sprintf("P%d_E%d", producerID, j)},
@@ -536,12 +537,15 @@ func TestEventQueue_ConcurrentAccess(t *testing.T) {
 	}
 	
 	// Wait for all producers to finish
-	wg.Wait()
+	producerWg.Wait()
 	
 	// Close the queue to signal consumers
 	queue.Close()
 	
-	// Collect consumed events
+	// Wait for consumers to finish
+	consumerWg.Wait()
+	
+	// Collect consumed events - close after consumers finish
 	close(consumedEvents)
 	var events []ProcessedEvent
 	for event := range consumedEvents {
