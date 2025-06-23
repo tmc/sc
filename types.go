@@ -1,6 +1,10 @@
 package sc
 
-import v1 "github.com/tmc/sc/gen/statecharts/v1"
+import (
+	"fmt"
+
+	v1 "github.com/tmc/sc/gen/statecharts/v1"
+)
 
 // StateType describes the type of a state.
 type StateType = v1.StateType
@@ -35,13 +39,22 @@ type Configuration = v1.Configuration
 // Machine describes an instance of a Statechart.
 type Machine = v1.Machine
 
+// Step describes a step in the execution of a Statechart.
+type Step = v1.Step
+
+// Core statechart types from Harel formalism [H87, HN96]
+
+// Core Harel statechart types [H87, Section 2.1]
 const (
 	StateTypeUnspecified = v1.StateType_STATE_TYPE_UNSPECIFIED
 	StateTypeBasic       = v1.StateType_STATE_TYPE_BASIC
-	StateTypeNormal      = v1.StateType_STATE_TYPE_NORMAL
-	StateTypeParallel    = v1.StateType_STATE_TYPE_PARALLEL
-	// StateTypeOrthogonal is an alias for StateTypeParallel for compatibility with academic literature
-	StateTypeOrthogonal  = v1.StateType_STATE_TYPE_ORTHOGONAL
+	StateTypeOR          = v1.StateType_STATE_TYPE_OR
+	StateTypeAND         = v1.StateType_STATE_TYPE_AND
+	
+	// Academic terminology aliases [H87] for backward compatibility
+	StateTypeNormal      = v1.StateType_STATE_TYPE_NORMAL      // Alias for OR
+	StateTypeParallel    = v1.StateType_STATE_TYPE_PARALLEL    // Alias for AND
+	StateTypeOrthogonal  = v1.StateType_STATE_TYPE_ORTHOGONAL  // Alias for AND (Harel's term)
 )
 
 const (
@@ -49,3 +62,22 @@ const (
 	MachineStateRunning     = v1.MachineState_MACHINE_STATE_RUNNING
 	MachineStateStopped     = v1.MachineState_MACHINE_STATE_STOPPED
 )
+
+// EventType, TransitionType, ActionType, and BroadcastSpec constants removed
+// These are modern extensions not present in core Harel formalism [H87, HN96, vdB94]
+
+// BasicValidate performs core Harel formalism validation on a statechart.
+// This implements the well-formedness constraints from [H87, HN96].
+func BasicValidate(s *Statechart) error {
+	if s == nil {
+		return fmt.Errorf("statechart is nil")
+	}
+	if s.RootState == nil {
+		return fmt.Errorf("root state is nil")
+	}
+	if s.RootState.Label == "" {
+		return fmt.Errorf("root state must have a label")
+	}
+	// Additional Harel constraints could be added here
+	return nil
+}

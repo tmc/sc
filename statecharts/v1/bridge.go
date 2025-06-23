@@ -144,10 +144,11 @@ func toNativeTransition(transition *Transition) *sc.Transition {
 	}
 
 	result := &sc.Transition{
-		Label: transition.Label,
-		From:  transition.From,
-		To:    transition.To,
-		Event: transition.Event,
+		Label:   transition.Label,
+		From:    transition.From,
+		To:      transition.To,
+		Event:   transition.Event,
+		Actions: make([]*sc.Action, 0, len(transition.Actions)), // Always initialize
 	}
 
 	if transition.Guard != nil {
@@ -156,13 +157,10 @@ func toNativeTransition(transition *Transition) *sc.Transition {
 		}
 	}
 
-	if len(transition.Actions) > 0 {
-		result.Actions = make([]*sc.Action, 0, len(transition.Actions))
-		for _, action := range transition.Actions {
-			result.Actions = append(result.Actions, &sc.Action{
-				Label: action.Label,
-			})
-		}
+	for _, action := range transition.Actions {
+		result.Actions = append(result.Actions, &sc.Action{
+			Label: action.Label,
+		})
 	}
 
 	return result
