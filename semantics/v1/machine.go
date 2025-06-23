@@ -139,6 +139,12 @@ func (m *MachineWrapper) GetContext() *structpb.Struct {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	
+	return m.getContextUnsafe()
+}
+
+// getContextUnsafe returns a copy of the current context without acquiring locks.
+// This should only be called when the caller already holds a lock.
+func (m *MachineWrapper) getContextUnsafe() *structpb.Struct {
 	// Create a shallow copy of the context
 	fields := make(map[string]*structpb.Value)
 	for k, v := range m.Context.Fields {
@@ -257,7 +263,7 @@ func (m *MachineWrapper) step(eventName string) (bool, error) {
 		Transitions:            selectedTransitions,
 		StartingConfiguration:  initialConfig,
 		ResultingConfiguration: m.cloneConfiguration(m.Configuration),
-		Context:                m.GetContext(),
+		Context:                m.getContextUnsafe(),
 	}
 	m.addStep(step)
 
