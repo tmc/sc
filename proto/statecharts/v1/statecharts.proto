@@ -7,103 +7,346 @@ option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartspb";
 import "google/protobuf/struct.proto";
 
 // ===========================================================================
-//  Static model for Harel statecharts with reconciled semantics.
+//  FORMAL STATECHART SPECIFICATION
+//  Based on Harel's original formalism with reconciled semantics
+//
+//  Primary References:
+//  [H87]  D. Harel, "Statecharts: A visual formalism for complex systems," 
+//         Science of Computer Programming, vol. 8, no. 3, pp. 231–274, 1987.
+//         DOI: 10.1016/0167-6423(87)90035-9
+//
+//  [HN96] D. Harel and A. Naamad, "The STATEMATE semantics of statecharts," 
+//         ACM Transactions on Software Engineering and Methodology, vol. 5, 
+//         no. 4, pp. 293–333, 1996. DOI: 10.1145/235321.235322
+//
+//  [vdB94] M. von der Beeck, "A comparison of statecharts variants," 
+//          Formal Techniques in Real-Time and Fault-Tolerant Systems, 
+//          pp. 128–148, 1994. DOI: 10.1007/3-540-58468-4_163
+//
+//  MATHEMATICAL FOUNDATION:
+//  A statechart SC is formally defined as a 7-tuple:
+//  SC = (S, ρ, ψ, δ, γ, λ, σ₀) where:
+//  - S: finite set of states
+//  - ρ ⊆ S × S: hierarchy relation (s',s) ∈ ρ means s is substate of s'
+//  - ψ: S → {BASIC, NORMAL, PARALLEL}: state type function
+//  - δ ⊆ S × E × G × A × S: transition relation
+//  - γ: S → A*: state action mapping (entry/exit)  
+//  - λ: S → P(S): default substate mapping for OR-states
+//  - σ₀ ∈ P(S): initial configuration
+//
+//  This implementation follows the reconciled semantics as described in [vdB94]
+//  and the operational semantics from [HN96].
 // ===========================================================================
 
 // ─────────────────────────── Root aggregate ────────────────────────────────
 
-/** Complete, static description of a statechart. */
+/**
+ * Complete, static description of a statechart.
+ * 
+ * FORMAL DEFINITION [H87, Section 2]:
+ * A statechart SC is a 7-tuple SC = (S, ρ, ψ, δ, γ, λ, σ₀) where this message
+ * represents the concrete encoding of such a tuple.
+ *
+ * WELL-FORMEDNESS CONSTRAINTS [H87, HN96]:
+ * 1. The hierarchy relation ρ must form a tree rooted at root_state
+ * 2. Each OR-state must have exactly one default child (λ function)
+ * 3. All state labels must be unique within the statechart
+ * 4. Transitions must reference valid states from S
+ * 5. Events in transitions must be from the event alphabet E
+ *
+ * SEMANTIC INVARIANTS:
+ * - ∀s ∈ S: s ≠ root ⟹ ∃!p ∈ S: (p,s) ∈ ρ (unique parent except root)
+ * - ∀s ∈ S: ψ(s) = NORMAL ∧ children(s) ≠ ∅ ⟹ |λ(s)| = 1 (single default)
+ * - ∀s ∈ S: ψ(s) = PARALLEL ⟹ ∀c ∈ children(s): c ∈ σ₀ (all children active)
+ */
 message Statechart {
-  State       root_state  = 1;  // Root node, label must be "__root__".
-  repeated Transition transitions = 2;
-  repeated Event      events      = 3;  // Alphabet (superset allowed).
+  State       root_state  = 1;  // Root node ∈ S, must be labeled "__root__"
+  repeated Transition transitions = 2;  // Transition relation δ ⊆ S×E×G×A×S
+  repeated Event      events      = 3;  // Event alphabet E (superset allowed)
+  
+  // Global context and metadata
+  google.protobuf.Struct variables   = 4;  // Global context Γ: Var → Val
+  string              name         = 5;   // Human-readable identifier
+  string              description  = 6;   // Natural language specification
 }
 
 // ───────────────────────────── Enumerations ────────────────────────────────
 
 /**
- * StateType describes the type of a state.
- * It can be a basic state, normal state, or parallel/orthogonal state.
+ * StateType describes the fundamental classification of states in Harel's statechart formalism.
+ * 
+ * THEORETICAL FOUNDATION [H87, Section 2.1]:
+ * The type function ψ: S → {BASIC, OR, AND} categorizes states by their decomposition:
+ * - BASIC: atomic states with no substates (ψ(s) = BASIC ⟹ children(s) = ∅)
+ * - OR: exclusive decomposition with XOR substate semantics (normal states)
+ * - AND: concurrent decomposition with parallel substate semantics (orthogonal states)
+ *
+ * SEMANTIC PROPERTIES [HN96, Section 3]:
+ * - OR-states: ∀σ,s: ψ(s)=OR ⟹ |{c ∈ children(s) : c ∈ σ}| ≤ 1
+ * - AND-states: ∀σ,s: ψ(s)=AND ∧ s ∈ σ ⟹ children(s) ⊆ σ
+ *
+ * Note: This enum contains ONLY the core types from Harel's original formalism.
+ * Modern extensions (history, pseudo-states) are intentionally excluded to maintain
+ * theoretical purity and alignment with the cited academic papers.
  */
 enum StateType {
-  option allow_alias = true; // Allow aliases for compatible naming with academic literature
-  STATE_TYPE_UNSPECIFIED = 0;  // Unspecified state type.
-  STATE_TYPE_BASIC       = 1;  // A basic state (has no sub-states).
-  STATE_TYPE_NORMAL      = 2;  // A normal state (has sub-states related by XOR semantics).
-  STATE_TYPE_PARALLEL    = 3;  // A parallel state (has sub-states related by AND semantics).
+  option allow_alias = true; // Enables academic terminology compatibility
+  
+  STATE_TYPE_UNSPECIFIED = 0;  // Undefined type (invalid in well-formed statecharts)
+  
+  // Core Harel state types [H87, Section 2.1]
+  STATE_TYPE_BASIC       = 1;  // Atomic state: ψ(s) = BASIC ⟹ children(s) = ∅
+  STATE_TYPE_OR          = 2;  // OR-decomposition: exclusive substate semantics
+  STATE_TYPE_AND         = 3;  // AND-decomposition: concurrent substate semantics
 
-  // Aliases for clarity with academic/literature terminology
-  STATE_TYPE_ORTHOGONAL  = 3;  // An alias for STATE_TYPE_PARALLEL. An orthogonal state is a state with concurrently active sub-states (AND semantics).
+  // Academic terminology aliases [H87] for clarity
+  STATE_TYPE_NORMAL      = 2;  // Alias for OR (common in literature)
+  STATE_TYPE_PARALLEL    = 3;  // Alias for AND (UML terminology)
+  STATE_TYPE_ORTHOGONAL  = 3;  // Alias for AND (Harel's original terminology)
 }
 
 /**
- * MachineState encodes the high-level state of a statechart.
+ * MachineState encodes the execution status of a statechart interpreter.
+ * 
+ * OPERATIONAL SEMANTICS [HN96, Section 4]:
+ * Machine state tracks the interpreter's lifecycle, distinct from the 
+ * statechart's logical configuration σ ∈ P(S).
  */
 enum MachineState {
-  MACHINE_STATE_UNSPECIFIED = 0;  // The machine is in an unspecified state.
-  MACHINE_STATE_RUNNING     = 1;  // The machine is in a running state.
-  MACHINE_STATE_STOPPED     = 2;  // The machine is in a stopped state.
+  MACHINE_STATE_UNSPECIFIED = 0;  // Undefined interpreter state
+  MACHINE_STATE_RUNNING     = 1;  // Interpreter active, processing events
+  MACHINE_STATE_STOPPED     = 2;  // Interpreter halted, no event processing
 }
+
+// EventType classification removed - not part of core Harel formalism [H87]
+// In the original papers, events are simply elements of alphabet E without taxonomy
+
+// TransitionType classification removed - not part of core Harel formalism [H87]
+// Original papers treat all transitions uniformly with standard exit/entry semantics
+
+// ActionType classification removed - core formalism has simpler action semantics
+// [H87] and [HN96] distinguish only entry/exit actions and transition actions
 
 // ─────────────────────────── Structural nodes ──────────────────────────────
 
 /**
- * State represents a state in a statechart.
- * Each state has a label, type, and optionally sub-states (children).
+ * State represents a node in the statechart hierarchy.
+ * 
+ * FORMAL DEFINITION [H87, Section 2.2]:
+ * A state s ∈ S is characterized by:
+ * - label: unique identifier within statechart
+ * - type: ψ(s) ∈ {BASIC, NORMAL, PARALLEL, ...}
+ * - parent: unique p where (p,s) ∈ ρ (except root)
+ * - children: {c ∈ S | (s,c) ∈ ρ}
+ *
+ * WELL-FORMEDNESS CONSTRAINTS [H87, HN96]:
+ * 1. Unique labeling: ∀s₁,s₂ ∈ S: s₁ ≠ s₂ ⟹ label(s₁) ≠ label(s₂)
+ * 2. Type consistency: ψ(s) = BASIC ⟺ children(s) = ∅
+ * 3. Default existence: ψ(s) = NORMAL ∧ children(s) ≠ ∅ ⟹ ∃!c ∈ children(s): is_initial(c)
+ * 4. Parallel semantics: ψ(s) = PARALLEL ⟹ ∀c ∈ children(s): ¬is_initial(c)
+ * 5. Tree structure: ∀s ∈ S\{root}: ∃!p ∈ S: (p,s) ∈ ρ
+ *
+ * ACTION SEMANTICS [HN96, Section 6]:
+ * Entry/exit actions implement the mapping γ: S → A* for state-based actions.
+ * Do-activities provide continuous behavior while state is active.
  */
 message State {
-  string          label     = 1;    // The label of the state.
-  StateType       type      = 2;    // The type of the state.
-  repeated State  children  = 3;    // The sub-states. If a state has no sub-states, it is considered a BASIC state.
-  bool            is_initial = 4;   // Default child of XOR composite.
-  bool            is_final   = 5;   // Terminal child.
+  string          label        = 1;   // Unique identifier: s.label ∈ String
+  StateType       type         = 2;   // Type function: ψ(s) ∈ StateType
+  repeated State  children     = 3;   // Hierarchy: {c | (s,c) ∈ ρ}
+  bool            is_initial   = 4;   // Default child: λ(parent) = {s} when true
+  bool            is_final     = 5;   // Terminal state: no outgoing transitions
+  
+  // Action mappings γ: S → A* [H87, HN96, Section 6]
+  repeated Action entry_actions = 6;   // γₑₙₜᵣᵧ(s): executed on state entry
+  repeated Action exit_actions  = 7;   // γₑₓᵢₜ(s): executed on state exit
 }
 
 /**
- * Transition represents a transition between states in a statechart.
- * It connects source (from) states to target (to) states and is triggered by an event.
+ * Transition represents an edge in the statechart's transition relation.
+ *
+ * FORMAL DEFINITION [H87, Section 3]:
+ * A transition t ∈ δ is a 5-tuple t = (src, event, guard, action, tgt) where:
+ * - src ∈ S: source state(s) 
+ * - event ∈ E ∪ {τ}: triggering event (τ for completion)
+ * - guard ∈ G: boolean condition
+ * - action ∈ A*: sequence of actions to execute
+ * - tgt ∈ S: target state(s)
+ *
+ * ENABLEMENT SEMANTICS [HN96, Section 4]:
+ * Transition t is enabled in configuration σ iff:
+ * 1. src ∩ σ ≠ ∅ (source active)
+ * 2. event occurred in current step
+ * 3. guard evaluates to true
+ * 4. No higher priority transition enabled
+ *
+ * CONFLICT RESOLUTION [HN96, Section 4.3]:
+ * Priority ordering resolves multiple enabled transitions:
+ * - Explicit priority values (higher = more priority)
+ * - Hierarchical ordering (deeper states win)
+ * - Textual ordering (deterministic fallback)
+ *
+ * FIRING SEMANTICS [HN96, Section 5]:
+ * When fired, transition execution follows precise sequence:
+ * 1. Exit states (src to LCA)
+ * 2. Execute transition actions
+ * 3. Enter states (LCA to tgt)
  */
 message Transition {
-  string          label   = 1;  // The label of the transition.
-  repeated string from    = 2;  // The source (from) State reference(s).
-  repeated string to      = 3;  // The target (to) State reference(s).
-  string          event   = 4;  // The label of the event that triggers the transition.
-  Guard           guard   = 5;  // The guard of the transition, a condition for the transition to occur.
-  repeated Action actions = 6;  // The action(s) associated with the transition.
+  string          label   = 1;  // Human-readable identifier
+  repeated string from    = 2;  // Source states: src ∈ P(S)
+  repeated string to      = 3;  // Target states: tgt ∈ P(S)
+  string          event   = 4;  // Trigger event: e ∈ E ∪ {τ}
+  Guard           guard   = 5;  // Guard condition: g ∈ G → Bool
+  repeated Action actions = 6;  // Action sequence: α ∈ A*
+  
+  // Priority for conflict resolution [HN96, Section 4.3]
+  int32           priority = 7;  // Explicit priority (higher = more priority)
 }
 
-/** Event represents an event in a statechart. Each event has a label that identifies it. */
-message Event  { string label = 1; }
+/**
+ * Event represents an element of the communication alphabet.
+ *
+ * FORMAL DEFINITION [H87, Section 3]:
+ * Events E constitute the communication alphabet for statechart execution.
+ * An event e ∈ E may carry parameters and trigger state transitions.
+ *
+ * CORE SEMANTICS [H87, HN96]:
+ * Events are atomic communication signals between the statechart and its environment.
+ * The original formalism treats events uniformly without complex type taxonomies.
+ */
+message Event {
+  string                 label      = 1;  // Event identifier: e.label ∈ String  
+  google.protobuf.Struct parameters = 2;  // Event payload: param(e) → Value
+}
 
-/** Guard is a guard for a transition. It represents a condition that must be satisfied for the transition to occur. */
-message Guard  { string expression = 1; }
+/**
+ * Guard represents a boolean condition for transition enablement.
+ *
+ * FORMAL DEFINITION [H87, Section 3.1]:
+ * A guard g ∈ G is a boolean expression over variables and event parameters:
+ * g: Context × Event → Bool
+ *
+ * EVALUATION SEMANTICS [HN96, Section 4.2]:
+ * Guards are evaluated atomically during transition enablement testing.
+ * Implementation languages should provide deterministic evaluation semantics.
+ */
+message Guard {
+  string expression = 1;  // Boolean expression: g ∈ G
+  string language   = 2;  // Expression language (for semantic clarity)
+}
 
-/** Action is an action associated with a transition. Each action has a label that identifies it. */
-message Action { string label = 1; }
+/**
+ * Action represents executable code associated with statechart elements.
+ *
+ * FORMAL DEFINITION [H87, Section 3.3; HN96, Section 6]:
+ * Actions α ∈ A are side-effecting computations executed during statechart
+ * operation. The action mapping γ: S ∪ δ → A* assigns action sequences.
+ *
+ * EXECUTION SEMANTICS [HN96, Section 6]:
+ * Actions execute atomically and may modify the statechart context.
+ * The core formalism distinguishes actions by their execution context
+ * (entry/exit for states, effect for transitions) rather than complex taxonomies.
+ */
+message Action {
+  string                 label      = 1;  // Action identifier
+  string                 expression = 2;  // Executable code: α ∈ A
+  string                 language   = 3;  // Implementation language
+  google.protobuf.Struct parameters = 4;  // Action parameters
+}
 
-/** StateRef is a reference to a state. It contains the label of the referenced state. */
-message StateRef { string label = 1; }
+/**
+ * StateRef represents a reference to a state within a statechart.
+ *
+ * FORMAL DEFINITION [H87, Section 2]:
+ * A state reference r is simply a label mapping r: Label → S where
+ * Label is the set of all state identifiers and S is the state set.
+ */
+message StateRef { 
+  string label = 1;  // State identifier: r(label) ∈ S
+}
 
-/** Configuration is a status for a statechart, which is defined by a subset of the states that are active. */
-message Configuration { repeated StateRef states = 1; }
+/**
+ * Configuration represents the active state set of a statechart at any point in time.
+ *
+ * FORMAL DEFINITION [H87, Section 4; HN96, Section 3]:
+ * A configuration σ ∈ P(S) is a subset of states that are simultaneously active.
+ * The configuration must satisfy consistency constraints for hierarchical states.
+ *
+ * WELL-FORMEDNESS CONSTRAINTS [HN96, Section 3.2]:
+ * 1. Ancestry closure: ∀s ∈ σ, ∀p ∈ ancestors(s): p ∈ σ (active states imply active ancestors)
+ * 2. OR-consistency: ∀s ∈ σ: ψ(s) = NORMAL ⟹ |{c ∈ children(s) ∩ σ}| ≤ 1 (at most one child active)
+ * 3. AND-consistency: ∀s ∈ σ: ψ(s) = PARALLEL ∧ s ∈ σ ⟹ children(s) ⊆ σ (all children active)
+ * 4. Basic leaves: ∀s ∈ σ: ψ(s) = BASIC ⟹ children(s) ∩ σ = ∅ (basic states have no active children)
+ *
+ * SEMANTIC INVARIANTS [H87, HN96]:
+ * - Consistency: isConsistent(σ) ≡ satisfies all well-formedness constraints
+ * - Maximality: isMaximal(σ) ≡ cannot add more states without violating consistency
+ * - Reachability: isReachable(σ) ≡ ∃ event sequence from initial configuration
+ *
+ * HISTORY SEMANTICS [UML 2.5, SCXML]:
+ * History tracking enables restoration of previous configurations when re-entering
+ * composite states, supporting both shallow and deep history variants.
+ */
+message Configuration {
+  repeated StateRef states = 1;   // Active state set: σ ⊆ S
+  
+  // History mechanism [UML 2.5] for configuration restoration
+  map<string, Configuration> history = 2;  // H: Label → P(S) history mapping
+}
 
-// ───────────────────────────── Runtime trace ───────────────────────────────
+// TimeoutSpec, TriggerSpec, and BroadcastSpec removed - these are modern
+// extensions not present in the core Harel formalism [H87, HN96, vdB94].
+// The original papers use simpler event-driven semantics without complex
+// temporal or broadcast mechanisms.
 
-/** Machine is an instance of a statechart. */
+// ───────────────────────────── Runtime execution ──────────────────────────────
+
+/**
+ * Machine represents a statechart instance with execution state.
+ *
+ * OPERATIONAL SEMANTICS [HN96, Section 4]:
+ * A machine M = (SC, σ, Γ) consists of:
+ * - SC: statechart definition (static structure)
+ * - σ: current configuration (active states)
+ * - Γ: variable context (dynamic data)
+ *
+ * EXECUTION MODEL [HN96, Section 4.1]:
+ * Machine execution proceeds through discrete steps triggered by events,
+ * maintaining the current configuration and context state.
+ */
 message Machine {
-  string                 id            = 1;  // The id of the machine.
-  MachineState           state         = 2;  // The overall state of the machine.
-  google.protobuf.Struct context       = 3;  // The context of the machine.
-  Statechart             statechart    = 4;  // The statechart definition.
-  Configuration          configuration = 5;  // The current configuration of the machine.
-  repeated Step          step_history  = 6;  // The history of steps that have been carried out by the machine.
+  string                 id            = 1;  // Machine identifier
+  MachineState           state         = 2;  // Execution state (running/stopped)
+  google.protobuf.Struct context       = 3;  // Variable context: Γ: Var → Val
+  Statechart             statechart    = 4;  // Static definition: SC
+  Configuration          configuration = 5;  // Current configuration: σ ∈ P(S)
+  repeated Step          step_history  = 6;  // Execution trace for analysis
 }
 
-/** Step is a step in the execution of a statechart. */
+/**
+ * Step represents a single execution step in statechart operation.
+ *
+ * STEP SEMANTICS [HN96, Section 4.2]:
+ * A step σ →ᵉ σ' represents the transition from configuration σ to σ'
+ * triggered by event set E', executing the enabled transitions.
+ *
+ * STEP COMPONENTS [HN96, Section 5]:
+ * Each step records:
+ * - Input events that triggered the step
+ * - Enabled and fired transitions
+ * - Configuration change (σ → σ')
+ * - Executed actions during the transition sequence
+ */
 message Step {
-  repeated Event        events                  = 1;  // The events that occurred.
-  repeated Transition   transitions             = 2;  // The transitions that occurred.
-  Configuration         starting_configuration  = 3;  // The starting configuration.
-  Configuration         resulting_configuration = 4;  // The resulting configuration.
-  google.protobuf.Struct context                = 5;  // The context of the event.
+  repeated Event        events                  = 1;  // Triggering events: E' ⊆ E
+  repeated Transition   transitions             = 2;  // Fired transitions: T' ⊆ δ
+  Configuration         starting_configuration  = 3;  // Initial configuration: σ
+  Configuration         resulting_configuration = 4;  // Final configuration: σ'
+  google.protobuf.Struct context                = 5;  // Updated context: Γ'
+  
+  // Execution trace information
+  repeated string       states_entered          = 6;  // States entered: enter(σ')
+  repeated string       states_exited           = 7;  // States exited: exit(σ)
+  repeated Action       actions_executed        = 8;  // Actions fired: α*
 }

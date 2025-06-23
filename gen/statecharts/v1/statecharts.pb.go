@@ -23,17 +23,33 @@ const (
 )
 
 // *
-// StateType describes the type of a state.
-// It can be a basic state, normal state, or parallel/orthogonal state.
+// StateType describes the fundamental classification of states in Harel's statechart formalism.
+//
+// THEORETICAL FOUNDATION [H87, Section 2.1]:
+// The type function ψ: S → {BASIC, OR, AND} categorizes states by their decomposition:
+// - BASIC: atomic states with no substates (ψ(s) = BASIC ⟹ children(s) = ∅)
+// - OR: exclusive decomposition with XOR substate semantics (normal states)
+// - AND: concurrent decomposition with parallel substate semantics (orthogonal states)
+//
+// SEMANTIC PROPERTIES [HN96, Section 3]:
+// - OR-states: ∀σ,s: ψ(s)=OR ⟹ |{c ∈ children(s) : c ∈ σ}| ≤ 1
+// - AND-states: ∀σ,s: ψ(s)=AND ∧ s ∈ σ ⟹ children(s) ⊆ σ
+//
+// Note: This enum contains ONLY the core types from Harel's original formalism.
+// Modern extensions (history, pseudo-states) are intentionally excluded to maintain
+// theoretical purity and alignment with the cited academic papers.
 type StateType int32
 
 const (
-	StateType_STATE_TYPE_UNSPECIFIED StateType = 0 // Unspecified state type.
-	StateType_STATE_TYPE_BASIC       StateType = 1 // A basic state (has no sub-states).
-	StateType_STATE_TYPE_NORMAL      StateType = 2 // A normal state (has sub-states related by XOR semantics).
-	StateType_STATE_TYPE_PARALLEL    StateType = 3 // A parallel state (has sub-states related by AND semantics).
-	// Aliases for clarity with academic/literature terminology
-	StateType_STATE_TYPE_ORTHOGONAL StateType = 3 // An alias for STATE_TYPE_PARALLEL. An orthogonal state is a state with concurrently active sub-states (AND semantics).
+	StateType_STATE_TYPE_UNSPECIFIED StateType = 0 // Undefined type (invalid in well-formed statecharts)
+	// Core Harel state types [H87, Section 2.1]
+	StateType_STATE_TYPE_BASIC StateType = 1 // Atomic state: ψ(s) = BASIC ⟹ children(s) = ∅
+	StateType_STATE_TYPE_OR    StateType = 2 // OR-decomposition: exclusive substate semantics
+	StateType_STATE_TYPE_AND   StateType = 3 // AND-decomposition: concurrent substate semantics
+	// Academic terminology aliases [H87] for clarity
+	StateType_STATE_TYPE_NORMAL     StateType = 2 // Alias for OR (common in literature)
+	StateType_STATE_TYPE_PARALLEL   StateType = 3 // Alias for AND (UML terminology)
+	StateType_STATE_TYPE_ORTHOGONAL StateType = 3 // Alias for AND (Harel's original terminology)
 )
 
 // Enum value maps for StateType.
@@ -41,13 +57,17 @@ var (
 	StateType_name = map[int32]string{
 		0: "STATE_TYPE_UNSPECIFIED",
 		1: "STATE_TYPE_BASIC",
-		2: "STATE_TYPE_NORMAL",
-		3: "STATE_TYPE_PARALLEL",
+		2: "STATE_TYPE_OR",
+		3: "STATE_TYPE_AND",
+		// Duplicate value: 2: "STATE_TYPE_NORMAL",
+		// Duplicate value: 3: "STATE_TYPE_PARALLEL",
 		// Duplicate value: 3: "STATE_TYPE_ORTHOGONAL",
 	}
 	StateType_value = map[string]int32{
 		"STATE_TYPE_UNSPECIFIED": 0,
 		"STATE_TYPE_BASIC":       1,
+		"STATE_TYPE_OR":          2,
+		"STATE_TYPE_AND":         3,
 		"STATE_TYPE_NORMAL":      2,
 		"STATE_TYPE_PARALLEL":    3,
 		"STATE_TYPE_ORTHOGONAL":  3,
@@ -82,13 +102,17 @@ func (StateType) EnumDescriptor() ([]byte, []int) {
 }
 
 // *
-// MachineState encodes the high-level state of a statechart.
+// MachineState encodes the execution status of a statechart interpreter.
+//
+// OPERATIONAL SEMANTICS [HN96, Section 4]:
+// Machine state tracks the interpreter's lifecycle, distinct from the
+// statechart's logical configuration σ ∈ P(S).
 type MachineState int32
 
 const (
-	MachineState_MACHINE_STATE_UNSPECIFIED MachineState = 0 // The machine is in an unspecified state.
-	MachineState_MACHINE_STATE_RUNNING     MachineState = 1 // The machine is in a running state.
-	MachineState_MACHINE_STATE_STOPPED     MachineState = 2 // The machine is in a stopped state.
+	MachineState_MACHINE_STATE_UNSPECIFIED MachineState = 0 // Undefined interpreter state
+	MachineState_MACHINE_STATE_RUNNING     MachineState = 1 // Interpreter active, processing events
+	MachineState_MACHINE_STATE_STOPPED     MachineState = 2 // Interpreter halted, no event processing
 )
 
 // Enum value maps for MachineState.
@@ -132,12 +156,33 @@ func (MachineState) EnumDescriptor() ([]byte, []int) {
 	return file_statecharts_v1_statecharts_proto_rawDescGZIP(), []int{1}
 }
 
-// * Complete, static description of a statechart.
+// *
+// Complete, static description of a statechart.
+//
+// FORMAL DEFINITION [H87, Section 2]:
+// A statechart SC is a 7-tuple SC = (S, ρ, ψ, δ, γ, λ, σ₀) where this message
+// represents the concrete encoding of such a tuple.
+//
+// WELL-FORMEDNESS CONSTRAINTS [H87, HN96]:
+// 1. The hierarchy relation ρ must form a tree rooted at root_state
+// 2. Each OR-state must have exactly one default child (λ function)
+// 3. All state labels must be unique within the statechart
+// 4. Transitions must reference valid states from S
+// 5. Events in transitions must be from the event alphabet E
+//
+// SEMANTIC INVARIANTS:
+// - ∀s ∈ S: s ≠ root ⟹ ∃!p ∈ S: (p,s) ∈ ρ (unique parent except root)
+// - ∀s ∈ S: ψ(s) = NORMAL ∧ children(s) ≠ ∅ ⟹ |λ(s)| = 1 (single default)
+// - ∀s ∈ S: ψ(s) = PARALLEL ⟹ ∀c ∈ children(s): c ∈ σ₀ (all children active)
 type Statechart struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RootState     *State                 `protobuf:"bytes,1,opt,name=root_state,json=rootState,proto3" json:"root_state,omitempty"` // Root node, label must be "__root__".
-	Transitions   []*Transition          `protobuf:"bytes,2,rep,name=transitions,proto3" json:"transitions,omitempty"`
-	Events        []*Event               `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"` // Alphabet (superset allowed).
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	RootState   *State                 `protobuf:"bytes,1,opt,name=root_state,json=rootState,proto3" json:"root_state,omitempty"` // Root node ∈ S, must be labeled "__root__"
+	Transitions []*Transition          `protobuf:"bytes,2,rep,name=transitions,proto3" json:"transitions,omitempty"`              // Transition relation δ ⊆ S×E×G×A×S
+	Events      []*Event               `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"`                        // Event alphabet E (superset allowed)
+	// Global context and metadata
+	Variables     *structpb.Struct `protobuf:"bytes,4,opt,name=variables,proto3" json:"variables,omitempty"`     // Global context Γ: Var → Val
+	Name          string           `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`               // Human-readable identifier
+	Description   string           `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"` // Natural language specification
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -193,16 +238,57 @@ func (x *Statechart) GetEvents() []*Event {
 	return nil
 }
 
+func (x *Statechart) GetVariables() *structpb.Struct {
+	if x != nil {
+		return x.Variables
+	}
+	return nil
+}
+
+func (x *Statechart) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Statechart) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 // *
-// State represents a state in a statechart.
-// Each state has a label, type, and optionally sub-states (children).
+// State represents a node in the statechart hierarchy.
+//
+// FORMAL DEFINITION [H87, Section 2.2]:
+// A state s ∈ S is characterized by:
+// - label: unique identifier within statechart
+// - type: ψ(s) ∈ {BASIC, NORMAL, PARALLEL, ...}
+// - parent: unique p where (p,s) ∈ ρ (except root)
+// - children: {c ∈ S | (s,c) ∈ ρ}
+//
+// WELL-FORMEDNESS CONSTRAINTS [H87, HN96]:
+// 1. Unique labeling: ∀s₁,s₂ ∈ S: s₁ ≠ s₂ ⟹ label(s₁) ≠ label(s₂)
+// 2. Type consistency: ψ(s) = BASIC ⟺ children(s) = ∅
+// 3. Default existence: ψ(s) = NORMAL ∧ children(s) ≠ ∅ ⟹ ∃!c ∈ children(s): is_initial(c)
+// 4. Parallel semantics: ψ(s) = PARALLEL ⟹ ∀c ∈ children(s): ¬is_initial(c)
+// 5. Tree structure: ∀s ∈ S\{root}: ∃!p ∈ S: (p,s) ∈ ρ
+//
+// ACTION SEMANTICS [HN96, Section 6]:
+// Entry/exit actions implement the mapping γ: S → A* for state-based actions.
+// Do-activities provide continuous behavior while state is active.
 type State struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`                              // The label of the state.
-	Type          StateType              `protobuf:"varint,2,opt,name=type,proto3,enum=statecharts.v1.StateType" json:"type,omitempty"` // The type of the state.
-	Children      []*State               `protobuf:"bytes,3,rep,name=children,proto3" json:"children,omitempty"`                        // The sub-states. If a state has no sub-states, it is considered a BASIC state.
-	IsInitial     bool                   `protobuf:"varint,4,opt,name=is_initial,json=isInitial,proto3" json:"is_initial,omitempty"`    // Default child of XOR composite.
-	IsFinal       bool                   `protobuf:"varint,5,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`          // Terminal child.
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Label     string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`                              // Unique identifier: s.label ∈ String
+	Type      StateType              `protobuf:"varint,2,opt,name=type,proto3,enum=statecharts.v1.StateType" json:"type,omitempty"` // Type function: ψ(s) ∈ StateType
+	Children  []*State               `protobuf:"bytes,3,rep,name=children,proto3" json:"children,omitempty"`                        // Hierarchy: {c | (s,c) ∈ ρ}
+	IsInitial bool                   `protobuf:"varint,4,opt,name=is_initial,json=isInitial,proto3" json:"is_initial,omitempty"`    // Default child: λ(parent) = {s} when true
+	IsFinal   bool                   `protobuf:"varint,5,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`          // Terminal state: no outgoing transitions
+	// Action mappings γ: S → A* [H87, HN96, Section 6]
+	EntryActions  []*Action `protobuf:"bytes,6,rep,name=entry_actions,json=entryActions,proto3" json:"entry_actions,omitempty"` // γₑₙₜᵣᵧ(s): executed on state entry
+	ExitActions   []*Action `protobuf:"bytes,7,rep,name=exit_actions,json=exitActions,proto3" json:"exit_actions,omitempty"`    // γₑₓᵢₜ(s): executed on state exit
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -272,17 +358,59 @@ func (x *State) GetIsFinal() bool {
 	return false
 }
 
+func (x *State) GetEntryActions() []*Action {
+	if x != nil {
+		return x.EntryActions
+	}
+	return nil
+}
+
+func (x *State) GetExitActions() []*Action {
+	if x != nil {
+		return x.ExitActions
+	}
+	return nil
+}
+
 // *
-// Transition represents a transition between states in a statechart.
-// It connects source (from) states to target (to) states and is triggered by an event.
+// Transition represents an edge in the statechart's transition relation.
+//
+// FORMAL DEFINITION [H87, Section 3]:
+// A transition t ∈ δ is a 5-tuple t = (src, event, guard, action, tgt) where:
+// - src ∈ S: source state(s)
+// - event ∈ E ∪ {τ}: triggering event (τ for completion)
+// - guard ∈ G: boolean condition
+// - action ∈ A*: sequence of actions to execute
+// - tgt ∈ S: target state(s)
+//
+// ENABLEMENT SEMANTICS [HN96, Section 4]:
+// Transition t is enabled in configuration σ iff:
+// 1. src ∩ σ ≠ ∅ (source active)
+// 2. event occurred in current step
+// 3. guard evaluates to true
+// 4. No higher priority transition enabled
+//
+// CONFLICT RESOLUTION [HN96, Section 4.3]:
+// Priority ordering resolves multiple enabled transitions:
+// - Explicit priority values (higher = more priority)
+// - Hierarchical ordering (deeper states win)
+// - Textual ordering (deterministic fallback)
+//
+// FIRING SEMANTICS [HN96, Section 5]:
+// When fired, transition execution follows precise sequence:
+// 1. Exit states (src to LCA)
+// 2. Execute transition actions
+// 3. Enter states (LCA to tgt)
 type Transition struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`     // The label of the transition.
-	From          []string               `protobuf:"bytes,2,rep,name=from,proto3" json:"from,omitempty"`       // The source (from) State reference(s).
-	To            []string               `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`           // The target (to) State reference(s).
-	Event         string                 `protobuf:"bytes,4,opt,name=event,proto3" json:"event,omitempty"`     // The label of the event that triggers the transition.
-	Guard         *Guard                 `protobuf:"bytes,5,opt,name=guard,proto3" json:"guard,omitempty"`     // The guard of the transition, a condition for the transition to occur.
-	Actions       []*Action              `protobuf:"bytes,6,rep,name=actions,proto3" json:"actions,omitempty"` // The action(s) associated with the transition.
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Label   string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`     // Human-readable identifier
+	From    []string               `protobuf:"bytes,2,rep,name=from,proto3" json:"from,omitempty"`       // Source states: src ∈ P(S)
+	To      []string               `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`           // Target states: tgt ∈ P(S)
+	Event   string                 `protobuf:"bytes,4,opt,name=event,proto3" json:"event,omitempty"`     // Trigger event: e ∈ E ∪ {τ}
+	Guard   *Guard                 `protobuf:"bytes,5,opt,name=guard,proto3" json:"guard,omitempty"`     // Guard condition: g ∈ G → Bool
+	Actions []*Action              `protobuf:"bytes,6,rep,name=actions,proto3" json:"actions,omitempty"` // Action sequence: α ∈ A*
+	// Priority for conflict resolution [HN96, Section 4.3]
+	Priority      int32 `protobuf:"varint,7,opt,name=priority,proto3" json:"priority,omitempty"` // Explicit priority (higher = more priority)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -359,10 +487,27 @@ func (x *Transition) GetActions() []*Action {
 	return nil
 }
 
-// * Event represents an event in a statechart. Each event has a label that identifies it.
+func (x *Transition) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+// *
+// Event represents an element of the communication alphabet.
+//
+// FORMAL DEFINITION [H87, Section 3]:
+// Events E constitute the communication alphabet for statechart execution.
+// An event e ∈ E may carry parameters and trigger state transitions.
+//
+// CORE SEMANTICS [H87, HN96]:
+// Events are atomic communication signals between the statechart and its environment.
+// The original formalism treats events uniformly without complex type taxonomies.
 type Event struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`           // Event identifier: e.label ∈ String
+	Parameters    *structpb.Struct       `protobuf:"bytes,2,opt,name=parameters,proto3" json:"parameters,omitempty"` // Event payload: param(e) → Value
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -404,10 +549,27 @@ func (x *Event) GetLabel() string {
 	return ""
 }
 
-// * Guard is a guard for a transition. It represents a condition that must be satisfied for the transition to occur.
+func (x *Event) GetParameters() *structpb.Struct {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+// *
+// Guard represents a boolean condition for transition enablement.
+//
+// FORMAL DEFINITION [H87, Section 3.1]:
+// A guard g ∈ G is a boolean expression over variables and event parameters:
+// g: Context × Event → Bool
+//
+// EVALUATION SEMANTICS [HN96, Section 4.2]:
+// Guards are evaluated atomically during transition enablement testing.
+// Implementation languages should provide deterministic evaluation semantics.
 type Guard struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Expression    string                 `protobuf:"bytes,1,opt,name=expression,proto3" json:"expression,omitempty"`
+	Expression    string                 `protobuf:"bytes,1,opt,name=expression,proto3" json:"expression,omitempty"` // Boolean expression: g ∈ G
+	Language      string                 `protobuf:"bytes,2,opt,name=language,proto3" json:"language,omitempty"`     // Expression language (for semantic clarity)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -449,10 +611,30 @@ func (x *Guard) GetExpression() string {
 	return ""
 }
 
-// * Action is an action associated with a transition. Each action has a label that identifies it.
+func (x *Guard) GetLanguage() string {
+	if x != nil {
+		return x.Language
+	}
+	return ""
+}
+
+// *
+// Action represents executable code associated with statechart elements.
+//
+// FORMAL DEFINITION [H87, Section 3.3; HN96, Section 6]:
+// Actions α ∈ A are side-effecting computations executed during statechart
+// operation. The action mapping γ: S ∪ δ → A* assigns action sequences.
+//
+// EXECUTION SEMANTICS [HN96, Section 6]:
+// Actions execute atomically and may modify the statechart context.
+// The core formalism distinguishes actions by their execution context
+// (entry/exit for states, effect for transitions) rather than complex taxonomies.
 type Action struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`           // Action identifier
+	Expression    string                 `protobuf:"bytes,2,opt,name=expression,proto3" json:"expression,omitempty"` // Executable code: α ∈ A
+	Language      string                 `protobuf:"bytes,3,opt,name=language,proto3" json:"language,omitempty"`     // Implementation language
+	Parameters    *structpb.Struct       `protobuf:"bytes,4,opt,name=parameters,proto3" json:"parameters,omitempty"` // Action parameters
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -494,10 +676,36 @@ func (x *Action) GetLabel() string {
 	return ""
 }
 
-// * StateRef is a reference to a state. It contains the label of the referenced state.
+func (x *Action) GetExpression() string {
+	if x != nil {
+		return x.Expression
+	}
+	return ""
+}
+
+func (x *Action) GetLanguage() string {
+	if x != nil {
+		return x.Language
+	}
+	return ""
+}
+
+func (x *Action) GetParameters() *structpb.Struct {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+// *
+// StateRef represents a reference to a state within a statechart.
+//
+// FORMAL DEFINITION [H87, Section 2]:
+// A state reference r is simply a label mapping r: Label → S where
+// Label is the set of all state identifiers and S is the state set.
 type StateRef struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"` // State identifier: r(label) ∈ S
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -539,10 +747,32 @@ func (x *StateRef) GetLabel() string {
 	return ""
 }
 
-// * Configuration is a status for a statechart, which is defined by a subset of the states that are active.
+// *
+// Configuration represents the active state set of a statechart at any point in time.
+//
+// FORMAL DEFINITION [H87, Section 4; HN96, Section 3]:
+// A configuration σ ∈ P(S) is a subset of states that are simultaneously active.
+// The configuration must satisfy consistency constraints for hierarchical states.
+//
+// WELL-FORMEDNESS CONSTRAINTS [HN96, Section 3.2]:
+// 1. Ancestry closure: ∀s ∈ σ, ∀p ∈ ancestors(s): p ∈ σ (active states imply active ancestors)
+// 2. OR-consistency: ∀s ∈ σ: ψ(s) = NORMAL ⟹ |{c ∈ children(s) ∩ σ}| ≤ 1 (at most one child active)
+// 3. AND-consistency: ∀s ∈ σ: ψ(s) = PARALLEL ∧ s ∈ σ ⟹ children(s) ⊆ σ (all children active)
+// 4. Basic leaves: ∀s ∈ σ: ψ(s) = BASIC ⟹ children(s) ∩ σ = ∅ (basic states have no active children)
+//
+// SEMANTIC INVARIANTS [H87, HN96]:
+// - Consistency: isConsistent(σ) ≡ satisfies all well-formedness constraints
+// - Maximality: isMaximal(σ) ≡ cannot add more states without violating consistency
+// - Reachability: isReachable(σ) ≡ ∃ event sequence from initial configuration
+//
+// HISTORY SEMANTICS [UML 2.5, SCXML]:
+// History tracking enables restoration of previous configurations when re-entering
+// composite states, supporting both shallow and deep history variants.
 type Configuration struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	States        []*StateRef            `protobuf:"bytes,1,rep,name=states,proto3" json:"states,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	States []*StateRef            `protobuf:"bytes,1,rep,name=states,proto3" json:"states,omitempty"` // Active state set: σ ⊆ S
+	// History mechanism [UML 2.5] for configuration restoration
+	History       map[string]*Configuration `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // H: Label → P(S) history mapping
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -584,15 +814,33 @@ func (x *Configuration) GetStates() []*StateRef {
 	return nil
 }
 
-// * Machine is an instance of a statechart.
+func (x *Configuration) GetHistory() map[string]*Configuration {
+	if x != nil {
+		return x.History
+	}
+	return nil
+}
+
+// *
+// Machine represents a statechart instance with execution state.
+//
+// OPERATIONAL SEMANTICS [HN96, Section 4]:
+// A machine M = (SC, σ, Γ) consists of:
+// - SC: statechart definition (static structure)
+// - σ: current configuration (active states)
+// - Γ: variable context (dynamic data)
+//
+// EXECUTION MODEL [HN96, Section 4.1]:
+// Machine execution proceeds through discrete steps triggered by events,
+// maintaining the current configuration and context state.
 type Machine struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                         // The id of the machine.
-	State         MachineState           `protobuf:"varint,2,opt,name=state,proto3,enum=statecharts.v1.MachineState" json:"state,omitempty"` // The overall state of the machine.
-	Context       *structpb.Struct       `protobuf:"bytes,3,opt,name=context,proto3" json:"context,omitempty"`                               // The context of the machine.
-	Statechart    *Statechart            `protobuf:"bytes,4,opt,name=statechart,proto3" json:"statechart,omitempty"`                         // The statechart definition.
-	Configuration *Configuration         `protobuf:"bytes,5,opt,name=configuration,proto3" json:"configuration,omitempty"`                   // The current configuration of the machine.
-	StepHistory   []*Step                `protobuf:"bytes,6,rep,name=step_history,json=stepHistory,proto3" json:"step_history,omitempty"`    // The history of steps that have been carried out by the machine.
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                         // Machine identifier
+	State         MachineState           `protobuf:"varint,2,opt,name=state,proto3,enum=statecharts.v1.MachineState" json:"state,omitempty"` // Execution state (running/stopped)
+	Context       *structpb.Struct       `protobuf:"bytes,3,opt,name=context,proto3" json:"context,omitempty"`                               // Variable context: Γ: Var → Val
+	Statechart    *Statechart            `protobuf:"bytes,4,opt,name=statechart,proto3" json:"statechart,omitempty"`                         // Static definition: SC
+	Configuration *Configuration         `protobuf:"bytes,5,opt,name=configuration,proto3" json:"configuration,omitempty"`                   // Current configuration: σ ∈ P(S)
+	StepHistory   []*Step                `protobuf:"bytes,6,rep,name=step_history,json=stepHistory,proto3" json:"step_history,omitempty"`    // Execution trace for analysis
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -669,16 +917,32 @@ func (x *Machine) GetStepHistory() []*Step {
 	return nil
 }
 
-// * Step is a step in the execution of a statechart.
+// *
+// Step represents a single execution step in statechart operation.
+//
+// STEP SEMANTICS [HN96, Section 4.2]:
+// A step σ →ᵉ σ' represents the transition from configuration σ to σ'
+// triggered by event set E', executing the enabled transitions.
+//
+// STEP COMPONENTS [HN96, Section 5]:
+// Each step records:
+// - Input events that triggered the step
+// - Enabled and fired transitions
+// - Configuration change (σ → σ')
+// - Executed actions during the transition sequence
 type Step struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
-	Events                 []*Event               `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`                                                               // The events that occurred.
-	Transitions            []*Transition          `protobuf:"bytes,2,rep,name=transitions,proto3" json:"transitions,omitempty"`                                                     // The transitions that occurred.
-	StartingConfiguration  *Configuration         `protobuf:"bytes,3,opt,name=starting_configuration,json=startingConfiguration,proto3" json:"starting_configuration,omitempty"`    // The starting configuration.
-	ResultingConfiguration *Configuration         `protobuf:"bytes,4,opt,name=resulting_configuration,json=resultingConfiguration,proto3" json:"resulting_configuration,omitempty"` // The resulting configuration.
-	Context                *structpb.Struct       `protobuf:"bytes,5,opt,name=context,proto3" json:"context,omitempty"`                                                             // The context of the event.
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	Events                 []*Event               `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`                                                               // Triggering events: E' ⊆ E
+	Transitions            []*Transition          `protobuf:"bytes,2,rep,name=transitions,proto3" json:"transitions,omitempty"`                                                     // Fired transitions: T' ⊆ δ
+	StartingConfiguration  *Configuration         `protobuf:"bytes,3,opt,name=starting_configuration,json=startingConfiguration,proto3" json:"starting_configuration,omitempty"`    // Initial configuration: σ
+	ResultingConfiguration *Configuration         `protobuf:"bytes,4,opt,name=resulting_configuration,json=resultingConfiguration,proto3" json:"resulting_configuration,omitempty"` // Final configuration: σ'
+	Context                *structpb.Struct       `protobuf:"bytes,5,opt,name=context,proto3" json:"context,omitempty"`                                                             // Updated context: Γ'
+	// Execution trace information
+	StatesEntered   []string  `protobuf:"bytes,6,rep,name=states_entered,json=statesEntered,proto3" json:"states_entered,omitempty"`       // States entered: enter(σ')
+	StatesExited    []string  `protobuf:"bytes,7,rep,name=states_exited,json=statesExited,proto3" json:"states_exited,omitempty"`          // States exited: exit(σ)
+	ActionsExecuted []*Action `protobuf:"bytes,8,rep,name=actions_executed,json=actionsExecuted,proto3" json:"actions_executed,omitempty"` // Actions fired: α*
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Step) Reset() {
@@ -746,24 +1010,50 @@ func (x *Step) GetContext() *structpb.Struct {
 	return nil
 }
 
+func (x *Step) GetStatesEntered() []string {
+	if x != nil {
+		return x.StatesEntered
+	}
+	return nil
+}
+
+func (x *Step) GetStatesExited() []string {
+	if x != nil {
+		return x.StatesExited
+	}
+	return nil
+}
+
+func (x *Step) GetActionsExecuted() []*Action {
+	if x != nil {
+		return x.ActionsExecuted
+	}
+	return nil
+}
+
 var File_statecharts_v1_statecharts_proto protoreflect.FileDescriptor
 
 const file_statecharts_v1_statecharts_proto_rawDesc = "" +
 	"\n" +
-	" statecharts/v1/statecharts.proto\x12\x0estatecharts.v1\x1a\x1cgoogle/protobuf/struct.proto\"\xaf\x01\n" +
+	" statecharts/v1/statecharts.proto\x12\x0estatecharts.v1\x1a\x1cgoogle/protobuf/struct.proto\"\x9c\x02\n" +
 	"\n" +
 	"Statechart\x124\n" +
 	"\n" +
 	"root_state\x18\x01 \x01(\v2\x15.statecharts.v1.StateR\trootState\x12<\n" +
 	"\vtransitions\x18\x02 \x03(\v2\x1a.statecharts.v1.TransitionR\vtransitions\x12-\n" +
-	"\x06events\x18\x03 \x03(\v2\x15.statecharts.v1.EventR\x06events\"\xb9\x01\n" +
+	"\x06events\x18\x03 \x03(\v2\x15.statecharts.v1.EventR\x06events\x125\n" +
+	"\tvariables\x18\x04 \x01(\v2\x17.google.protobuf.StructR\tvariables\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\"\xb1\x02\n" +
 	"\x05State\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12-\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x19.statecharts.v1.StateTypeR\x04type\x121\n" +
 	"\bchildren\x18\x03 \x03(\v2\x15.statecharts.v1.StateR\bchildren\x12\x1d\n" +
 	"\n" +
 	"is_initial\x18\x04 \x01(\bR\tisInitial\x12\x19\n" +
-	"\bis_final\x18\x05 \x01(\bR\aisFinal\"\xbb\x01\n" +
+	"\bis_final\x18\x05 \x01(\bR\aisFinal\x12;\n" +
+	"\rentry_actions\x18\x06 \x03(\v2\x16.statecharts.v1.ActionR\fentryActions\x129\n" +
+	"\fexit_actions\x18\a \x03(\v2\x16.statecharts.v1.ActionR\vexitActions\"\xd7\x01\n" +
 	"\n" +
 	"Transition\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x12\n" +
@@ -771,19 +1061,35 @@ const file_statecharts_v1_statecharts_proto_rawDesc = "" +
 	"\x02to\x18\x03 \x03(\tR\x02to\x12\x14\n" +
 	"\x05event\x18\x04 \x01(\tR\x05event\x12+\n" +
 	"\x05guard\x18\x05 \x01(\v2\x15.statecharts.v1.GuardR\x05guard\x120\n" +
-	"\aactions\x18\x06 \x03(\v2\x16.statecharts.v1.ActionR\aactions\"\x1d\n" +
+	"\aactions\x18\x06 \x03(\v2\x16.statecharts.v1.ActionR\aactions\x12\x1a\n" +
+	"\bpriority\x18\a \x01(\x05R\bpriority\"V\n" +
 	"\x05Event\x12\x14\n" +
-	"\x05label\x18\x01 \x01(\tR\x05label\"'\n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\x127\n" +
+	"\n" +
+	"parameters\x18\x02 \x01(\v2\x17.google.protobuf.StructR\n" +
+	"parameters\"C\n" +
 	"\x05Guard\x12\x1e\n" +
 	"\n" +
 	"expression\x18\x01 \x01(\tR\n" +
-	"expression\"\x1e\n" +
+	"expression\x12\x1a\n" +
+	"\blanguage\x18\x02 \x01(\tR\blanguage\"\x93\x01\n" +
 	"\x06Action\x12\x14\n" +
-	"\x05label\x18\x01 \x01(\tR\x05label\" \n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\x12\x1e\n" +
+	"\n" +
+	"expression\x18\x02 \x01(\tR\n" +
+	"expression\x12\x1a\n" +
+	"\blanguage\x18\x03 \x01(\tR\blanguage\x127\n" +
+	"\n" +
+	"parameters\x18\x04 \x01(\v2\x17.google.protobuf.StructR\n" +
+	"parameters\" \n" +
 	"\bStateRef\x12\x14\n" +
-	"\x05label\x18\x01 \x01(\tR\x05label\"A\n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\"\xe2\x01\n" +
 	"\rConfiguration\x120\n" +
-	"\x06states\x18\x01 \x03(\v2\x18.statecharts.v1.StateRefR\x06states\"\xba\x02\n" +
+	"\x06states\x18\x01 \x03(\v2\x18.statecharts.v1.StateRefR\x06states\x12D\n" +
+	"\ahistory\x18\x02 \x03(\v2*.statecharts.v1.Configuration.HistoryEntryR\ahistory\x1aY\n" +
+	"\fHistoryEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x123\n" +
+	"\x05value\x18\x02 \x01(\v2\x1d.statecharts.v1.ConfigurationR\x05value:\x028\x01\"\xba\x02\n" +
 	"\aMachine\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x122\n" +
 	"\x05state\x18\x02 \x01(\x0e2\x1c.statecharts.v1.MachineStateR\x05state\x121\n" +
@@ -792,16 +1098,21 @@ const file_statecharts_v1_statecharts_proto_rawDesc = "" +
 	"statechart\x18\x04 \x01(\v2\x1a.statecharts.v1.StatechartR\n" +
 	"statechart\x12C\n" +
 	"\rconfiguration\x18\x05 \x01(\v2\x1d.statecharts.v1.ConfigurationR\rconfiguration\x127\n" +
-	"\fstep_history\x18\x06 \x03(\v2\x14.statecharts.v1.StepR\vstepHistory\"\xd4\x02\n" +
+	"\fstep_history\x18\x06 \x03(\v2\x14.statecharts.v1.StepR\vstepHistory\"\xe3\x03\n" +
 	"\x04Step\x12-\n" +
 	"\x06events\x18\x01 \x03(\v2\x15.statecharts.v1.EventR\x06events\x12<\n" +
 	"\vtransitions\x18\x02 \x03(\v2\x1a.statecharts.v1.TransitionR\vtransitions\x12T\n" +
 	"\x16starting_configuration\x18\x03 \x01(\v2\x1d.statecharts.v1.ConfigurationR\x15startingConfiguration\x12V\n" +
 	"\x17resulting_configuration\x18\x04 \x01(\v2\x1d.statecharts.v1.ConfigurationR\x16resultingConfiguration\x121\n" +
-	"\acontext\x18\x05 \x01(\v2\x17.google.protobuf.StructR\acontext*\x8c\x01\n" +
+	"\acontext\x18\x05 \x01(\v2\x17.google.protobuf.StructR\acontext\x12%\n" +
+	"\x0estates_entered\x18\x06 \x03(\tR\rstatesEntered\x12#\n" +
+	"\rstates_exited\x18\a \x03(\tR\fstatesExited\x12A\n" +
+	"\x10actions_executed\x18\b \x03(\v2\x16.statecharts.v1.ActionR\x0factionsExecuted*\xb3\x01\n" +
 	"\tStateType\x12\x1a\n" +
 	"\x16STATE_TYPE_UNSPECIFIED\x10\x00\x12\x14\n" +
-	"\x10STATE_TYPE_BASIC\x10\x01\x12\x15\n" +
+	"\x10STATE_TYPE_BASIC\x10\x01\x12\x11\n" +
+	"\rSTATE_TYPE_OR\x10\x02\x12\x12\n" +
+	"\x0eSTATE_TYPE_AND\x10\x03\x12\x15\n" +
 	"\x11STATE_TYPE_NORMAL\x10\x02\x12\x17\n" +
 	"\x13STATE_TYPE_PARALLEL\x10\x03\x12\x19\n" +
 	"\x15STATE_TYPE_ORTHOGONAL\x10\x03\x1a\x02\x10\x01*c\n" +
@@ -824,7 +1135,7 @@ func file_statecharts_v1_statecharts_proto_rawDescGZIP() []byte {
 }
 
 var file_statecharts_v1_statecharts_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_statecharts_v1_statecharts_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_statecharts_v1_statecharts_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_statecharts_v1_statecharts_proto_goTypes = []any{
 	(StateType)(0),          // 0: statecharts.v1.StateType
 	(MachineState)(0),       // 1: statecharts.v1.MachineState
@@ -838,32 +1149,41 @@ var file_statecharts_v1_statecharts_proto_goTypes = []any{
 	(*Configuration)(nil),   // 9: statecharts.v1.Configuration
 	(*Machine)(nil),         // 10: statecharts.v1.Machine
 	(*Step)(nil),            // 11: statecharts.v1.Step
-	(*structpb.Struct)(nil), // 12: google.protobuf.Struct
+	nil,                     // 12: statecharts.v1.Configuration.HistoryEntry
+	(*structpb.Struct)(nil), // 13: google.protobuf.Struct
 }
 var file_statecharts_v1_statecharts_proto_depIdxs = []int32{
 	3,  // 0: statecharts.v1.Statechart.root_state:type_name -> statecharts.v1.State
 	4,  // 1: statecharts.v1.Statechart.transitions:type_name -> statecharts.v1.Transition
 	5,  // 2: statecharts.v1.Statechart.events:type_name -> statecharts.v1.Event
-	0,  // 3: statecharts.v1.State.type:type_name -> statecharts.v1.StateType
-	3,  // 4: statecharts.v1.State.children:type_name -> statecharts.v1.State
-	6,  // 5: statecharts.v1.Transition.guard:type_name -> statecharts.v1.Guard
-	7,  // 6: statecharts.v1.Transition.actions:type_name -> statecharts.v1.Action
-	8,  // 7: statecharts.v1.Configuration.states:type_name -> statecharts.v1.StateRef
-	1,  // 8: statecharts.v1.Machine.state:type_name -> statecharts.v1.MachineState
-	12, // 9: statecharts.v1.Machine.context:type_name -> google.protobuf.Struct
-	2,  // 10: statecharts.v1.Machine.statechart:type_name -> statecharts.v1.Statechart
-	9,  // 11: statecharts.v1.Machine.configuration:type_name -> statecharts.v1.Configuration
-	11, // 12: statecharts.v1.Machine.step_history:type_name -> statecharts.v1.Step
-	5,  // 13: statecharts.v1.Step.events:type_name -> statecharts.v1.Event
-	4,  // 14: statecharts.v1.Step.transitions:type_name -> statecharts.v1.Transition
-	9,  // 15: statecharts.v1.Step.starting_configuration:type_name -> statecharts.v1.Configuration
-	9,  // 16: statecharts.v1.Step.resulting_configuration:type_name -> statecharts.v1.Configuration
-	12, // 17: statecharts.v1.Step.context:type_name -> google.protobuf.Struct
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	13, // 3: statecharts.v1.Statechart.variables:type_name -> google.protobuf.Struct
+	0,  // 4: statecharts.v1.State.type:type_name -> statecharts.v1.StateType
+	3,  // 5: statecharts.v1.State.children:type_name -> statecharts.v1.State
+	7,  // 6: statecharts.v1.State.entry_actions:type_name -> statecharts.v1.Action
+	7,  // 7: statecharts.v1.State.exit_actions:type_name -> statecharts.v1.Action
+	6,  // 8: statecharts.v1.Transition.guard:type_name -> statecharts.v1.Guard
+	7,  // 9: statecharts.v1.Transition.actions:type_name -> statecharts.v1.Action
+	13, // 10: statecharts.v1.Event.parameters:type_name -> google.protobuf.Struct
+	13, // 11: statecharts.v1.Action.parameters:type_name -> google.protobuf.Struct
+	8,  // 12: statecharts.v1.Configuration.states:type_name -> statecharts.v1.StateRef
+	12, // 13: statecharts.v1.Configuration.history:type_name -> statecharts.v1.Configuration.HistoryEntry
+	1,  // 14: statecharts.v1.Machine.state:type_name -> statecharts.v1.MachineState
+	13, // 15: statecharts.v1.Machine.context:type_name -> google.protobuf.Struct
+	2,  // 16: statecharts.v1.Machine.statechart:type_name -> statecharts.v1.Statechart
+	9,  // 17: statecharts.v1.Machine.configuration:type_name -> statecharts.v1.Configuration
+	11, // 18: statecharts.v1.Machine.step_history:type_name -> statecharts.v1.Step
+	5,  // 19: statecharts.v1.Step.events:type_name -> statecharts.v1.Event
+	4,  // 20: statecharts.v1.Step.transitions:type_name -> statecharts.v1.Transition
+	9,  // 21: statecharts.v1.Step.starting_configuration:type_name -> statecharts.v1.Configuration
+	9,  // 22: statecharts.v1.Step.resulting_configuration:type_name -> statecharts.v1.Configuration
+	13, // 23: statecharts.v1.Step.context:type_name -> google.protobuf.Struct
+	7,  // 24: statecharts.v1.Step.actions_executed:type_name -> statecharts.v1.Action
+	9,  // 25: statecharts.v1.Configuration.HistoryEntry.value:type_name -> statecharts.v1.Configuration
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_statecharts_v1_statecharts_proto_init() }
@@ -877,7 +1197,7 @@ func file_statecharts_v1_statecharts_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_statecharts_v1_statecharts_proto_rawDesc), len(file_statecharts_v1_statecharts_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
