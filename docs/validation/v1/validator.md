@@ -192,6 +192,18 @@ RuleId identifies specific validation rules for statecharts.
 | COMPOUND_HAS_CHILDREN | 4 |  Compound states must have children.  |
 | DETERMINISTIC_TRANSITION_SELECTION | 5 |  Transition selection must be deterministic.  |
 | NO_EVENT_BROADCAST_CYCLES | 6 |  Event broadcast must not create cycles.  |
+| HISTORY_STATES_WELL_FORMED | 7 | Extended validation rules for enhanced statechart features  History states must be properly configured.  |
+| PSEUDO_STATES_WELL_FORMED | 8 |  Pseudo-states must follow structural rules.  |
+| FORK_JOIN_BALANCED | 9 |  Fork and join pseudo-states must be balanced.  |
+| CHOICE_GUARDS_COMPLETE | 10 |  Choice pseudo-states must have complete guard coverage.  |
+| TIMEOUT_EVENTS_UNIQUE | 11 |  Timeout events must have unique labels within scope.  |
+| ACTION_EXPRESSIONS_VALID | 12 |  Action expressions must be syntactically valid.  |
+| GUARD_EXPRESSIONS_VALID | 13 |  Guard expressions must be syntactically valid.  |
+| EVENT_PARAMETERS_CONSISTENT | 14 |  Event parameters must be consistent across usage.  |
+| INTERNAL_TRANSITIONS_VALID | 15 |  Internal transitions must not cross state boundaries.  |
+| COMPLETION_TRANSITIONS_VALID | 16 |  Completion transitions must be properly structured.  |
+| INVARIANTS_SATISFIABLE | 17 |  State invariants must be satisfiable.  |
+| HISTORY_DEFAULTS_VALID | 18 |  History default states must be valid children.  |
 
 
  <!-- end file-level enums -->

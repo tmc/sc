@@ -90,18 +90,43 @@ const (
 	RuleId_COMPOUND_HAS_CHILDREN              RuleId = 4 // Compound states must have children.
 	RuleId_DETERMINISTIC_TRANSITION_SELECTION RuleId = 5 // Transition selection must be deterministic.
 	RuleId_NO_EVENT_BROADCAST_CYCLES          RuleId = 6 // Event broadcast must not create cycles.
+	// Extended validation rules for enhanced statechart features
+	RuleId_HISTORY_STATES_WELL_FORMED   RuleId = 7  // History states must be properly configured.
+	RuleId_PSEUDO_STATES_WELL_FORMED    RuleId = 8  // Pseudo-states must follow structural rules.
+	RuleId_FORK_JOIN_BALANCED           RuleId = 9  // Fork and join pseudo-states must be balanced.
+	RuleId_CHOICE_GUARDS_COMPLETE       RuleId = 10 // Choice pseudo-states must have complete guard coverage.
+	RuleId_TIMEOUT_EVENTS_UNIQUE        RuleId = 11 // Timeout events must have unique labels within scope.
+	RuleId_ACTION_EXPRESSIONS_VALID     RuleId = 12 // Action expressions must be syntactically valid.
+	RuleId_GUARD_EXPRESSIONS_VALID      RuleId = 13 // Guard expressions must be syntactically valid.
+	RuleId_EVENT_PARAMETERS_CONSISTENT  RuleId = 14 // Event parameters must be consistent across usage.
+	RuleId_INTERNAL_TRANSITIONS_VALID   RuleId = 15 // Internal transitions must not cross state boundaries.
+	RuleId_COMPLETION_TRANSITIONS_VALID RuleId = 16 // Completion transitions must be properly structured.
+	RuleId_INVARIANTS_SATISFIABLE       RuleId = 17 // State invariants must be satisfiable.
+	RuleId_HISTORY_DEFAULTS_VALID       RuleId = 18 // History default states must be valid children.
 )
 
 // Enum value maps for RuleId.
 var (
 	RuleId_name = map[int32]string{
-		0: "RULE_UNSPECIFIED",
-		1: "UNIQUE_STATE_LABELS",
-		2: "SINGLE_DEFAULT_CHILD",
-		3: "BASIC_HAS_NO_CHILDREN",
-		4: "COMPOUND_HAS_CHILDREN",
-		5: "DETERMINISTIC_TRANSITION_SELECTION",
-		6: "NO_EVENT_BROADCAST_CYCLES",
+		0:  "RULE_UNSPECIFIED",
+		1:  "UNIQUE_STATE_LABELS",
+		2:  "SINGLE_DEFAULT_CHILD",
+		3:  "BASIC_HAS_NO_CHILDREN",
+		4:  "COMPOUND_HAS_CHILDREN",
+		5:  "DETERMINISTIC_TRANSITION_SELECTION",
+		6:  "NO_EVENT_BROADCAST_CYCLES",
+		7:  "HISTORY_STATES_WELL_FORMED",
+		8:  "PSEUDO_STATES_WELL_FORMED",
+		9:  "FORK_JOIN_BALANCED",
+		10: "CHOICE_GUARDS_COMPLETE",
+		11: "TIMEOUT_EVENTS_UNIQUE",
+		12: "ACTION_EXPRESSIONS_VALID",
+		13: "GUARD_EXPRESSIONS_VALID",
+		14: "EVENT_PARAMETERS_CONSISTENT",
+		15: "INTERNAL_TRANSITIONS_VALID",
+		16: "COMPLETION_TRANSITIONS_VALID",
+		17: "INVARIANTS_SATISFIABLE",
+		18: "HISTORY_DEFAULTS_VALID",
 	}
 	RuleId_value = map[string]int32{
 		"RULE_UNSPECIFIED":                   0,
@@ -111,6 +136,18 @@ var (
 		"COMPOUND_HAS_CHILDREN":              4,
 		"DETERMINISTIC_TRANSITION_SELECTION": 5,
 		"NO_EVENT_BROADCAST_CYCLES":          6,
+		"HISTORY_STATES_WELL_FORMED":         7,
+		"PSEUDO_STATES_WELL_FORMED":          8,
+		"FORK_JOIN_BALANCED":                 9,
+		"CHOICE_GUARDS_COMPLETE":             10,
+		"TIMEOUT_EVENTS_UNIQUE":              11,
+		"ACTION_EXPRESSIONS_VALID":           12,
+		"GUARD_EXPRESSIONS_VALID":            13,
+		"EVENT_PARAMETERS_CONSISTENT":        14,
+		"INTERNAL_TRANSITIONS_VALID":         15,
+		"COMPLETION_TRANSITIONS_VALID":       16,
+		"INVARIANTS_SATISFIABLE":             17,
+		"HISTORY_DEFAULTS_VALID":             18,
 	}
 )
 
@@ -471,7 +508,7 @@ const file_validation_v1_validator_proto_rawDesc = "" +
 	"\x14SEVERITY_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04INFO\x10\x01\x12\v\n" +
 	"\aWARNING\x10\x02\x12\t\n" +
-	"\x05ERROR\x10\x03*\xce\x01\n" +
+	"\x05ERROR\x10\x03*\xb2\x04\n" +
 	"\x06RuleId\x12\x14\n" +
 	"\x10RULE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13UNIQUE_STATE_LABELS\x10\x01\x12\x18\n" +
@@ -479,7 +516,20 @@ const file_validation_v1_validator_proto_rawDesc = "" +
 	"\x15BASIC_HAS_NO_CHILDREN\x10\x03\x12\x19\n" +
 	"\x15COMPOUND_HAS_CHILDREN\x10\x04\x12&\n" +
 	"\"DETERMINISTIC_TRANSITION_SELECTION\x10\x05\x12\x1d\n" +
-	"\x19NO_EVENT_BROADCAST_CYCLES\x10\x062\xfb\x01\n" +
+	"\x19NO_EVENT_BROADCAST_CYCLES\x10\x06\x12\x1e\n" +
+	"\x1aHISTORY_STATES_WELL_FORMED\x10\a\x12\x1d\n" +
+	"\x19PSEUDO_STATES_WELL_FORMED\x10\b\x12\x16\n" +
+	"\x12FORK_JOIN_BALANCED\x10\t\x12\x1a\n" +
+	"\x16CHOICE_GUARDS_COMPLETE\x10\n" +
+	"\x12\x19\n" +
+	"\x15TIMEOUT_EVENTS_UNIQUE\x10\v\x12\x1c\n" +
+	"\x18ACTION_EXPRESSIONS_VALID\x10\f\x12\x1b\n" +
+	"\x17GUARD_EXPRESSIONS_VALID\x10\r\x12\x1f\n" +
+	"\x1bEVENT_PARAMETERS_CONSISTENT\x10\x0e\x12\x1e\n" +
+	"\x1aINTERNAL_TRANSITIONS_VALID\x10\x0f\x12 \n" +
+	"\x1cCOMPLETION_TRANSITIONS_VALID\x10\x10\x12\x1a\n" +
+	"\x16INVARIANTS_SATISFIABLE\x10\x11\x12\x1a\n" +
+	"\x16HISTORY_DEFAULTS_VALID\x10\x122\xfb\x01\n" +
 	"\x11SemanticValidator\x12r\n" +
 	"\rValidateChart\x12/.statecharts.validation.v1.ValidateChartRequest\x1a0.statecharts.validation.v1.ValidateChartResponse\x12r\n" +
 	"\rValidateTrace\x12/.statecharts.validation.v1.ValidateTraceRequest\x1a0.statecharts.validation.v1.ValidateTraceResponseB\xe3\x01\n" +

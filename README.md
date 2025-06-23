@@ -42,6 +42,76 @@ The formal specification of the Statecharts model is defined using Protocol Buff
 
 To utilize this Statecharts implementation in research or application development, clone the repository or include it as a dependency in your project. The library provides a foundation for formal verification, model checking, and execution of reactive system specifications.
 
+### Go
+
+The primary implementation is available in Go:
+
+```go
+import "github.com/tmc/sc"
+
+// Create a statechart definition
+statechart := &sc.Statechart{
+    RootState: &sc.State{
+        Label: "root",
+        Children: []*sc.State{
+            {
+                Label:     "off",
+                Type:      sc.StateTypeBasic,
+                IsInitial: true,
+            },
+            {
+                Label: "on",
+                Type:  sc.StateTypeBasic,
+            },
+        },
+    },
+}
+```
+
+### Rust
+
+A fully-featured Rust SDK is available in the `sdks/rust` directory:
+
+```rust
+use statecharts::factory::*;
+use statecharts::v1::*;
+
+// Create states
+let off_state = basic_state("off", true);
+let on_state = basic_state("on", false);
+
+// Create root state with children
+let root = normal_state("root", true, vec![off_state, on_state]);
+
+// Add transition between states
+let transition = transition("PowerOn", vec!["off"], vec!["on"], "POWER_ON");
+
+// Create the statechart
+let mut statechart = statechart(root);
+statechart.transitions.push(transition);
+```
+
+The Rust SDK includes:
+- Generated Protocol Buffer bindings for all statechart types
+- Factory functions for easier statechart creation
+- Support for hierarchical, orthogonal, and history states
+- Examples demonstrating different statechart patterns
+
+To generate and build the Rust SDK:
+
+```bash
+cd proto
+make build-rust
+```
+
+To run examples:
+
+```bash
+cd sdks/rust
+cargo run --example simple_statechart
+cargo run --example orthogonal_statechart
+```
+
 ## Contributing
 
 Contributions to the theoretical foundation or implementation of Statecharts are welcomed. Please adhere to rigorous academic standards when proposing modifications or extensions to the model.
