@@ -1,0 +1,12 @@
+version: v1
+plugins:
+  - name: prost
+    out: ../sdks/rust/src/generated
+    opt:
+      - bytes=.
+      - compile_well_known_types
+      - file_descriptor_set
+  - name: tonic
+    out: ../sdks/rust/src/generated
+    opt:
+      - compile_well_known_types
