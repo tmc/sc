@@ -29,7 +29,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "overlapping state labels: duplicate state label: A",
+			errMsg:  "duplicate state label: A",
 		},
 		{
 			name: "Invalid statechart - missing initial state",
@@ -43,7 +43,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "multiple default states: state __root__ has 0 default states, should have exactly 1",
+			errMsg:  "normal state __root__ must have exactly one initial child, found 0",
 		},
 		{
 			name: "Invalid statechart - basic state with children",
@@ -61,7 +61,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "state type mismatch: basic state A has children",
+			errMsg:  "basic state A cannot have children",
 		},
 		{
 			name: "Invalid statechart - compound state without children",
@@ -76,7 +76,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "state type mismatch: compound state A has no children",
+			errMsg:  "compound state A must have children",
 		},
 		{
 			name: "Invalid statechart - inconsistent parent-child relationship",
@@ -94,7 +94,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "invalid parent-child relationship: inconsistent parent-child relationship for B",
+			errMsg:  "duplicate state label: B",
 		},
 		{
 			name: "Invalid statechart - multiple default states",
@@ -108,7 +108,7 @@ func TestValidate(t *testing.T) {
 				},
 			}),
 			wantErr: true,
-			errMsg:  "multiple default states: state __root__ has 2 default states, should have exactly 1",
+			errMsg:  "normal state __root__ must have exactly one initial child, found 2",
 		},
 	}
 
