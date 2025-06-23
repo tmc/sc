@@ -33,13 +33,18 @@ func NewValidatorClient(target string) (*ValidatorClient, error) {
 // Close closes the connection to the SemanticValidator service.
 func (c *ValidatorClient) Close() error {
 	if c.conn != nil {
-		return c.conn.Close()
+		err := c.conn.Close()
+		c.conn = nil // Ensure subsequent closes are safe
+		return err
 	}
 	return nil
 }
 
 // ValidateStatechart validates a statechart using the SemanticValidator service.
 func (c *ValidatorClient) ValidateStatechart(ctx context.Context, statechart *Statechart) error {
+	if c.client == nil {
+		return fmt.Errorf("validator client is not initialized")
+	}
 	// Convert to proto statechart
 	protoStatechart := &pb.Statechart{
 		RootState:   convertStateToProto(statechart.RootState),
@@ -79,6 +84,9 @@ func (c *ValidatorClient) ValidateStatechart(ctx context.Context, statechart *St
 
 // ValidateTrace validates a statechart trace using the SemanticValidator service.
 func (c *ValidatorClient) ValidateTrace(ctx context.Context, statechart *Statechart, machines []*sc.Machine) error {
+	if c.client == nil {
+		return fmt.Errorf("validator client is not initialized")
+	}
 	// Convert to proto statechart
 	protoStatechart := &pb.Statechart{
 		RootState:   convertStateToProto(statechart.RootState),
