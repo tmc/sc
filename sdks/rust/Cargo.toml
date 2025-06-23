@@ -1,0 +1,29 @@
+[package]
+name = "statecharts"
+version = "0.1.0"
+edition = "2021"
+description = "Rust SDK for the Statecharts library"
+repository = "https://github.com/tmc/sc"
+license = "MIT"
+authors = ["Travis Cline <travis.cline@gmail.com>"]
+
+[dependencies]
+prost = "0.12"
+prost-types = "0.12"
+tonic = "0.10"
+tokio = { version = "1.36", features = ["rt-multi-thread", "macros"] }
+
+[build-dependencies]
+tonic-build = "0.10"
+
+[lib]
+name = "statecharts"
+path = "src/lib.rs"
+
+[[example]]
+name = "simple_statechart"
+path = "examples/simple_statechart.rs"
+
+[[example]]
+name = "orthogonal_statechart"
+path = "examples/orthogonal_statechart.rs"
