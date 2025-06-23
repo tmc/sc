@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statechart Visualizer & Simulator</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <h1>Statechart Visualizer & Simulator</h1>
+            <div class="controls">
+                <select id="example-select">
+                    <option value="">Select an example...</option>
+                </select>
+                <button id="load-example">Load Example</button>
+                <button id="reset-machine">Reset</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="panel-left">
+                <div class="section">
+                    <h3>Statechart Visualization</h3>
+                    <div id="statechart-container"></div>
+                </div>
+            </div>
+
+            <div class="panel-right">
+                <div class="section">
+                    <h3>Current Configuration</h3>
+                    <div id="current-states">
+                        <p class="placeholder">No machine loaded</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Event Controls</h3>
+                    <div id="event-controls">
+                        <input type="text" id="event-input" placeholder="Enter event name..." />
+                        <button id="send-event">Send Event</button>
+                    </div>
+                    <div id="available-events">
+                        <h4>Available Events:</h4>
+                        <div id="event-buttons"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Simulation History</h3>
+                    <div id="history-container">
+                        <div id="step-history"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Machine Context</h3>
+                    <div id="context-display">
+                        <pre id="context-json">{}</pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="status-bar" class="status-bar">
+            <span id="connection-status">Disconnected</span>
+            <span id="machine-info">No machine</span>
+        </div>
+    </div>
+
+    <script src="visualizer.js"></script>
+</body>
+</html>

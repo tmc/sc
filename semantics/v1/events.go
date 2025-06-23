@@ -94,6 +94,7 @@ type EventQueue struct {
 	events []ProcessedEvent
 	mutex  sync.RWMutex
 	cond   *sync.Cond
+	closed bool
 }
 
 // EventTrace represents trace information for event processing
@@ -571,6 +572,10 @@ func (eq *EventQueue) Enqueue(event ProcessedEvent) error {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
 	
+	if eq.closed {
+		return fmt.Errorf("queue is closed")
+	}
+	
 	eq.events = append(eq.events, event)
 	eq.sortEvents()
 	eq.cond.Signal()
@@ -581,6 +586,10 @@ func (eq *EventQueue) Enqueue(event ProcessedEvent) error {
 func (eq *EventQueue) EnqueueInternal(event ProcessedEvent) error {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
+	
+	if eq.closed {
+		return fmt.Errorf("queue is closed")
+	}
 	
 	// Internal events go to the front based on priority
 	eq.events = append(eq.events, event)
@@ -594,7 +603,7 @@ func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
 	
-	for len(eq.events) == 0 {
+	for len(eq.events) == 0 && !eq.closed {
 		// Check if context is done before waiting
 		select {
 		case <-ctx.Done():
@@ -613,7 +622,7 @@ func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 		}
 	}
 	
-	if len(eq.events) == 0 {
+	if len(eq.events) == 0 || eq.closed {
 		return ProcessedEvent{}, false
 	}
 	
@@ -626,6 +635,7 @@ func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 func (eq *EventQueue) Close() {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
+	eq.closed = true
 	eq.cond.Broadcast()
 }
 
