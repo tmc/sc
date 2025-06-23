@@ -6,7 +6,7 @@ import (
 	"github.com/tmc/sc"
 )
 
-func (s *Statechart) Validate() error {
+func (s *Statechart) ValidateAdvanced() error {
 	if err := s.validateRootState(); err != nil {
 		return fmt.Errorf("invalid root state: %w", err)
 	}
