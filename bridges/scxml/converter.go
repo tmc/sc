@@ -7,7 +7,6 @@ import (
 
 	"github.com/tmc/sc"
 	"github.com/tmc/sc/bridges/common"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // Document represents an SCXML document structure.
@@ -164,7 +163,7 @@ func (c *Converter) Export(statechart *sc.Statechart) (Document, error) {
 	if len(statechart.RootState.Children) > 0 {
 		for _, child := range statechart.RootState.Children {
 			if child.IsInitial {
-				doc.Initial = child.ID
+				doc.Initial = child.Label
 				break
 			}
 		}

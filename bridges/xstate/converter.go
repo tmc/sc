@@ -6,7 +6,6 @@ import (
 
 	"github.com/tmc/sc"
 	"github.com/tmc/sc/bridges/common"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // Machine represents an XState machine definition.
