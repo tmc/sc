@@ -1,13 +1,24 @@
+// Import the new tab system components
+import stateManager from './state-manager.js';
+import TabSystem from './tab-system.js';
+import KeyboardShortcuts from './keyboard-shortcuts.js';
+import webSocketClient from './websocket-client.js';
+
 class StatechartVisualizer {
     constructor() {
         this.currentMachine = null;
         this.examples = {};
-        this.websocket = null;
         this.svg = null;
         this.simulation = null;
         
+        // New tab system components
+        this.stateManager = stateManager;
+        this.tabSystem = null;
+        this.keyboardShortcuts = null;
+        this.webSocketClient = webSocketClient;
+        
         this.initializeUI();
-        this.connectWebSocket();
+        this.initializeTabSystem();
         this.loadExamples();
     }
 
@@ -38,32 +49,145 @@ class StatechartVisualizer {
         this.updateMachineInfo('No machine loaded');
     }
 
-    connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
+    initializeTabSystem() {
+        // Replace the right panel with the tab system
+        const rightPanel = document.querySelector('.panel-right');
+        if (rightPanel) {
+            // Initialize tab system in the right panel
+            this.tabSystem = new TabSystem(rightPanel);
+            
+            // Initialize keyboard shortcuts
+            this.keyboardShortcuts = new KeyboardShortcuts(this.tabSystem);
+            
+            // Bind tab system events
+            this.bindTabSystemEvents();
+        }
+    }
+    
+    bindTabSystemEvents() {
+        // Handle keyboard shortcuts
+        this.keyboardShortcuts.addEventListener('newMachine', () => {
+            this.createNewMachine();
+        });
         
-        this.websocket = new WebSocket(wsUrl);
+        this.keyboardShortcuts.addEventListener('saveMachine', () => {
+            this.saveMachine();
+        });
         
-        this.websocket.onopen = () => {
-            this.updateConnectionStatus('connected');
-            console.log('WebSocket connected');
+        this.keyboardShortcuts.addEventListener('resetMachine', () => {
+            this.resetMachine();
+        });
+        
+        // Handle WebSocket events
+        this.webSocketClient.addEventListener('eventProcessed', (e) => {
+            this.handleEventProcessed(e.detail);
+        });
+        
+        this.webSocketClient.addEventListener('machineStateUpdate', (e) => {
+            this.handleMachineStateUpdate(e.detail);
+        });
+    }
+    
+    createNewMachine() {
+        // Create a new blank machine
+        const machineId = `machine-${Date.now()}`;
+        const blankMachine = {
+            id: machineId,
+            statechart: this.getBlankStatechart(),
+            configuration: ['idle'],
+            context: {},
+            created_at: new Date().toISOString()
         };
         
-        this.websocket.onclose = () => {
-            this.updateConnectionStatus('disconnected');
-            console.log('WebSocket disconnected');
-            // Attempt to reconnect after 3 seconds
-            setTimeout(() => this.connectWebSocket(), 3000);
+        this.stateManager.addMachine(blankMachine);
+        this.visualizeStatechart(blankMachine.statechart);
+    }
+    
+    getBlankStatechart() {
+        return {
+            root_state: {
+                label: 'root',
+                type: 2, // compound
+                children: [
+                    {
+                        label: 'idle',
+                        type: 1, // atomic
+                        children: []
+                    }
+                ]
+            },
+            transitions: [],
+            events: []
         };
+    }
+    
+    async saveMachine() {
+        const currentMachine = this.stateManager.getCurrentMachine();
+        if (!currentMachine) {
+            alert('No machine to save');
+            return;
+        }
         
-        this.websocket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('WebSocket message:', data);
-        };
+        try {
+            const response = await fetch(`/api/machines/${currentMachine.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(currentMachine),
+            });
+            
+            if (response.ok) {
+                console.log('Machine saved successfully');
+            } else {
+                throw new Error('Failed to save machine');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            alert('Failed to save machine: ' + error.message);
+        }
+    }
+    
+    handleEventProcessed(eventData) {
+        const { machineId, data } = eventData;
         
-        this.websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
+        if (this.currentMachine && this.currentMachine.id === machineId) {
+            // Update machine state
+            this.currentMachine.configuration = data.configuration;
+            this.currentMachine.context = data.context;
+            
+            // Update state manager
+            this.stateManager.updateMachine(machineId, {
+                configuration: data.configuration,
+                context: data.context
+            });
+            
+            // Update visualization
+            this.updateVisualizationHighlights();
+            
+            // Add to history
+            this.addToHistory(data.event, data.last_step);
+        }
+    }
+    
+    handleMachineStateUpdate(stateData) {
+        const { machineId, data } = stateData;
+        
+        if (this.currentMachine && this.currentMachine.id === machineId) {
+            // Update machine state
+            this.currentMachine.configuration = data.configuration;
+            this.currentMachine.context = data.context;
+            
+            // Update state manager
+            this.stateManager.updateMachine(machineId, {
+                configuration: data.configuration,
+                context: data.context,
+                state: data.state
+            });
+            
+            // Update visualization
+            this.updateVisualizationHighlights();
+        }
     }
 
     async loadExamples() {
@@ -110,7 +234,10 @@ class StatechartVisualizer {
             if (response.ok) {
                 const machine = await response.json();
                 this.currentMachine = machine;
-                this.updateMachineDisplay();
+                
+                // Add to state manager
+                this.stateManager.addMachine(machine);
+                
                 this.visualizeStatechart(statechart);
                 this.updateMachineInfo(`Machine: ${machineId}`);
             } else {
@@ -137,6 +264,10 @@ class StatechartVisualizer {
             if (response.ok) {
                 const machine = await response.json();
                 this.currentMachine = machine;
+                
+                // Update state manager
+                this.stateManager.updateMachine(machine.id, machine);
+                
                 this.updateMachineDisplay();
             } else {
                 const error = await response.text();
@@ -179,8 +310,16 @@ class StatechartVisualizer {
                 this.currentMachine.configuration = result.configuration;
                 this.currentMachine.context = result.context;
                 
+                // Update state manager
+                this.stateManager.updateMachine(this.currentMachine.id, {
+                    configuration: result.configuration,
+                    context: result.context
+                });
+                
+                // Add to event history
+                this.stateManager.addEventToHistory(eventName, result.last_step);
+                
                 this.updateMachineDisplay();
-                this.addToHistory(eventName, result.last_step);
                 eventInput.value = '';
             } else {
                 const error = await response.text();
