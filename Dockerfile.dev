@@ -1,0 +1,199 @@
+# Development Dockerfile for Statechart Library
+FROM golang:1.24-alpine AS go-base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    make \
+    bash \
+    curl \
+    protoc \
+    protobuf-dev \
+    nodejs \
+    npm \
+    python3 \
+    py3-pip \
+    rust \
+    cargo \
+    build-base \
+    linux-headers \
+    docker-cli \
+    docker-compose
+
+# Install buf for protobuf management
+RUN go install github.com/bufbuild/buf/cmd/buf@latest && \
+    go install github.com/tmc/protoc-gen-apidocs@latest
+
+# Install Go tools
+RUN go install golang.org/x/tools/gopls@latest && \
+    go install github.com/go-delve/delve/cmd/dlv@latest && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
+    go install golang.org/x/tools/cmd/goimports@latest && \
+    go install mvdan.cc/gofumpt@latest
+
+# Install Rust protobuf tools
+RUN cargo install protoc-gen-prost protoc-gen-tonic
+
+# Set working directory
+WORKDIR /workspace
+
+# Python development environment
+FROM python:3.11-slim AS python-base
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python development tools
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install \
+    poetry \
+    black \
+    mypy \
+    ruff \
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    grpcio-tools \
+    protobuf
+
+# Node.js development environment
+FROM node:20-alpine AS node-base
+
+RUN apk add --no-cache \
+    git \
+    make \
+    bash
+
+# Main development image
+FROM golang:1.24-bookworm
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    make \
+    bash \
+    curl \
+    wget \
+    protobuf-compiler \
+    protobuf-compiler-grpc \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    docker.io \
+    docker-compose \
+    tmux \
+    vim \
+    neovim \
+    htop \
+    jq \
+    ripgrep \
+    fd-find \
+    bat \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python 3.11
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3-pip \
+    python3.11-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Install buf
+RUN BUF_VERSION="1.28.1" && \
+    curl -sSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-x86_64" -o /usr/local/bin/buf && \
+    chmod +x /usr/local/bin/buf
+
+# Install Go tools
+RUN go install github.com/tmc/protoc-gen-apidocs@latest && \
+    go install golang.org/x/tools/gopls@latest && \
+    go install github.com/go-delve/delve/cmd/dlv@latest && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
+    go install golang.org/x/tools/cmd/goimports@latest && \
+    go install mvdan.cc/gofumpt@latest && \
+    go install github.com/air-verse/air@latest
+
+# Install Rust protobuf tools
+RUN cargo install protoc-gen-prost protoc-gen-tonic
+
+# Install Python tools globally
+RUN pip3 install --upgrade pip setuptools wheel && \
+    pip3 install \
+    poetry \
+    black \
+    mypy \
+    ruff \
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    grpcio-tools \
+    protobuf \
+    flask \
+    fastapi \
+    uvicorn \
+    django
+
+# Install global Node.js tools
+RUN npm install -g \
+    @playwright/test \
+    concurrently \
+    nodemon \
+    eslint \
+    prettier \
+    rollup \
+    jest \
+    typescript \
+    @types/node
+
+# Create workspace directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV GO111MODULE=on
+ENV GOPROXY=https://proxy.golang.org,direct
+ENV PATH="/workspace/bin:/go/bin:/root/.cargo/bin:${PATH}"
+ENV PYTHONPATH="/workspace/sdks/python:${PYTHONPATH}"
+
+# Create directories for hot-reload
+RUN mkdir -p /workspace/.cache/go-build && \
+    mkdir -p /workspace/.cache/pip && \
+    mkdir -p /workspace/.cache/npm && \
+    mkdir -p /workspace/.cache/cargo
+
+# Set cache directories
+ENV GOCACHE=/workspace/.cache/go-build
+ENV PIP_CACHE_DIR=/workspace/.cache/pip
+ENV npm_config_cache=/workspace/.cache/npm
+ENV CARGO_HOME=/workspace/.cache/cargo
+
+# Install development utilities
+RUN go install github.com/cweill/gotests/gotests@latest && \
+    go install github.com/fatih/gomodifytags@latest && \
+    go install github.com/josharian/impl@latest && \
+    go install github.com/haya14busa/goplay/cmd/goplay@latest
+
+# Add shell configuration
+RUN echo 'alias ll="ls -la"' >> ~/.bashrc && \
+    echo 'alias gs="git status"' >> ~/.bashrc && \
+    echo 'alias gd="git diff"' >> ~/.bashrc && \
+    echo 'alias gl="git log --oneline --graph"' >> ~/.bashrc && \
+    echo 'export PS1="\[\033[01;32m\]statechart-dev\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$ "' >> ~/.bashrc
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["/bin/bash"]

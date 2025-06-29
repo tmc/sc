@@ -1,0 +1,38 @@
+# Prometheus configuration for statechart library development
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # Add any rule files here
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Web visualizer application
+  - job_name: 'web-visualizer'
+    static_configs:
+      - targets: ['web-visualizer:8080']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+
+  # Development services
+  - job_name: 'dev-services'
+    static_configs:
+      - targets: ['dev:8080', 'python-dev:5000', 'python-dev:8000']
+    scrape_interval: 30s
+
+  # Database monitoring (if metrics endpoint available)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['database:5432']
+    scrape_interval: 30s
+
+  # Redis monitoring (if metrics endpoint available)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s

@@ -1,0 +1,28 @@
+# Example override file for local development customization
+# Copy this to docker-compose.override.yml and adjust as needed
+
+version: '3.8'
+
+services:
+  dev:
+    # Override environment variables for local development
+    environment:
+      - CUSTOM_ENV_VAR=value
+      
+    # Mount additional volumes for local configuration
+    volumes:
+      - ~/.gitconfig:/root/.gitconfig:ro
+      - ~/.ssh:/root/.ssh:ro
+      
+    # Expose additional ports if needed
+    ports:
+      - "9090:9090"  # Additional debug port
+      
+  # Disable services not needed for local development
+  # postgres:
+  #   deploy:
+  #     replicas: 0
+      
+  # redis:
+  #   deploy:
+  #     replicas: 0

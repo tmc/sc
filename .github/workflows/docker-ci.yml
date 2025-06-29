@@ -1,0 +1,231 @@
+name: Docker CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test-docker-environment:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Test Docker environment
+      run: |
+        chmod +x scripts/test-docker.sh
+        ./scripts/test-docker.sh
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs: test-docker-environment
+    
+    strategy:
+      matrix:
+        component: [go, python, rust, web]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build development image
+      run: |
+        docker-compose build dev
+        
+    - name: Test Go components
+      if: matrix.component == 'go'
+      run: |
+        docker-compose run --rm dev bash -c "
+          cd /workspace &&
+          make generate &&
+          go test ./... -v -race -coverprofile=coverage.out &&
+          go tool cover -html=coverage.out -o coverage.html
+        "
+        
+    - name: Test Python SDK
+      if: matrix.component == 'python'
+      run: |
+        docker-compose run --rm dev bash -c "
+          cd /workspace/sdks/python &&
+          pip install -e .[dev,web] &&
+          pytest --cov=statecharts --cov-report=html
+        "
+        
+    - name: Test Rust SDK
+      if: matrix.component == 'rust'
+      run: |
+        docker-compose run --rm dev bash -c "
+          cd /workspace/sdks/rust &&
+          cargo test &&
+          cargo clippy -- -D warnings
+        "
+        
+    - name: Test Web Visualizer
+      if: matrix.component == 'web'
+      run: |
+        docker-compose run --rm dev bash -c "
+          cd /workspace/cmd/web-visualizer &&
+          npm install &&
+          npm run lint &&
+          npm run test:unit
+        "
+        
+    - name: Upload coverage reports
+      if: matrix.component == 'go'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        flags: go
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.component }}
+        path: |
+          coverage.html
+          coverage.out
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Run integration tests
+      run: |
+        docker-compose up -d
+        
+        # Wait for services
+        sleep 30
+        
+        # Run integration tests
+        docker-compose exec -T dev bash -c "
+          cd /workspace &&
+          go test ./integration/... -v -tags=integration
+        "
+        
+        # Run end-to-end tests (if available)
+        docker-compose exec -T dev bash -c "
+          cd /workspace/cmd/web-visualizer &&
+          npm run test:e2e || echo 'E2E tests not available'
+        "
+        
+    - name: Cleanup
+      if: always()
+      run: docker-compose down -v
+
+  build-production-images:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push web visualizer
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.prod
+        target: alpine
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web-visualizer:${{ github.sha }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Build and push Python API
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.prod
+        target: python-prod
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/python-api:${{ github.sha }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-production-images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web-visualizer:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [integration-tests, security-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your deployment steps here
+        # For example, using docker-compose with production config:
+        # docker-compose -f docker-compose.prod.yml up -d
+        
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests..."
+        # Add smoke test commands here
+        # curl -f http://staging.example.com/health || exit 1

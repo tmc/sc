@@ -1,0 +1,189 @@
+version: '3.8'
+
+services:
+  # Main development container
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: statechart-dev:latest
+    container_name: statechart-dev
+    volumes:
+      # Mount the entire project
+      - .:/workspace:cached
+      # Persist Go modules
+      - go-modules:/go/pkg/mod
+      # Persist build caches
+      - go-build-cache:/workspace/.cache/go-build
+      - pip-cache:/workspace/.cache/pip
+      - npm-cache:/workspace/.cache/npm
+      - cargo-cache:/workspace/.cache/cargo
+      # Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    environment:
+      - GO111MODULE=on
+      - GOPROXY=https://proxy.golang.org,direct
+      - CGO_ENABLED=1
+      - GOPATH=/go
+      - PATH=/workspace/bin:/go/bin:/root/.cargo/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    networks:
+      - statechart-net
+    ports:
+      # Web visualizer
+      - "8080:8080"
+      # gRPC service
+      - "50051:50051"
+      # Python FastAPI
+      - "8000:8000"
+      # Python Flask
+      - "5000:5000"
+      # Delve debugger
+      - "2345:2345"
+      # Node.js debug
+      - "9229:9229"
+    command: tail -f /dev/null
+    stdin_open: true
+    tty: true
+
+  # Web visualizer service with hot-reload
+  web-visualizer:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: statechart-dev:latest
+    container_name: statechart-visualizer
+    volumes:
+      - .:/workspace:cached
+      - go-modules:/go/pkg/mod
+      - npm-cache:/workspace/.cache/npm
+    working_dir: /workspace/cmd/web-visualizer
+    environment:
+      - GO111MODULE=on
+      - NODE_ENV=development
+    networks:
+      - statechart-net
+    ports:
+      - "8081:8080"
+      - "8082:8082"  # WebSocket port
+    command: >
+      bash -c "
+        npm install &&
+        air -c .air.toml
+      "
+    depends_on:
+      - dev
+
+  # Python SDK development server
+  python-sdk:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: statechart-dev:latest
+    container_name: statechart-python
+    volumes:
+      - .:/workspace:cached
+      - pip-cache:/workspace/.cache/pip
+    working_dir: /workspace/sdks/python
+    environment:
+      - PYTHONPATH=/workspace/sdks/python
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    networks:
+      - statechart-net
+    ports:
+      - "5001:5000"  # Flask
+      - "8001:8000"  # FastAPI
+    command: >
+      bash -c "
+        pip install -e .[dev,web] &&
+        python -m uvicorn statecharts.integrations.fastapi_integration:app --reload --host 0.0.0.0 --port 8000
+      "
+    depends_on:
+      - dev
+
+  # Rust SDK development server
+  rust-sdk:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: statechart-dev:latest
+    container_name: statechart-rust
+    volumes:
+      - .:/workspace:cached
+      - cargo-cache:/workspace/.cache/cargo
+      - cargo-registry:/root/.cargo/registry
+    working_dir: /workspace/sdks/rust
+    environment:
+      - RUST_BACKTRACE=1
+      - CARGO_HOME=/workspace/.cache/cargo
+    networks:
+      - statechart-net
+    command: >
+      bash -c "
+        cargo watch -x 'test' -x 'run --example simple_statechart'
+      "
+    depends_on:
+      - dev
+
+  # PostgreSQL for persistence (optional)
+  postgres:
+    image: postgres:16-alpine
+    container_name: statechart-postgres
+    environment:
+      - POSTGRES_USER=statechart
+      - POSTGRES_PASSWORD=statechart
+      - POSTGRES_DB=statechart
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - statechart-net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U statechart"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching/session storage (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: statechart-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - statechart-net
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Documentation server
+  docs:
+    image: nginx:alpine
+    container_name: statechart-docs
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+    networks:
+      - statechart-net
+    ports:
+      - "8090:80"
+
+networks:
+  statechart-net:
+    driver: bridge
+
+volumes:
+  go-modules:
+  go-build-cache:
+  pip-cache:
+  npm-cache:
+  cargo-cache:
+  cargo-registry:
+  postgres-data:
+  redis-data:

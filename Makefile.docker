@@ -1,0 +1,75 @@
+# Docker-specific Makefile targets
+
+.PHONY: docker-build
+docker-build: ## Build the development Docker image
+	@echo "Building Docker development image..."
+	@docker-compose build --no-cache dev
+
+.PHONY: docker-up
+docker-up: ## Start all Docker services
+	@echo "Starting Docker services..."
+	@docker-compose up -d
+	@echo "Services started. Run 'make docker-logs' to view logs."
+
+.PHONY: docker-down
+docker-down: ## Stop all Docker services
+	@echo "Stopping Docker services..."
+	@docker-compose down
+
+.PHONY: docker-clean
+docker-clean: ## Clean up Docker resources
+	@echo "Cleaning Docker resources..."
+	@docker-compose down -v --remove-orphans
+	@docker system prune -f
+
+.PHONY: docker-logs
+docker-logs: ## View logs from all services
+	@docker-compose logs -f
+
+.PHONY: docker-shell
+docker-shell: ## Open a shell in the dev container
+	@docker-compose exec dev bash
+
+.PHONY: docker-test
+docker-test: ## Run all tests in Docker
+	@echo "Running tests in Docker..."
+	@docker-compose exec dev bash -c "cd /workspace && go test ./..."
+
+.PHONY: docker-generate
+docker-generate: ## Generate protobuf code in Docker
+	@echo "Generating protobuf code in Docker..."
+	@docker-compose exec dev bash -c "cd /workspace && make generate"
+
+.PHONY: docker-web
+docker-web: ## Start web visualizer with hot-reload
+	@echo "Starting web visualizer..."
+	@docker-compose up -d web-visualizer
+	@echo "Web visualizer available at http://localhost:8081"
+
+.PHONY: docker-python
+docker-python: ## Start Python SDK server
+	@echo "Starting Python SDK server..."
+	@docker-compose up -d python-sdk
+	@echo "FastAPI server available at http://localhost:8001"
+	@echo "API docs available at http://localhost:8001/docs"
+
+.PHONY: docker-rust
+docker-rust: ## Start Rust SDK development
+	@echo "Starting Rust SDK development..."
+	@docker-compose up -d rust-sdk
+
+.PHONY: docker-status
+docker-status: ## Show status of all Docker services
+	@docker-compose ps
+
+.PHONY: docker-rebuild
+docker-rebuild: docker-clean docker-build docker-up ## Full rebuild of Docker environment
+
+.PHONY: help
+help: ## Show this help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.DEFAULT_GOAL := help

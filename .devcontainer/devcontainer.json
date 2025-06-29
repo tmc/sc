@@ -1,0 +1,182 @@
+{
+  "name": "Statechart Development Environment",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Go
+        "golang.go",
+        "golang.go-nightly",
+        
+        // Python
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        
+        // JavaScript/TypeScript
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        
+        // Rust
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        
+        // Protocol Buffers
+        "pbkit.vscode-pbkit",
+        "zxh404.vscode-proto3",
+        
+        // Docker
+        "ms-azuretools.vscode-docker",
+        
+        // Git
+        "mhutchie.git-graph",
+        "eamodio.gitlens",
+        
+        // Markdown
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        
+        // Utilities
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode.hexeditor",
+        "streetsidesoftware.code-spell-checker",
+        "aaron-bond.better-comments",
+        "gruntfuggly.todo-tree",
+        
+        // Testing
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        
+        // REST Client for API testing
+        "humao.rest-client"
+      ],
+      
+      "settings": {
+        // Go settings
+        "go.gopath": "/go",
+        "go.goroot": "/usr/local/go",
+        "go.toolsManagement.checkForUpdates": "local",
+        "go.useLanguageServer": true,
+        "go.lintOnSave": "package",
+        "go.formatTool": "goimports",
+        "go.lintTool": "golangci-lint",
+        "go.testFlags": ["-v"],
+        "go.buildTags": "",
+        "go.coverMode": "atomic",
+        "go.coverageDecorator": {
+          "type": "gutter",
+          "coveredHighlightColor": "rgba(64,128,128,0.5)",
+          "uncoveredHighlightColor": "rgba(128,64,64,0.25)"
+        },
+        
+        // Python settings
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.terminal.activateEnvironment": false,
+        "python.linting.enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.formatting.provider": "black",
+        "python.sortImports.args": ["--profile", "black"],
+        
+        // Rust settings
+        "rust-analyzer.server.path": "/root/.cargo/bin/rust-analyzer",
+        "rust-analyzer.cargo.buildScripts.enable": true,
+        "rust-analyzer.checkOnSave.command": "clippy",
+        
+        // JavaScript/TypeScript settings
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "javascript.preferences.importModuleSpecifier": "relative",
+        "eslint.workingDirectories": ["cmd/web-visualizer"],
+        
+        // Editor settings
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true,
+          "source.fixAll.eslint": true
+        },
+        "editor.rulers": [80, 120],
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        
+        // Terminal settings
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash",
+            "args": []
+          }
+        },
+        
+        // File associations
+        "files.associations": {
+          "*.proto": "proto3",
+          "Dockerfile*": "dockerfile",
+          "*.air.toml": "toml"
+        },
+        
+        // Workspace settings
+        "explorer.fileNesting.enabled": true,
+        "explorer.fileNesting.patterns": {
+          "*.go": "${capture}_test.go",
+          "*.proto": "${capture}.pb.go,${capture}_grpc.pb.go",
+          "package.json": "package-lock.json,yarn.lock",
+          "Cargo.toml": "Cargo.lock"
+        }
+      }
+    }
+  },
+  
+  "postCreateCommand": "echo 'Development container ready! Run make help to see available commands.'",
+  
+  "mounts": [
+    "source=${localWorkspaceFolder}/.vscode,target=/workspace/.vscode,type=bind,consistency=cached"
+  ],
+  
+  "forwardPorts": [8080, 8081, 5000, 8000, 5432, 6379, 2345, 9229],
+  "portsAttributes": {
+    "8080": {
+      "label": "Web Visualizer",
+      "onAutoForward": "notify"
+    },
+    "8081": {
+      "label": "Web Visualizer (Hot Reload)",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "Python Flask",
+      "onAutoForward": "silent"
+    },
+    "8000": {
+      "label": "Python FastAPI",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "silent"
+    },
+    "2345": {
+      "label": "Go Delve Debugger",
+      "onAutoForward": "silent"
+    },
+    "9229": {
+      "label": "Node.js Debugger",
+      "onAutoForward": "silent"
+    }
+  },
+  
+  "remoteUser": "root"
+}
