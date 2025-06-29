@@ -145,10 +145,16 @@ func (m *MachineWrapper) GetContext() *structpb.Struct {
 // getContextUnsafe returns a copy of the current context without acquiring locks.
 // This should only be called when the caller already holds a lock.
 func (m *MachineWrapper) getContextUnsafe() *structpb.Struct {
+	if m.Context == nil {
+		return &structpb.Struct{Fields: make(map[string]*structpb.Value)}
+	}
+	
 	// Create a shallow copy of the context
 	fields := make(map[string]*structpb.Value)
-	for k, v := range m.Context.Fields {
-		fields[k] = v
+	if m.Context.Fields != nil {
+		for k, v := range m.Context.Fields {
+			fields[k] = v
+		}
 	}
 	
 	return &structpb.Struct{Fields: fields}
@@ -272,9 +278,10 @@ func (m *MachineWrapper) step(eventName string) (bool, error) {
 
 // findEnabledTransitions finds all transitions enabled by the given event.
 func (m *MachineWrapper) findEnabledTransitions(eventName string) ([]*sc.Transition, error) {
-	var enabled []*sc.Transition
+	// Pre-allocate with estimated capacity to reduce allocations
+	enabled := make([]*sc.Transition, 0, 8)
 
-	currentStates := make(map[string]bool)
+	currentStates := make(map[string]bool, len(m.Configuration.States))
 	for _, stateRef := range m.Configuration.States {
 		currentStates[stateRef.Label] = true
 	}

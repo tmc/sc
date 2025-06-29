@@ -148,6 +148,10 @@ func (c *Converter) Import(doc Document) (*sc.Statechart, error) {
 
 // Export converts Harel core semantics to SCXML document format.
 func (c *Converter) Export(statechart *sc.Statechart) (Document, error) {
+	if statechart == nil {
+		return Document{}, common.NewConversionError("scxml", "export", "statechart",
+			fmt.Errorf("statechart cannot be nil"))
+	}
 	if statechart.RootState == nil {
 		return Document{}, common.NewConversionError("scxml", "export", "rootState",
 			fmt.Errorf("root state is required"))

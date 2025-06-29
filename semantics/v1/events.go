@@ -394,7 +394,8 @@ func (ep *EventProcessor) handleExitEvent(event ProcessedEvent) ([]string, []str
 
 // findEnabledTransitions finds all transitions enabled by the given event
 func (ep *EventProcessor) findEnabledTransitions(eventLabel string, currentStates []string) []*sc.Transition {
-	var enabled []*sc.Transition
+	// Pre-allocate with estimated capacity
+	enabled := make([]*sc.Transition, 0, 4)
 	
 	for _, transition := range ep.machine.Statechart.Transitions {
 		if transition.Event == eventLabel {
@@ -546,6 +547,8 @@ func (ep *EventProcessor) applyFilters(event ProcessedEvent) bool {
 }
 
 // addTrace adds a trace entry if tracing is enabled
+const maxTraceSize = 10000 // Maximum number of trace entries to keep
+
 func (ep *EventProcessor) addTrace(event ProcessedEvent, action string, fromStates, toStates, transitions []string, err error) {
 	if !ep.tracing {
 		return
@@ -565,6 +568,13 @@ func (ep *EventProcessor) addTrace(event ProcessedEvent, action string, fromStat
 	}
 	
 	ep.trace = append(ep.trace, trace)
+	
+	// Prevent unbounded growth by keeping only the most recent traces
+	if len(ep.trace) > maxTraceSize {
+		// Keep the second half to maintain continuity
+		copy(ep.trace, ep.trace[maxTraceSize/2:])
+		ep.trace = ep.trace[:maxTraceSize/2]
+	}
 }
 
 // Enqueue adds an event to the queue
