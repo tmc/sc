@@ -3,6 +3,7 @@ import stateManager from './state-manager.js';
 import TabSystem from './tab-system.js';
 import KeyboardShortcuts from './keyboard-shortcuts.js';
 import webSocketClient from './websocket-client.js';
+import { PerformanceOptimizer } from './performance-optimizer.js';
 
 class StatechartVisualizer {
     constructor() {
@@ -23,6 +24,9 @@ class StatechartVisualizer {
         this.nodeMap = new Map();
         this.bounds = { width: 0, height: 0, minX: 0, minY: 0, maxX: 0, maxY: 0 };
         
+        // Performance optimization
+        this.performanceOptimizer = null;
+        
         // New tab system components
         this.stateManager = stateManager;
         this.tabSystem = null;
@@ -35,6 +39,7 @@ class StatechartVisualizer {
         this.initializeTabSystem();
         this.initializeEventSystem();
         this.initializeExportSystem();
+        this.initializePerformanceOptimizer();
         this.loadExamples();
     }
 
@@ -137,6 +142,35 @@ class StatechartVisualizer {
             
             // Make it available globally for integration
             window.exportManager = this.exportManager;
+        }
+    }
+
+    initializePerformanceOptimizer() {
+        // Initialize performance optimizer
+        this.performanceOptimizer = new PerformanceOptimizer(this);
+        
+        // Add performance status display
+        this.addPerformanceDisplay();
+        
+        console.log('✅ Performance optimizer initialized');
+    }
+
+    addPerformanceDisplay() {
+        // Add performance indicator to status bar
+        const statusBar = document.getElementById('status-bar');
+        if (statusBar) {
+            const perfIndicator = document.createElement('div');
+            perfIndicator.className = 'status-item performance-indicator';
+            perfIndicator.innerHTML = `
+                <span class="status-text" id="performance-fps">60 FPS</span>
+                <span class="status-text" id="performance-nodes">0 nodes</span>
+                <span class="status-text" id="performance-lod">High</span>
+            `;
+            
+            const statusRight = statusBar.querySelector('.status-right');
+            if (statusRight) {
+                statusRight.insertBefore(perfIndicator, statusRight.firstChild);
+            }
         }
     }
     
@@ -468,20 +502,25 @@ class StatechartVisualizer {
         this.bounds.width = width;
         this.bounds.height = height;
         
+        // Performance check - determine if we need optimization
+        const nodeCount = this.performanceOptimizer ? this.performanceOptimizer.countNodes(statechart) : 0;
+        const useOptimizedRendering = nodeCount > 100;
+        
         // Create SVG with zoom/pan support
         const svg = d3.select(container)
             .append('svg')
             .attr('width', width)
             .attr('height', height)
             .style('cursor', 'default');
+        
+        this.svg = svg;
 
-        // Setup zoom behavior
+        // Setup zoom behavior with performance optimization
         this.zoom = d3.zoom()
             .scaleExtent([0.1, 10])
             .on('zoom', (event) => {
                 this.transform = event.transform;
-                this.mainGroup.attr('transform', this.transform);
-                this.updateMinimap();
+                this.onZoomChanged(event.transform);
             });
 
         svg.call(this.zoom);
@@ -493,17 +532,13 @@ class StatechartVisualizer {
         this.mainGroup = svg.append('g')
             .attr('class', 'main-group');
 
-        // Create hierarchical layout
-        const root = this.createHierarchy(statechart.root_state);
-        const treeLayout = d3.tree().size([width - 200, height - 200]);
-        const treeData = treeLayout(root);
-        
-        // Calculate content bounds
-        this.calculateContentBounds(treeData);
-        
-        // Draw states and transitions
-        this.drawStates(this.mainGroup, treeData);
-        this.drawTransitions(this.mainGroup, statechart.transitions, treeData);
+        if (useOptimizedRendering && this.performanceOptimizer) {
+            // Use performance-optimized rendering
+            this.renderWithOptimization(statechart, svg);
+        } else {
+            // Use standard rendering for smaller statecharts
+            this.renderStandard(statechart, svg);
+        }
         
         // Initialize minimap
         this.initializeMinimap();
@@ -513,6 +548,88 @@ class StatechartVisualizer {
         
         // Fit to screen initially
         this.fitToScreen();
+        
+        // Update performance display
+        this.updatePerformanceDisplay(nodeCount, useOptimizedRendering);
+    }
+
+    onZoomChanged(transform) {
+        this.transform = transform;
+        
+        // Apply transform to main group
+        this.mainGroup.attr('transform', transform);
+        
+        // Update minimap
+        this.updateMinimap();
+        
+        // If using performance optimization, re-render with new viewport
+        if (this.performanceOptimizer && this.currentStatechart) {
+            const nodeCount = this.performanceOptimizer.countNodes(this.currentStatechart);
+            if (nodeCount > 100) {
+                this.performanceOptimizer.optimizeStatechartRendering(
+                    this.currentStatechart, 
+                    this.svg, 
+                    transform
+                );
+            }
+        }
+    }
+
+    renderWithOptimization(statechart, svg) {
+        console.log('🚀 Using performance-optimized rendering');
+        
+        // Use performance optimizer for large statecharts
+        const renderResult = this.performanceOptimizer.optimizeStatechartRendering(
+            statechart, 
+            svg, 
+            this.transform
+        );
+        
+        console.log(`Rendered ${renderResult.nodesRendered} nodes, ${renderResult.transitionsRendered} transitions (${renderResult.strategy})`);
+    }
+
+    renderStandard(statechart, svg) {
+        console.log('📊 Using standard rendering');
+        
+        // Create hierarchical layout
+        const root = this.createHierarchy(statechart.root_state);
+        const treeLayout = d3.tree().size([this.bounds.width - 200, this.bounds.height - 200]);
+        const treeData = treeLayout(root);
+        
+        // Calculate content bounds
+        this.calculateContentBounds(treeData);
+        
+        // Draw states and transitions using standard methods
+        this.drawStates(this.mainGroup, treeData);
+        this.drawTransitions(this.mainGroup, statechart.transitions, treeData);
+    }
+
+    updatePerformanceDisplay(nodeCount, optimized) {
+        const fpsElement = document.getElementById('performance-fps');
+        const nodesElement = document.getElementById('performance-nodes');
+        const lodElement = document.getElementById('performance-lod');
+        
+        if (nodesElement) {
+            nodesElement.textContent = `${nodeCount} nodes`;
+        }
+        
+        if (lodElement) {
+            const lod = optimized ? 
+                (this.performanceOptimizer ? this.performanceOptimizer.levelOfDetail.current : 'Medium') : 
+                'High';
+            lodElement.textContent = lod;
+        }
+        
+        // Update FPS display (will be updated by performance monitor)
+        if (this.performanceOptimizer) {
+            const fps = Math.round(this.performanceOptimizer.performanceMonitor.getCurrentFps());
+            if (fpsElement) {
+                fpsElement.textContent = `${fps} FPS`;
+                fpsElement.className = fps < 30 ? 'status-text fps-low' : 
+                                     fps < 50 ? 'status-text fps-medium' : 
+                                     'status-text fps-high';
+            }
+        }
     }
 
     createHierarchy(state) {

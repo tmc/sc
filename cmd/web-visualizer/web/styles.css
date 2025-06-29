@@ -897,6 +897,73 @@ body {
     box-shadow: 0 0 6px rgba(220, 53, 69, 0.5);
 }
 
+/* Performance Indicators */
+.performance-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-tertiary);
+    border-radius: 4px;
+    border: 1px solid var(--color-border-secondary);
+}
+
+.performance-indicator .status-text {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+.fps-high {
+    color: var(--color-success) !important;
+}
+
+.fps-medium {
+    color: var(--color-warning) !important;
+}
+
+.fps-low {
+    color: var(--color-error) !important;
+    animation: fps-warning 2s ease-in-out infinite;
+}
+
+@keyframes fps-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Performance optimization visual indicators */
+.optimized-nodes .optimized-node {
+    transition: opacity 0.2s ease;
+}
+
+.optimized-nodes .optimized-node.culled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.optimized-transitions .optimized-transition {
+    transition: opacity 0.2s ease;
+}
+
+.optimized-transitions .optimized-transition.simplified {
+    stroke-width: 1px;
+    opacity: 0.7;
+}
+
+/* Level of Detail indicators */
+.lod-low .node-label {
+    display: none;
+}
+
+.lod-medium .node-label {
+    font-size: 8px;
+}
+
+.lod-high .node-label {
+    font-size: 12px;
+}
+
 .status-text {
     font-weight: var(--font-weight-medium);
 }

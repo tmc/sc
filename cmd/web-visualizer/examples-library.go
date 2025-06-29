@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	sc "github.com/tmc/sc/gen/statecharts/v1"
 )
 
@@ -37,6 +38,10 @@ func GetRealWorldExamples() map[string]*sc.Statechart {
 	
 	// Chat Application
 	examples["chat_application"] = createChatApplication()
+	
+	// Large-scale performance test examples
+	examples["large_hierarchy"] = createLargeHierarchicalStatechart()
+	examples["complex_workflow"] = createComplexWorkflowStatechart()
 	
 	return examples
 }
@@ -761,5 +766,288 @@ func createChatApplication() *sc.Statechart {
 			{Label: "SET_INVISIBLE"},
 			{Label: "SET_ONLINE"},
 		},
+	}
+}
+
+// Large Hierarchical Statechart for performance testing (150+ states)
+func createLargeHierarchicalStatechart() *sc.Statechart {
+	states := make([]*sc.State, 0)
+	transitions := make([]*sc.Transition, 0)
+	events := make([]*sc.Event, 0)
+	
+	// Create a deep hierarchical structure with many states
+	for i := 0; i < 10; i++ {
+		// Level 1 - Major subsystems
+		subsystemStates := make([]*sc.State, 0)
+		
+		for j := 0; j < 15; j++ {
+			// Level 2 - Components within subsystems
+			componentStates := make([]*sc.State, 0)
+			
+			for k := 0; k < 5; k++ {
+				// Level 3 - Individual states
+				stateName := fmt.Sprintf("State_%d_%d_%d", i, j, k)
+				state := &sc.State{
+					Label:    stateName,
+					Type:     1, // atomic
+					Children: []*sc.State{},
+				}
+				
+				if k == 0 {
+					state.IsInitial = true
+				}
+				if k == 4 {
+					state.IsFinal = true
+				}
+				
+				componentStates = append(componentStates, state)
+				
+				// Add transitions between states in the same component
+				if k > 0 {
+					prevStateName := fmt.Sprintf("State_%d_%d_%d", i, j, k-1)
+					eventName := fmt.Sprintf("NEXT_%d_%d_%d", i, j, k)
+					
+					transitions = append(transitions, &sc.Transition{
+						From:  []string{prevStateName},
+						To:    []string{stateName},
+						Event: eventName,
+					})
+					
+					events = append(events, &sc.Event{Label: eventName})
+				}
+			}
+			
+			componentName := fmt.Sprintf("Component_%d_%d", i, j)
+			component := &sc.State{
+				Label:    componentName,
+				Type:     2, // compound
+				Children: componentStates,
+			}
+			
+			subsystemStates = append(subsystemStates, component)
+			
+			// Add transitions between components
+			if j > 0 {
+				prevComponentName := fmt.Sprintf("Component_%d_%d", i, j-1)
+				eventName := fmt.Sprintf("COMPONENT_TRANSITION_%d_%d", i, j)
+				
+				transitions = append(transitions, &sc.Transition{
+					From:  []string{prevComponentName},
+					To:    []string{componentName},
+					Event: eventName,
+				})
+				
+				events = append(events, &sc.Event{Label: eventName})
+			}
+		}
+		
+		subsystemName := fmt.Sprintf("Subsystem_%d", i)
+		subsystem := &sc.State{
+			Label:    subsystemName,
+			Type:     2, // compound
+			Children: subsystemStates,
+		}
+		
+		if i == 0 {
+			subsystem.IsInitial = true
+		}
+		
+		states = append(states, subsystem)
+		
+		// Add transitions between subsystems
+		if i > 0 {
+			prevSubsystemName := fmt.Sprintf("Subsystem_%d", i-1)
+			eventName := fmt.Sprintf("SUBSYSTEM_TRANSITION_%d", i)
+			
+			transitions = append(transitions, &sc.Transition{
+				From:  []string{prevSubsystemName},
+				To:    []string{subsystemName},
+				Event: eventName,
+			})
+			
+			events = append(events, &sc.Event{Label: eventName})
+		}
+	}
+	
+	return &sc.Statechart{
+		RootState: &sc.State{
+			Label:    "__root__",
+			Type:     2, // compound
+			Children: states,
+		},
+		Transitions: transitions,
+		Events:      events,
+	}
+}
+
+// Complex Workflow Statechart for performance testing (200+ states, many transitions)
+func createComplexWorkflowStatechart() *sc.Statechart {
+	states := make([]*sc.State, 0)
+	transitions := make([]*sc.Transition, 0)
+	events := make([]*sc.Event, 0)
+	
+	// Create multiple parallel workflow tracks
+	parallelTracks := make([]*sc.State, 0)
+	
+	for trackId := 0; trackId < 5; trackId++ {
+		trackStates := make([]*sc.State, 0)
+		
+		// Each track has multiple stages
+		for stageId := 0; stageId < 8; stageId++ {
+			stageStates := make([]*sc.State, 0)
+			
+			// Each stage has multiple steps
+			for stepId := 0; stepId < 10; stepId++ {
+				stepName := fmt.Sprintf("Track%d_Stage%d_Step%d", trackId, stageId, stepId)
+				step := &sc.State{
+					Label:    stepName,
+					Type:     1, // atomic
+					Children: []*sc.State{},
+				}
+				
+				if stepId == 0 && stageId == 0 {
+					step.IsInitial = true
+				}
+				
+				stageStates = append(stageStates, step)
+				
+				// Linear progression within stage
+				if stepId > 0 {
+					prevStepName := fmt.Sprintf("Track%d_Stage%d_Step%d", trackId, stageId, stepId-1)
+					eventName := fmt.Sprintf("STEP_COMPLETE_%d_%d_%d", trackId, stageId, stepId)
+					
+					transitions = append(transitions, &sc.Transition{
+						From:  []string{prevStepName},
+						To:    []string{stepName},
+						Event: eventName,
+					})
+					
+					events = append(events, &sc.Event{Label: eventName})
+				}
+				
+				// Add error transitions (every step can go to error state)
+				errorStateName := fmt.Sprintf("Track%d_Error", trackId)
+				errorEventName := fmt.Sprintf("ERROR_%d_%d_%d", trackId, stageId, stepId)
+				
+				transitions = append(transitions, &sc.Transition{
+					From:  []string{stepName},
+					To:    []string{errorStateName},
+					Event: errorEventName,
+				})
+				
+				events = append(events, &sc.Event{Label: errorEventName})
+			}
+			
+			stageName := fmt.Sprintf("Track%d_Stage%d", trackId, stageId)
+			stage := &sc.State{
+				Label:    stageName,
+				Type:     2, // compound
+				Children: stageStates,
+			}
+			
+			trackStates = append(trackStates, stage)
+			
+			// Stage to stage transitions
+			if stageId > 0 {
+				prevStageName := fmt.Sprintf("Track%d_Stage%d", trackId, stageId-1)
+				eventName := fmt.Sprintf("STAGE_COMPLETE_%d_%d", trackId, stageId)
+				
+				transitions = append(transitions, &sc.Transition{
+					From:  []string{prevStageName},
+					To:    []string{stageName},
+					Event: eventName,
+				})
+				
+				events = append(events, &sc.Event{Label: eventName})
+			}
+		}
+		
+		// Add error and completed states for each track
+		errorState := &sc.State{
+			Label:    fmt.Sprintf("Track%d_Error", trackId),
+			Type:     1, // atomic
+			Children: []*sc.State{},
+		}
+		
+		completedState := &sc.State{
+			Label:    fmt.Sprintf("Track%d_Completed", trackId),
+			Type:     1, // atomic
+			IsFinal:  true,
+			Children: []*sc.State{},
+		}
+		
+		trackStates = append(trackStates, errorState, completedState)
+		
+		// Final stage to completed transition
+		finalStageName := fmt.Sprintf("Track%d_Stage%d", trackId, 7)
+		completedEventName := fmt.Sprintf("TRACK_COMPLETE_%d", trackId)
+		
+		transitions = append(transitions, &sc.Transition{
+			From:  []string{finalStageName},
+			To:    []string{fmt.Sprintf("Track%d_Completed", trackId)},
+			Event: completedEventName,
+		})
+		
+		events = append(events, &sc.Event{Label: completedEventName})
+		
+		// Recovery transitions from error state
+		for stageId := 0; stageId < 8; stageId++ {
+			stageName := fmt.Sprintf("Track%d_Stage%d", trackId, stageId)
+			retryEventName := fmt.Sprintf("RETRY_%d_%d", trackId, stageId)
+			
+			transitions = append(transitions, &sc.Transition{
+				From:  []string{fmt.Sprintf("Track%d_Error", trackId)},
+				To:    []string{stageName},
+				Event: retryEventName,
+			})
+			
+			events = append(events, &sc.Event{Label: retryEventName})
+		}
+		
+		trackName := fmt.Sprintf("Track_%d", trackId)
+		track := &sc.State{
+			Label:    trackName,
+			Type:     2, // compound
+			Children: trackStates,
+		}
+		
+		parallelTracks = append(parallelTracks, track)
+	}
+	
+	// Create the main parallel region
+	mainRegion := &sc.State{
+		Label:    "WorkflowRegion",
+		Type:     3, // parallel
+		Children: parallelTracks,
+	}
+	
+	states = append(states, mainRegion)
+	
+	// Add coordination states
+	coordinationStates := []*sc.State{
+		{Label: "Initializing", Type: 1, IsInitial: true, Children: []*sc.State{}},
+		{Label: "AllCompleted", Type: 1, IsFinal: true, Children: []*sc.State{}},
+		{Label: "PartialFailure", Type: 1, Children: []*sc.State{}},
+	}
+	
+	states = append(states, coordinationStates...)
+	
+	// Add coordination transitions
+	transitions = append(transitions, &sc.Transition{
+		From:  []string{"Initializing"},
+		To:    []string{"WorkflowRegion"},
+		Event: "START_WORKFLOW",
+	})
+	
+	events = append(events, &sc.Event{Label: "START_WORKFLOW"})
+	
+	return &sc.Statechart{
+		RootState: &sc.State{
+			Label:    "__root__",
+			Type:     2, // compound
+			Children: states,
+		},
+		Transitions: transitions,
+		Events:      events,
 	}
 }
