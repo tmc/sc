@@ -17,10 +17,12 @@ class StatechartVisualizer {
         this.keyboardShortcuts = null;
         this.webSocketClient = webSocketClient;
         this.eventInputSystem = null;
+        this.exportManager = null;
         
         this.initializeUI();
         this.initializeTabSystem();
         this.initializeEventSystem();
+        this.initializeExportSystem();
         this.loadExamples();
     }
 
@@ -75,6 +77,16 @@ class StatechartVisualizer {
             window.eventInputSystem = this.eventInputSystem;
         }
     }
+
+    initializeExportSystem() {
+        // Initialize export manager
+        if (typeof ExportManager !== 'undefined') {
+            this.exportManager = new ExportManager();
+            
+            // Make it available globally for integration
+            window.exportManager = this.exportManager;
+        }
+    }
     
     bindTabSystemEvents() {
         // Handle keyboard shortcuts
@@ -112,6 +124,18 @@ class StatechartVisualizer {
         };
         
         this.stateManager.addMachine(blankMachine);
+        
+        // Set as current machine
+        this.currentMachine = blankMachine;
+        
+        // Connect to systems
+        if (this.eventInputSystem) {
+            this.eventInputSystem.setMachine(blankMachine);
+        }
+        if (this.exportManager) {
+            this.exportManager.setMachine(blankMachine);
+        }
+        
         this.visualizeStatechart(blankMachine.statechart);
     }
     
@@ -253,6 +277,11 @@ class StatechartVisualizer {
                 // Connect to event input system
                 if (this.eventInputSystem) {
                     this.eventInputSystem.setMachine(machine);
+                }
+                
+                // Connect to export manager
+                if (this.exportManager) {
+                    this.exportManager.setMachine(machine);
                 }
                 
                 this.visualizeStatechart(statechart);
