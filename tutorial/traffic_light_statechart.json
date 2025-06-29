@@ -1,0 +1,181 @@
+{
+  "id": "traffic-light-export",
+  "state": 2,
+  "context": {
+    "emergency_mode": false,
+    "timer": 0
+  },
+  "statechart": {
+    "root_state": {
+      "label": "__root__",
+      "type": 2,
+      "children": [
+        {
+          "label": "Normal",
+          "type": 2,
+          "children": [
+            {
+              "label": "Red",
+              "type": 1,
+              "is_initial": true
+            },
+            {
+              "label": "Green",
+              "type": 1
+            },
+            {
+              "label": "Yellow",
+              "type": 1
+            }
+          ],
+          "is_initial": true
+        },
+        {
+          "label": "Emergency",
+          "type": 2,
+          "children": [
+            {
+              "label": "FlashingRed",
+              "type": 1,
+              "is_initial": true
+            },
+            {
+              "label": "FlashingOff",
+              "type": 1
+            }
+          ]
+        },
+        {
+          "label": "Maintenance",
+          "type": 1
+        }
+      ]
+    },
+    "transitions": [
+      {
+        "label": "ToGreen",
+        "from": [
+          "Red"
+        ],
+        "to": [
+          "Green"
+        ],
+        "event": "TIMER_EXPIRED"
+      },
+      {
+        "label": "ToYellow",
+        "from": [
+          "Green"
+        ],
+        "to": [
+          "Yellow"
+        ],
+        "event": "TIMER_EXPIRED"
+      },
+      {
+        "label": "ToRed",
+        "from": [
+          "Yellow"
+        ],
+        "to": [
+          "Red"
+        ],
+        "event": "TIMER_EXPIRED"
+      },
+      {
+        "label": "EmergencyActivate",
+        "from": [
+          "Normal"
+        ],
+        "to": [
+          "Emergency"
+        ],
+        "event": "EMERGENCY"
+      },
+      {
+        "label": "EmergencyDeactivate",
+        "from": [
+          "Emergency"
+        ],
+        "to": [
+          "Normal"
+        ],
+        "event": "EMERGENCY_CLEAR"
+      },
+      {
+        "label": "FlashOn",
+        "from": [
+          "FlashingOff"
+        ],
+        "to": [
+          "FlashingRed"
+        ],
+        "event": "FLASH_TIMER"
+      },
+      {
+        "label": "FlashOff",
+        "from": [
+          "FlashingRed"
+        ],
+        "to": [
+          "FlashingOff"
+        ],
+        "event": "FLASH_TIMER"
+      },
+      {
+        "label": "EnterMaintenance",
+        "from": [
+          "Normal",
+          "Emergency"
+        ],
+        "to": [
+          "Maintenance"
+        ],
+        "event": "MAINTENANCE"
+      },
+      {
+        "label": "ExitMaintenance",
+        "from": [
+          "Maintenance"
+        ],
+        "to": [
+          "Normal"
+        ],
+        "event": "MAINTENANCE_COMPLETE"
+      }
+    ],
+    "events": [
+      {
+        "label": "TIMER_EXPIRED"
+      },
+      {
+        "label": "EMERGENCY"
+      },
+      {
+        "label": "EMERGENCY_CLEAR"
+      },
+      {
+        "label": "FLASH_TIMER"
+      },
+      {
+        "label": "MAINTENANCE"
+      },
+      {
+        "label": "MAINTENANCE_COMPLETE"
+      }
+    ]
+  },
+  "configuration": {
+    "states": [
+      {
+        "label": "__root__"
+      },
+      {
+        "label": "Normal"
+      },
+      {
+        "label": "Red"
+      }
+    ]
+  }
+}
