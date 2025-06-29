@@ -71,6 +71,12 @@ class StatechartVisualizer {
         // Update status
         this.updateConnectionStatus('disconnected');
         this.updateMachineInfo('No machine loaded');
+        
+        // Initialize notifications
+        this.initializeNotifications();
+        
+        // Initialize connection status click handler
+        this.initializeConnectionStatusHandler();
     }
 
     initializeVisualizationControls() {
@@ -930,14 +936,133 @@ class StatechartVisualizer {
         }
     }
 
-    updateConnectionStatus(status) {
+    updateConnectionStatus(status, message = null) {
         const statusElement = document.getElementById('connection-status');
-        statusElement.textContent = status === 'connected' ? 'Connected' : 'Disconnected';
-        statusElement.className = status;
+        const statusText = statusElement.querySelector('.status-text');
+        const statusIndicator = statusElement.querySelector('.status-indicator');
+        
+        if (!statusText || !statusIndicator) {
+            console.error('Status elements not found');
+            return;
+        }
+        
+        // Remove existing status classes
+        statusElement.classList.remove('connected', 'disconnected', 'connecting', 'error');
+        
+        // Update status classes and text based on connection state
+        switch (status) {
+            case 'connected':
+                statusElement.classList.add('status-item', 'connected');
+                statusText.textContent = message || 'Connected';
+                break;
+            case 'connecting':
+                statusElement.classList.add('status-item', 'connecting');
+                statusText.textContent = message || 'Connecting...';
+                break;
+            case 'error':
+                statusElement.classList.add('status-item', 'error');
+                statusText.textContent = message || 'Connection Error';
+                break;
+            case 'disconnected':
+            default:
+                statusElement.classList.add('status-item', 'disconnected');
+                statusText.textContent = message || 'Disconnected';
+                break;
+        }
+        
+        // Dispatch custom event for other components to listen to
+        this.dispatchEvent(new CustomEvent('connectionStatusChanged', {
+            detail: { status, message }
+        }));
     }
 
     updateMachineInfo(info) {
         document.getElementById('machine-info').textContent = info;
+    }
+    
+    initializeNotifications() {
+        // Create notification container if it doesn't exist
+        if (!document.getElementById('notification-container')) {
+            const container = document.createElement('div');
+            container.id = 'notification-container';
+            container.className = 'notification-container';
+            document.body.appendChild(container);
+        }
+        
+        // Listen to WebSocket connection events
+        this.webSocketClient.addEventListener('connected', () => {
+            this.showNotification('Connected to server', 'success', 3000);
+        });
+        
+        this.webSocketClient.addEventListener('disconnected', () => {
+            this.showNotification('Disconnected from server', 'warning', 5000);
+        });
+        
+        this.webSocketClient.addEventListener('connectionFailed', (event) => {
+            this.showNotification(
+                `Connection failed: ${event.detail.message}`, 
+                'error', 
+                10000
+            );
+        });
+        
+        this.webSocketClient.addEventListener('error', (event) => {
+            this.showNotification('Connection error occurred', 'error', 7000);
+        });
+    }
+    
+    showNotification(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+        
+        // Add slide-in animation
+        notification.style.transform = 'translateX(100%)';
+        container.appendChild(notification);
+        
+        // Trigger animation
+        requestAnimationFrame(() => {
+            notification.style.transform = 'translateX(0)';
+        });
+        
+        // Auto-remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+    }
+    
+    initializeConnectionStatusHandler() {
+        const statusElement = document.getElementById('connection-status');
+        if (statusElement) {
+            statusElement.addEventListener('click', () => {
+                // Only allow reconnection when disconnected or in error state
+                const state = this.webSocketClient.getConnectionState();
+                if (state === 'disconnected' || state === 'error') {
+                    this.showNotification('Attempting to reconnect...', 'info', 2000);
+                    this.webSocketClient.reconnectNow();
+                }
+            });
+            
+            // Make it look clickable when appropriate
+            statusElement.style.cursor = 'pointer';
+        }
     }
 
     // Enhanced visualization control methods
@@ -1196,5 +1321,26 @@ class StatechartVisualizer {
 
 // Initialize the visualizer when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new StatechartVisualizer();
+    const visualizer = new StatechartVisualizer();
+    
+    // Make visualizer available globally for WebSocket integration
+    window.visualizer = visualizer;
+    
+    // Listen for WebSocket status updates
+    window.addEventListener('websocketStatusUpdate', (event) => {
+        const { status, attempts, clientId } = event.detail;
+        let message = null;
+        
+        if (status === 'connecting' && attempts > 0) {
+            message = `Reconnecting... (attempt ${attempts})`;
+        } else if (status === 'connected' && clientId) {
+            message = `Connected (${clientId.slice(-8)})`;
+        } else if (status === 'error') {
+            message = `Connection error (${attempts} attempts)`;
+        }
+        
+        visualizer.updateConnectionStatus(status, message);
+    });
+    
+    console.log('✅ Statechart Visualizer initialized with WebSocket integration');
 });

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Connection Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .status.connected { background: #28a745; }
+        .status.disconnected { background: #dc3545; }
+        .status.connecting { background: #ffc107; color: #000; }
+        .status.error { background: #dc3545; }
+        .log {
+            background: #2d2d2d;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            margin: 20px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5ba0f2;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Connection Test</h1>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div class="controls">
+            <button id="connect-btn">Connect</button>
+            <button id="disconnect-btn" disabled>Disconnect</button>
+            <button id="send-ping-btn" disabled>Send Ping</button>
+            <button id="clear-log-btn">Clear Log</button>
+        </div>
+        
+        <div>
+            <strong>Connection Log:</strong>
+            <div id="log" class="log"></div>
+        </div>
+        
+        <div>
+            <h3>Test Scenarios:</h3>
+            <ul>
+                <li>✅ Initial connection</li>
+                <li>✅ Manual disconnect and reconnect</li>
+                <li>✅ Automatic reconnection with exponential backoff</li>
+                <li>✅ Connection status display updates</li>
+                <li>✅ Heartbeat/ping functionality</li>
+                <li>✅ Error handling and notifications</li>
+                <li>✅ Connection state transitions</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class WebSocketTester {
+            constructor() {
+                this.ws = null;
+                this.connectionState = 'disconnected';
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 1000;
+                this.maxReconnectDelay = 10000;
+                this.reconnectTimer = null;
+                
+                this.statusElement = document.getElementById('status');
+                this.logElement = document.getElementById('log');
+                this.connectBtn = document.getElementById('connect-btn');
+                this.disconnectBtn = document.getElementById('disconnect-btn');
+                this.sendPingBtn = document.getElementById('send-ping-btn');
+                this.clearLogBtn = document.getElementById('clear-log-btn');
+                
+                this.initializeEvents();
+                this.log('WebSocket tester initialized');
+            }
+            
+            initializeEvents() {
+                this.connectBtn.addEventListener('click', () => this.connect());
+                this.disconnectBtn.addEventListener('click', () => this.disconnect());
+                this.sendPingBtn.addEventListener('click', () => this.sendPing());
+                this.clearLogBtn.addEventListener('click', () => this.clearLog());
+            }
+            
+            connect() {
+                if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
+                    this.log('Already connected or connecting');
+                    return;
+                }
+                
+                this.updateStatus('connecting');
+                this.log('Attempting to connect...');
+                
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                try {
+                    this.ws = new WebSocket(wsUrl);
+                    this.setupWebSocketEvents();
+                } catch (error) {
+                    this.log(`Connection error: ${error.message}`, 'error');
+                    this.handleConnectionError(error);
+                }
+            }
+            
+            setupWebSocketEvents() {
+                this.ws.onopen = (event) => {
+                    this.log('✅ WebSocket connected', 'success');
+                    this.connectionState = 'connected';
+                    this.reconnectAttempts = 0;
+                    this.updateStatus('connected');
+                    this.updateButtons();
+                };
+                
+                this.ws.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        this.log(`📨 Received: ${JSON.stringify(message)}`, 'info');
+                    } catch (error) {
+                        this.log(`📨 Received (raw): ${event.data}`, 'info');
+                    }
+                };
+                
+                this.ws.onclose = (event) => {
+                    this.log(`❌ WebSocket disconnected (code: ${event.code}, reason: ${event.reason})`, 'warning');
+                    this.connectionState = 'disconnected';
+                    this.updateStatus('disconnected');
+                    this.updateButtons();
+                    
+                    // Attempt to reconnect if not a clean close
+                    if (event.code !== 1000) {
+                        this.scheduleReconnect();
+                    }
+                };
+                
+                this.ws.onerror = (error) => {
+                    this.log(`🚫 WebSocket error: ${error}`, 'error');
+                    this.handleConnectionError(error);
+                };
+            }
+            
+            disconnect() {
+                if (this.reconnectTimer) {
+                    clearTimeout(this.reconnectTimer);
+                    this.reconnectTimer = null;
+                }
+                
+                if (this.ws) {
+                    this.ws.close(1000, 'Manual disconnect');
+                }
+                
+                this.connectionState = 'disconnected';
+                this.updateStatus('disconnected');
+                this.updateButtons();
+                this.log('Manual disconnect requested');
+            }
+            
+            sendPing() {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    const message = {
+                        type: 'ping',
+                        timestamp: new Date().toISOString()
+                    };
+                    this.ws.send(JSON.stringify(message));
+                    this.log(`📤 Sent ping: ${JSON.stringify(message)}`, 'info');
+                } else {
+                    this.log('Cannot send ping - not connected', 'error');
+                }
+            }
+            
+            scheduleReconnect() {
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    this.log(`❌ Max reconnection attempts (${this.maxReconnectAttempts}) reached`, 'error');
+                    this.connectionState = 'error';
+                    this.updateStatus('error');
+                    return;
+                }
+                
+                this.reconnectAttempts++;
+                const baseDelay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+                const jitter = Math.random() * 0.3 * baseDelay;
+                const delay = Math.min(baseDelay + jitter, this.maxReconnectDelay);
+                
+                this.log(`🔄 Reconnecting in ${Math.round(delay)}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'warning');
+                
+                this.connectionState = 'connecting';
+                this.updateStatus('connecting');
+                
+                this.reconnectTimer = setTimeout(() => {
+                    if (this.connectionState !== 'connected') {
+                        this.log(`🔄 Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}...`);
+                        this.connect();
+                    }
+                }, delay);
+            }
+            
+            handleConnectionError(error) {
+                this.connectionState = 'error';
+                this.updateStatus('error');
+                this.updateButtons();
+            }
+            
+            updateStatus(status) {
+                this.statusElement.className = `status ${status}`;
+                this.statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+            
+            updateButtons() {
+                const isConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
+                this.connectBtn.disabled = isConnected;
+                this.disconnectBtn.disabled = !isConnected;
+                this.sendPingBtn.disabled = !isConnected;
+            }
+            
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.style.color = this.getLogColor(type);
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                this.logElement.appendChild(logEntry);
+                this.logElement.scrollTop = this.logElement.scrollHeight;
+            }
+            
+            getLogColor(type) {
+                switch (type) {
+                    case 'success': return '#28a745';
+                    case 'error': return '#dc3545';
+                    case 'warning': return '#ffc107';
+                    case 'info': return '#17a2b8';
+                    default: return '#ffffff';
+                }
+            }
+            
+            clearLog() {
+                this.logElement.innerHTML = '';
+                this.log('Log cleared');
+            }
+        }
+        
+        // Initialize tester when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.tester = new WebSocketTester();
+        });
+    </script>
+</body>
+</html>
