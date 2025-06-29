@@ -16,9 +16,11 @@ class StatechartVisualizer {
         this.tabSystem = null;
         this.keyboardShortcuts = null;
         this.webSocketClient = webSocketClient;
+        this.eventInputSystem = null;
         
         this.initializeUI();
         this.initializeTabSystem();
+        this.initializeEventSystem();
         this.loadExamples();
     }
 
@@ -61,6 +63,16 @@ class StatechartVisualizer {
             
             // Bind tab system events
             this.bindTabSystemEvents();
+        }
+    }
+
+    initializeEventSystem() {
+        // Initialize event input system
+        if (typeof EventInputSystem !== 'undefined') {
+            this.eventInputSystem = new EventInputSystem();
+            
+            // Make it available globally for integration
+            window.eventInputSystem = this.eventInputSystem;
         }
     }
     
@@ -129,7 +141,7 @@ class StatechartVisualizer {
         }
         
         try {
-            const response = await fetch(`/api/machines/${currentMachine.id}`, {
+            const response = await fetch(`/api/v1/machines/${currentMachine.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -192,7 +204,7 @@ class StatechartVisualizer {
 
     async loadExamples() {
         try {
-            const response = await fetch('/api/examples');
+            const response = await fetch('/api/v1/examples');
             this.examples = await response.json();
             
             const selectElement = document.getElementById('example-select');
@@ -219,7 +231,7 @@ class StatechartVisualizer {
             const statechart = this.examples[selectedExample];
             const machineId = `example-${selectedExample}-${Date.now()}`;
             
-            const response = await fetch('/api/machines', {
+            const response = await fetch('/api/v1/machines', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -237,6 +249,11 @@ class StatechartVisualizer {
                 
                 // Add to state manager
                 this.stateManager.addMachine(machine);
+                
+                // Connect to event input system
+                if (this.eventInputSystem) {
+                    this.eventInputSystem.setMachine(machine);
+                }
                 
                 this.visualizeStatechart(statechart);
                 this.updateMachineInfo(`Machine: ${machineId}`);
@@ -257,7 +274,7 @@ class StatechartVisualizer {
         }
 
         try {
-            const response = await fetch(`/api/machines/${this.currentMachine.id}/reset`, {
+            const response = await fetch(`/api/v1/machines/${this.currentMachine.id}/reset`, {
                 method: 'POST',
             });
 
@@ -295,7 +312,7 @@ class StatechartVisualizer {
         }
 
         try {
-            const response = await fetch(`/api/machines/${this.currentMachine.id}/events`, {
+            const response = await fetch(`/api/v1/machines/${this.currentMachine.id}/events`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
