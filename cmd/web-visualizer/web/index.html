@@ -251,6 +251,115 @@
         </button>
     </div>
 
+    <!-- Inline CodeGenerator for immediate availability -->
+    <script>
+        // Minimal CodeGenerator implementation to fix loading issues
+        window.CodeGenerator = class CodeGenerator {
+            constructor() {
+                this.generators = new Map();
+                this.config = { indentation: '  ' };
+                console.log('✅ CodeGenerator initialized');
+            }
+            
+            getAvailableFormats() {
+                return [
+                    { id: 'xstate', name: 'XState v5', version: '5.0', supportsTypeScript: true },
+                    { id: 'json', name: 'JSON Export', version: '1.0', supportsTypeScript: false }
+                ];
+            }
+            
+            async generate(statechart, format = 'xstate', options = {}) {
+                if (!statechart || !statechart.root_state) {
+                    return { success: false, error: 'Invalid statechart' };
+                }
+                
+                const machineId = options.machineId || 'machine';
+                
+                if (format === 'xstate') {
+                    return {
+                        success: true,
+                        code: this.generateXStateCode(statechart, machineId),
+                        metadata: { format: 'xstate', machineId: machineId }
+                    };
+                } else if (format === 'json') {
+                    return {
+                        success: true,
+                        code: JSON.stringify(statechart, null, 2),
+                        metadata: { format: 'json' }
+                    };
+                }
+                
+                return { success: false, error: 'Unsupported format: ' + format };
+            }
+            
+            generateXStateCode(statechart, machineId) {
+                const initialState = this.getInitialState(statechart.root_state);
+                const states = this.generateStates(statechart.root_state);
+                const transitions = this.generateTransitions(statechart.transitions || []);
+                
+                return `import { createMachine } from 'xstate';
+
+export const ${machineId}Machine = createMachine({
+  id: '${machineId}',
+  initial: '${initialState}',
+  states: {
+${states}
+  }${transitions ? `,
+  on: {
+${transitions}
+  }` : ''}
+});`;
+            }
+            
+            getInitialState(state) {
+                if (state.children && state.children.length > 0) {
+                    const initial = state.children.find(child => child.is_initial);
+                    return initial ? initial.label : state.children[0].label;
+                }
+                return state.label;
+            }
+            
+            generateStates(state, indent = '    ') {
+                if (!state.children || state.children.length === 0) {
+                    return `${indent}${state.label}: {}`;
+                }
+                
+                const states = [];
+                for (const child of state.children) {
+                    if (child.children && child.children.length > 0) {
+                        states.push(`${indent}${child.label}: {
+${indent}  initial: '${this.getInitialState(child)}',
+${indent}  states: {
+${this.generateStates(child, indent + '    ')}
+${indent}  }
+${indent}}`);
+                    } else {
+                        states.push(`${indent}${child.label}: {}`);
+                    }
+                }
+                return states.join(',\n');
+            }
+            
+            generateTransitions(transitions) {
+                if (!transitions.length) return '';
+                return transitions.map(t => 
+                    `    ${t.event}: { target: '${t.to?.[0] || 'unknown'}' }`
+                ).join(',\n');
+            }
+        };
+        
+        // Also create stub implementations for missing classes
+        window.EventInputSystem = window.EventInputSystem || class {
+            constructor() { console.log('✅ EventInputSystem stub created'); }
+            setMachine(machine) { this.machine = machine; }
+        };
+        
+        window.ExportManager = window.ExportManager || class {
+            constructor() { console.log('✅ ExportManager stub created'); }
+            setMachine(machine) { this.machine = machine; }
+        };
+    </script>
+    
     <script src="validators.js"></script>
     <script src="code-generator.js"></script>
     <script src="event-input.js"></script>
