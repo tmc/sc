@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/tmc/sc"
 	"github.com/tmc/sc/semantics/v1"
-	"github.com/tmc/sc/semantics/v1/examples"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -147,11 +146,7 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *Server) GetExamples(w http.ResponseWriter, r *http.Request) {
-	examples := map[string]*sc.Statechart{
-		"hierarchical": examples.HierarchicalStatechart().Statechart,
-		"orthogonal":   examples.OrthogonalStatechart().Statechart,
-		"compound":     examples.CompoundStatechart().Statechart,
-	}
+	examples := GetRealWorldExamples() // Use the comprehensive real-world examples library
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(examples)
@@ -867,6 +862,7 @@ func (m *MetricsCollector) incrementErrorCount() {
 	defer m.mutex.Unlock()
 	m.errorCount++
 }
+
 
 func main() {
 	server := NewServer()

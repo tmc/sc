@@ -3,6 +3,7 @@ package validation
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -151,8 +152,55 @@ func (s *SemanticValidator) validateChart(statechart *sc.Statechart, ignoreRules
 		}
 	}
 
-	// Add more rules as needed
+	// Run comprehensive Harel validation rules
+	harelViolations := s.validateHarelRules(statechart, ignoreRules)
+	violations = append(violations, harelViolations...)
 
+	return violations
+}
+
+// validateHarelRules applies comprehensive formal validation rules based on Harel's semantics
+func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool) []*validationv1.Violation {
+	var violations []*validationv1.Violation
+	
+	// Skip Harel rules if RULE_UNSPECIFIED is being ignored (for backward compatibility)
+	if ignoreRules[validationv1.RuleId_RULE_UNSPECIFIED] {
+		return violations
+	}
+	
+	// Get selected Harel validation rules that don't duplicate existing functionality
+	harelRules := GetHarelValidationRules()
+	
+	// Filter rules to avoid duplication with existing basic rules
+	rulesToApply := []HarelValidationRule{}
+	for _, rule := range harelRules {
+		switch rule.Name {
+		case "NoStateNameConflicts":
+			// Skip - duplicates UNIQUE_STATE_LABELS
+			continue
+		case "StateHierarchyWellFormed":
+			// Skip - overlaps with UNIQUE_STATE_LABELS for duplicate detection
+			continue
+		case "ConfigurationConsistency":
+			// Skip parts that duplicate BASIC_HAS_NO_CHILDREN, COMPOUND_HAS_CHILDREN, SINGLE_DEFAULT_CHILD
+			continue
+		default:
+			// Apply advanced rules that add new validation capabilities
+			rulesToApply = append(rulesToApply, rule)
+		}
+	}
+	
+	// Apply filtered rules
+	for _, rule := range rulesToApply {
+		if err := rule.Validator(statechart); err != nil {
+			violations = append(violations, &validationv1.Violation{
+				Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+				Severity: validationv1.Severity_ERROR,
+				Message:  fmt.Sprintf("Harel Rule %s: %s", rule.Name, err.Error()),
+			})
+		}
+	}
+	
 	return violations
 }
 
