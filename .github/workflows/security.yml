@@ -1,0 +1,214 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # CodeQL analysis
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go', 'python', 'javascript' ]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # Dependency scanning
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'statecharts'
+          path: '.'
+          format: 'HTML'
+          args: >
+            --enableRetired
+            --enableExperimental
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
+          retention-days: 30
+
+  # Container scanning
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: docker build -f Dockerfile.prod -t statecharts:scan .
+      
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'statecharts:scan'
+          format: 'sarif'
+          output: 'trivy-container.sarif'
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-container.sarif'
+      
+      - name: Run Grype scan
+        uses: anchore/scan-action@v3
+        with:
+          image: 'statecharts:scan'
+          fail-build: true
+          severity-cutoff: high
+
+  # License compliance
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Go licenses
+        uses: fossa-contrib/fossa-action@v2
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+          directory: .
+      
+      - name: Check Python licenses
+        working-directory: sdks/python
+        run: |
+          pip install pip-licenses
+          pip-licenses --format=csv --output-file=licenses.csv
+          
+      - name: Check npm licenses
+        working-directory: cmd/web-visualizer
+        run: |
+          npx license-checker --csv --out licenses.csv
+
+  # Secret scanning
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # SAST scanning
+  sast:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/golang
+            p/python
+            p/javascript
+            p/dockerfile
+          generateSarif: true
+      
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
+
+  # Infrastructure as Code scanning
+  iac-scan:
+    name: IaC Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: all
+          output_format: sarif
+          output_file_path: checkov.sarif
+      
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov.sarif
+
+  # Compliance reporting
+  compliance-report:
+    name: Generate Compliance Report
+    needs: [codeql, dependency-check, container-scan, license-check, secret-scan, sast, iac-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate security report
+        run: |
+          echo "# Security Compliance Report" > SECURITY_REPORT.md
+          echo "Generated on: $(date)" >> SECURITY_REPORT.md
+          echo "" >> SECURITY_REPORT.md
+          echo "## Summary" >> SECURITY_REPORT.md
+          echo "- CodeQL: ${{ needs.codeql.result }}" >> SECURITY_REPORT.md
+          echo "- Dependency Check: ${{ needs.dependency-check.result }}" >> SECURITY_REPORT.md
+          echo "- Container Scan: ${{ needs.container-scan.result }}" >> SECURITY_REPORT.md
+          echo "- License Check: ${{ needs.license-check.result }}" >> SECURITY_REPORT.md
+          echo "- Secret Scan: ${{ needs.secret-scan.result }}" >> SECURITY_REPORT.md
+          echo "- SAST: ${{ needs.sast.result }}" >> SECURITY_REPORT.md
+          echo "- IaC Scan: ${{ needs.iac-scan.result }}" >> SECURITY_REPORT.md
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-compliance-report
+          path: SECURITY_REPORT.md
+          retention-days: 90

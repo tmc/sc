@@ -1,0 +1,419 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.23'
+  RUST_VERSION: '1.75'
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  PROTOC_VERSION: '25.1'
+
+jobs:
+  # Code quality checks
+  lint:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cmd/web-visualizer/package-lock.json
+      
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      
+      - name: Install Go tools
+        run: |
+          go install golang.org/x/tools/cmd/goimports@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+      
+      - name: Install Python dependencies
+        working-directory: sdks/python
+        run: |
+          pip install -e .[dev]
+      
+      - name: Install Node dependencies
+        working-directory: cmd/web-visualizer
+        run: |
+          npm ci --include=dev
+      
+      - name: Lint Go code
+        run: |
+          goimports -l -w .
+          golangci-lint run --timeout=5m
+          staticcheck ./...
+      
+      - name: Lint Python code
+        working-directory: sdks/python
+        run: |
+          black --check .
+          ruff check .
+          mypy statecharts --ignore-missing-imports
+      
+      - name: Lint Rust code
+        working-directory: sdks/rust
+        run: |
+          cargo fmt -- --check
+          cargo clippy -- -D warnings
+      
+      - name: Lint JavaScript code
+        working-directory: cmd/web-visualizer
+        run: |
+          npm run lint
+      
+      - name: Check proto files
+        working-directory: proto
+        run: |
+          make lint
+
+  # Security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run gosec security scanner
+        uses: securego/gosec@master
+        with:
+          args: '-fmt sarif -out gosec-results.sarif ./...'
+      
+      - name: Upload gosec results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'gosec-results.sarif'
+      
+      - name: Run Snyk security scan
+        uses: snyk/actions/golang@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+        continue-on-error: true
+
+  # Go tests
+  test-go:
+    name: Test Go (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: ${{ env.PROTOC_VERSION }}
+      
+      - name: Install protoc plugins
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+      
+      - name: Generate protobuf code
+        run: make generate
+      
+      - name: Run tests
+        run: |
+          go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      
+      - name: Run integration tests
+        run: |
+          go test -v -tags=integration ./integration/...
+      
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.txt
+          flags: go
+          name: go-coverage
+
+  # Python tests
+  test-python:
+    name: Test Python (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: ${{ env.PROTOC_VERSION }}
+      
+      - name: Install dependencies
+        working-directory: sdks/python
+        run: |
+          pip install -e .[dev,web]
+      
+      - name: Build protobuf files
+        working-directory: sdks/python
+        run: make build
+      
+      - name: Run tests
+        working-directory: sdks/python
+        run: |
+          pytest tests/ -v --cov=statecharts --cov-report=xml
+      
+      - name: Upload coverage
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./sdks/python/coverage.xml
+          flags: python
+          name: python-coverage
+
+  # Rust tests
+  test-rust:
+    name: Test Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: ${{ env.PROTOC_VERSION }}
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Build Rust SDK
+        working-directory: sdks/rust
+        run: |
+          make build
+      
+      - name: Run tests
+        working-directory: sdks/rust
+        run: |
+          cargo test --all-features
+      
+      - name: Run examples
+        working-directory: sdks/rust
+        run: |
+          cargo run --example simple_statechart
+          cargo run --example orthogonal_statechart
+
+  # JavaScript/Web tests
+  test-web:
+    name: Test Web Visualizer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cmd/web-visualizer/package-lock.json
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      
+      - name: Install dependencies
+        working-directory: cmd/web-visualizer
+        run: |
+          npm ci
+          npx playwright install --with-deps
+      
+      - name: Build backend
+        working-directory: cmd/web-visualizer
+        run: go build -o web-visualizer .
+      
+      - name: Run unit tests
+        working-directory: cmd/web-visualizer
+        run: npm run test:unit
+      
+      - name: Run integration tests
+        working-directory: cmd/web-visualizer
+        run: |
+          ./web-visualizer &
+          SERVER_PID=$!
+          sleep 5
+          npm run test:integration
+          kill $SERVER_PID
+      
+      - name: Run E2E tests
+        working-directory: cmd/web-visualizer
+        run: |
+          ./web-visualizer &
+          SERVER_PID=$!
+          sleep 5
+          npm run test:e2e
+          kill $SERVER_PID
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: cmd/web-visualizer/test-results/
+          retention-days: 30
+
+  # Performance tests
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: ${{ env.PROTOC_VERSION }}
+      
+      - name: Generate code
+        run: make generate
+      
+      - name: Run benchmarks
+        run: |
+          go test -bench=. -benchmem -benchtime=10s ./semantics/v1/profiling/... | tee benchmark.txt
+      
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'go'
+          output-file-path: benchmark.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '120%'
+          comment-on-alert: true
+          fail-on-alert: true
+
+  # Docker build
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build development image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.dev
+          tags: statecharts:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          tags: statecharts:prod
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Test Docker images
+        run: |
+          docker run --rm statecharts:dev go version
+          docker run --rm statecharts:prod /app/web-visualizer --version
+
+  # Integration test matrix
+  integration:
+    name: Integration Tests
+    needs: [test-go, test-python, test-rust, test-web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up test environment
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 10
+      
+      - name: Run cross-language integration tests
+        run: |
+          ./scripts/test-docker.sh
+      
+      - name: Cleanup
+        if: always()
+        run: docker-compose down

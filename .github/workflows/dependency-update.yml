@@ -1,0 +1,163 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Update Go dependencies
+  update-go:
+    name: Update Go Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Update dependencies
+        run: |
+          go get -u ./...
+          go mod tidy
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): update Go dependencies'
+          title: 'Update Go Dependencies'
+          body: |
+            ## Updates Go dependencies
+            
+            This PR updates all Go dependencies to their latest versions.
+            
+            - [ ] Tests pass
+            - [ ] No breaking changes
+            - [ ] Security vulnerabilities addressed
+          branch: update-go-dependencies
+          delete-branch: true
+
+  # Update Python dependencies
+  update-python:
+    name: Update Python Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Update dependencies
+        working-directory: sdks/python
+        run: |
+          pip install pip-tools
+          pip-compile --upgrade pyproject.toml
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): update Python dependencies'
+          title: 'Update Python Dependencies'
+          body: |
+            ## Updates Python SDK dependencies
+            
+            This PR updates all Python dependencies to their latest versions.
+            
+            - [ ] Tests pass
+            - [ ] No breaking changes
+            - [ ] Type checking passes
+          branch: update-python-dependencies
+          delete-branch: true
+
+  # Update Rust dependencies
+  update-rust:
+    name: Update Rust Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Update dependencies
+        working-directory: sdks/rust
+        run: |
+          cargo update
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): update Rust dependencies'
+          title: 'Update Rust Dependencies'
+          body: |
+            ## Updates Rust SDK dependencies
+            
+            This PR updates all Rust dependencies to their latest versions.
+            
+            - [ ] Tests pass
+            - [ ] No breaking changes
+            - [ ] Clippy warnings addressed
+          branch: update-rust-dependencies
+          delete-branch: true
+
+  # Update npm dependencies
+  update-npm:
+    name: Update npm Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Update dependencies
+        working-directory: cmd/web-visualizer
+        run: |
+          npx npm-check-updates -u
+          npm install
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(deps): update npm dependencies'
+          title: 'Update npm Dependencies'
+          body: |
+            ## Updates Web Visualizer npm dependencies
+            
+            This PR updates all npm dependencies to their latest versions.
+            
+            - [ ] Tests pass
+            - [ ] No breaking changes
+            - [ ] ESLint passes
+            - [ ] UI components work correctly
+          branch: update-npm-dependencies
+          delete-branch: true
+
+  # Renovate bot configuration (alternative to manual updates)
+  renovate:
+    name: Renovate Bot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v39.2.4
+        with:
+          configurationFile: .github/renovate.json
+          token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          LOG_LEVEL: debug

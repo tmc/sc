@@ -1,0 +1,465 @@
+# CI/CD Makefile for the Statecharts project
+# This Makefile contains targets specifically for CI/CD operations
+
+.PHONY: ci-setup ci-test ci-lint ci-security ci-build ci-deploy ci-smoke-test ci-performance
+.PHONY: ci-go ci-python ci-rust ci-web ci-docker ci-integration
+.PHONY: setup-tools check-tools clean-ci generate-reports
+
+# Variables
+GOVERSION ?= 1.23
+PYTHONVERSION ?= 3.11
+RUSTVERSION ?= stable
+NODEVERSION ?= 20
+PROTOC_VERSION ?= 25.1
+
+# Docker variables
+REGISTRY ?= ghcr.io
+IMAGE_NAME ?= $(shell echo "$(GITHUB_REPOSITORY)" | tr '[:upper:]' '[:lower:]')
+TAG ?= $(shell git rev-parse --short HEAD)
+
+# Test configuration
+TEST_TIMEOUT ?= 10m
+COVERAGE_THRESHOLD ?= 80
+BENCHMARK_COUNT ?= 5
+
+# Directories
+BUILD_DIR := build
+REPORTS_DIR := reports
+COVERAGE_DIR := $(REPORTS_DIR)/coverage
+ARTIFACTS_DIR := artifacts
+
+# Colors for output
+NO_COLOR=\033[0m
+OK_COLOR=\033[32;01m
+ERROR_COLOR=\033[31;01m
+WARN_COLOR=\033[33;01m
+
+# Helper function to print colored output
+define print_status
+	@echo "$(OK_COLOR)[$(1)]$(NO_COLOR) $(2)"
+endef
+
+define print_error
+	@echo "$(ERROR_COLOR)[ERROR]$(NO_COLOR) $(1)"
+endef
+
+define print_warning
+	@echo "$(WARN_COLOR)[WARNING]$(NO_COLOR) $(1)"
+endef
+
+# ==============================================================================
+# CI Setup and Tool Installation
+# ==============================================================================
+
+ci-setup: setup-tools generate
+	$(call print_status,SETUP,CI environment ready)
+
+setup-tools:
+	$(call print_status,TOOLS,Installing development tools)
+	@mkdir -p $(BUILD_DIR) $(REPORTS_DIR) $(COVERAGE_DIR) $(ARTIFACTS_DIR)
+	
+	# Go tools
+	@command -v go >/dev/null 2>&1 || ($(call print_error,Go not found) && exit 1)
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
+	go install github.com/go-delve/delve/cmd/dlv@latest
+	
+	# Protocol Buffer tools
+	@command -v protoc >/dev/null 2>&1 || ($(call print_error,protoc not found) && exit 1)
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	
+	# Python tools (if Python SDK exists)
+	@if [ -d "sdks/python" ]; then \
+		command -v python3 >/dev/null 2>&1 || ($(call print_error,Python not found) && exit 1); \
+		python3 -m pip install --upgrade pip setuptools wheel; \
+		cd sdks/python && pip install -e .[dev,web]; \
+	fi
+	
+	# Rust tools (if Rust SDK exists)
+	@if [ -d "sdks/rust" ]; then \
+		command -v cargo >/dev/null 2>&1 || ($(call print_error,Rust not found) && exit 1); \
+		rustup component add rustfmt clippy; \
+	fi
+	
+	# Node.js tools (if web visualizer exists)
+	@if [ -d "cmd/web-visualizer" ]; then \
+		command -v npm >/dev/null 2>&1 || ($(call print_error,npm not found) && exit 1); \
+		cd cmd/web-visualizer && npm ci; \
+	fi
+
+check-tools:
+	$(call print_status,CHECK,Verifying tool installation)
+	@echo "Go version: $$(go version)"
+	@echo "golangci-lint version: $$(golangci-lint version 2>/dev/null || echo 'not installed')"
+	@echo "protoc version: $$(protoc --version 2>/dev/null || echo 'not installed')"
+	@if [ -d "sdks/python" ]; then echo "Python version: $$(python3 --version)"; fi
+	@if [ -d "sdks/rust" ]; then echo "Rust version: $$(rustc --version)"; fi
+	@if [ -d "cmd/web-visualizer" ]; then echo "Node.js version: $$(node --version)"; fi
+
+# ==============================================================================
+# Code Generation
+# ==============================================================================
+
+generate:
+	$(call print_status,GENERATE,Generating code from protobuf definitions)
+	@$(MAKE) -C proto generate
+	@if [ -d "sdks/python" ]; then cd sdks/python && make build; fi
+	@if [ -d "sdks/rust" ]; then cd sdks/rust && make build; fi
+
+# ==============================================================================
+# Linting and Code Quality
+# ==============================================================================
+
+ci-lint: lint-go lint-python lint-rust lint-web lint-proto lint-docker
+	$(call print_status,LINT,All linting completed)
+
+lint-go:
+	$(call print_status,LINT,Go code)
+	@goimports -l -w .
+	@golangci-lint run --timeout=5m --out-format=colored-line-number
+	@staticcheck ./...
+
+lint-python:
+	@if [ -d "sdks/python" ]; then \
+		$(call print_status,LINT,Python code); \
+		cd sdks/python && \
+		black --check --diff . && \
+		ruff check . && \
+		mypy statecharts --ignore-missing-imports; \
+	fi
+
+lint-rust:
+	@if [ -d "sdks/rust" ]; then \
+		$(call print_status,LINT,Rust code); \
+		cd sdks/rust && \
+		cargo fmt -- --check && \
+		cargo clippy -- -D warnings; \
+	fi
+
+lint-web:
+	@if [ -d "cmd/web-visualizer" ]; then \
+		$(call print_status,LINT,Web/JavaScript code); \
+		cd cmd/web-visualizer && \
+		npm run lint; \
+	fi
+
+lint-proto:
+	$(call print_status,LINT,Protocol Buffer files)
+	@cd proto && make lint
+
+lint-docker:
+	$(call print_status,LINT,Docker files)
+	@command -v hadolint >/dev/null 2>&1 && hadolint Dockerfile* || $(call print_warning,hadolint not found)
+
+# ==============================================================================
+# Testing
+# ==============================================================================
+
+ci-test: test-go test-python test-rust test-web test-integration
+	$(call print_status,TEST,All tests completed)
+
+test-go:
+	$(call print_status,TEST,Go tests)
+	@mkdir -p $(COVERAGE_DIR)
+	go test -v -race -timeout=$(TEST_TIMEOUT) \
+		-coverprofile=$(COVERAGE_DIR)/go-coverage.out \
+		-covermode=atomic \
+		./...
+	@go tool cover -html=$(COVERAGE_DIR)/go-coverage.out -o $(COVERAGE_DIR)/go-coverage.html
+	@go tool cover -func=$(COVERAGE_DIR)/go-coverage.out | tail -1
+
+test-python:
+	@if [ -d "sdks/python" ]; then \
+		$(call print_status,TEST,Python tests); \
+		cd sdks/python && \
+		pytest tests/ -v --cov=statecharts \
+			--cov-report=xml:../../$(COVERAGE_DIR)/python-coverage.xml \
+			--cov-report=html:../../$(COVERAGE_DIR)/python-coverage-html \
+			--cov-fail-under=$(COVERAGE_THRESHOLD); \
+	fi
+
+test-rust:
+	@if [ -d "sdks/rust" ]; then \
+		$(call print_status,TEST,Rust tests); \
+		cd sdks/rust && \
+		cargo test --all-features; \
+	fi
+
+test-web:
+	@if [ -d "cmd/web-visualizer" ]; then \
+		$(call print_status,TEST,Web/JavaScript tests); \
+		cd cmd/web-visualizer && \
+		npm run test:unit; \
+	fi
+
+test-integration:
+	$(call print_status,TEST,Integration tests)
+	@if [ -f "scripts/test-docker.sh" ]; then \
+		chmod +x scripts/test-docker.sh && \
+		./scripts/test-docker.sh; \
+	fi
+	@go test -v -tags=integration ./integration/... || echo "No integration tests found"
+
+# ==============================================================================
+# Security Scanning
+# ==============================================================================
+
+ci-security: security-go security-python security-rust security-web security-docker
+	$(call print_status,SECURITY,All security scans completed)
+
+security-go:
+	$(call print_status,SECURITY,Go security scan)
+	@mkdir -p $(REPORTS_DIR)
+	@gosec -fmt json -out $(REPORTS_DIR)/gosec-report.json ./... || true
+	@gosec -fmt text ./...
+
+security-python:
+	@if [ -d "sdks/python" ]; then \
+		$(call print_status,SECURITY,Python security scan); \
+		cd sdks/python && \
+		pip install safety bandit && \
+		safety check --json --output ../../$(REPORTS_DIR)/safety-report.json || true && \
+		bandit -r statecharts -f json -o ../../$(REPORTS_DIR)/bandit-report.json || true; \
+	fi
+
+security-rust:
+	@if [ -d "sdks/rust" ]; then \
+		$(call print_status,SECURITY,Rust security scan); \
+		cd sdks/rust && \
+		cargo install cargo-audit cargo-deny && \
+		cargo audit --json --output ../../$(REPORTS_DIR)/cargo-audit-report.json || true && \
+		cargo deny check --format json > ../../$(REPORTS_DIR)/cargo-deny-report.json || true; \
+	fi
+
+security-web:
+	@if [ -d "cmd/web-visualizer" ]; then \
+		$(call print_status,SECURITY,Web/JavaScript security scan); \
+		cd cmd/web-visualizer && \
+		npm audit --json > ../../$(REPORTS_DIR)/npm-audit-report.json || true; \
+	fi
+
+security-docker:
+	$(call print_status,SECURITY,Docker image security scan)
+	@if command -v trivy >/dev/null 2>&1; then \
+		trivy fs --format json --output $(REPORTS_DIR)/trivy-fs-report.json .; \
+	else \
+		$(call print_warning,trivy not found); \
+	fi
+
+# ==============================================================================
+# Performance Testing
+# ==============================================================================
+
+ci-performance: benchmark-go benchmark-python benchmark-rust benchmark-web
+	$(call print_status,PERFORMANCE,All performance tests completed)
+
+benchmark-go:
+	$(call print_status,PERFORMANCE,Go benchmarks)
+	@mkdir -p $(REPORTS_DIR)
+	go test -run=^$$ -bench=. -benchmem -count=$(BENCHMARK_COUNT) \
+		-timeout=30m ./... | tee $(REPORTS_DIR)/go-benchmark.txt
+
+benchmark-python:
+	@if [ -d "sdks/python" ]; then \
+		$(call print_status,PERFORMANCE,Python benchmarks); \
+		cd sdks/python && \
+		pip install pytest-benchmark && \
+		pytest tests/benchmarks/ --benchmark-only \
+			--benchmark-json=../../$(REPORTS_DIR)/python-benchmark.json || true; \
+	fi
+
+benchmark-rust:
+	@if [ -d "sdks/rust" ]; then \
+		$(call print_status,PERFORMANCE,Rust benchmarks); \
+		cd sdks/rust && \
+		cargo install cargo-criterion && \
+		cargo criterion --output-format json > ../../$(REPORTS_DIR)/rust-benchmark.json || true; \
+	fi
+
+benchmark-web:
+	@if [ -d "cmd/web-visualizer" ]; then \
+		$(call print_status,PERFORMANCE,Web performance tests); \
+		cd cmd/web-visualizer && \
+		npm run test:performance || echo "No performance tests configured"; \
+	fi
+
+# ==============================================================================
+# Build and Packaging
+# ==============================================================================
+
+ci-build: build-go build-python build-rust build-web build-docker
+	$(call print_status,BUILD,All builds completed)
+
+build-go:
+	$(call print_status,BUILD,Go binaries)
+	@mkdir -p $(ARTIFACTS_DIR)
+	go build -ldflags="-s -w -X main.Version=$(TAG)" \
+		-o $(ARTIFACTS_DIR)/statecharts-linux-amd64 \
+		./cmd/web-visualizer
+	@if [[ "$$OSTYPE" == "darwin"* ]]; then \
+		GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.Version=$(TAG)" \
+			-o $(ARTIFACTS_DIR)/statecharts-darwin-amd64 \
+			./cmd/web-visualizer; \
+	fi
+	@if [[ "$$OSTYPE" == "msys" || "$$OSTYPE" == "win32" ]]; then \
+		GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X main.Version=$(TAG)" \
+			-o $(ARTIFACTS_DIR)/statecharts-windows-amd64.exe \
+			./cmd/web-visualizer; \
+	fi
+
+build-python:
+	@if [ -d "sdks/python" ]; then \
+		$(call print_status,BUILD,Python package); \
+		cd sdks/python && \
+		python -m build --outdir ../../$(ARTIFACTS_DIR); \
+	fi
+
+build-rust:
+	@if [ -d "sdks/rust" ]; then \
+		$(call print_status,BUILD,Rust package); \
+		cd sdks/rust && \
+		cargo build --release && \
+		cp target/release/statecharts-rust ../../$(ARTIFACTS_DIR)/ || true; \
+	fi
+
+build-web:
+	@if [ -d "cmd/web-visualizer" ]; then \
+		$(call print_status,BUILD,Web assets); \
+		cd cmd/web-visualizer && \
+		npm run build && \
+		tar -czf ../../$(ARTIFACTS_DIR)/web-assets.tar.gz dist/; \
+	fi
+
+build-docker:
+	$(call print_status,BUILD,Docker images)
+	docker build -f Dockerfile.prod -t $(REGISTRY)/$(IMAGE_NAME):$(TAG) .
+	docker build -f Dockerfile.dev -t $(REGISTRY)/$(IMAGE_NAME):dev .
+
+# ==============================================================================
+# Deployment and Verification
+# ==============================================================================
+
+ci-deploy: deploy-staging
+	$(call print_status,DEPLOY,Deployment completed)
+
+deploy-staging:
+	$(call print_status,DEPLOY,Deploying to staging)
+	@echo "Deploying version $(TAG) to staging environment"
+	@# Add actual deployment commands here
+	@# kubectl apply -f k8s/staging/
+	@# kubectl set image deployment/statecharts statecharts=$(REGISTRY)/$(IMAGE_NAME):$(TAG)
+
+deploy-production:
+	$(call print_status,DEPLOY,Deploying to production)
+	@echo "Deploying version $(TAG) to production environment"
+	@# Add actual deployment commands here
+	@# kubectl apply -f k8s/production/
+	@# kubectl set image deployment/statecharts statecharts=$(REGISTRY)/$(IMAGE_NAME):$(TAG)
+
+ci-smoke-test:
+	$(call print_status,TEST,Running smoke tests)
+	@if [ -f "scripts/smoke-test.sh" ]; then \
+		chmod +x scripts/smoke-test.sh && \
+		./scripts/smoke-test.sh; \
+	else \
+		$(call print_warning,smoke-test.sh not found); \
+	fi
+
+# ==============================================================================
+# Reporting and Cleanup
+# ==============================================================================
+
+generate-reports:
+	$(call print_status,REPORTS,Generating CI reports)
+	@mkdir -p $(REPORTS_DIR)
+	
+	# Aggregate coverage reports
+	@echo "# Coverage Report" > $(REPORTS_DIR)/coverage-summary.md
+	@echo "" >> $(REPORTS_DIR)/coverage-summary.md
+	@if [ -f "$(COVERAGE_DIR)/go-coverage.out" ]; then \
+		echo "## Go Coverage" >> $(REPORTS_DIR)/coverage-summary.md; \
+		go tool cover -func=$(COVERAGE_DIR)/go-coverage.out | tail -1 >> $(REPORTS_DIR)/coverage-summary.md; \
+		echo "" >> $(REPORTS_DIR)/coverage-summary.md; \
+	fi
+	
+	# Create test summary
+	@echo "# Test Summary" > $(REPORTS_DIR)/test-summary.md
+	@echo "" >> $(REPORTS_DIR)/test-summary.md
+	@echo "- Go tests: ✓" >> $(REPORTS_DIR)/test-summary.md
+	@if [ -d "sdks/python" ]; then echo "- Python tests: ✓" >> $(REPORTS_DIR)/test-summary.md; fi
+	@if [ -d "sdks/rust" ]; then echo "- Rust tests: ✓" >> $(REPORTS_DIR)/test-summary.md; fi
+	@if [ -d "cmd/web-visualizer" ]; then echo "- Web tests: ✓" >> $(REPORTS_DIR)/test-summary.md; fi
+
+clean-ci:
+	$(call print_status,CLEAN,Cleaning CI artifacts)
+	rm -rf $(BUILD_DIR) $(REPORTS_DIR) $(ARTIFACTS_DIR)
+	docker system prune -f || true
+
+# ==============================================================================
+# CI Pipeline Targets
+# ==============================================================================
+
+# Complete CI pipeline
+ci: ci-setup ci-lint ci-test ci-security ci-build generate-reports
+	$(call print_status,CI,Complete CI pipeline finished)
+
+# Quick CI for PRs
+ci-quick: ci-setup ci-lint test-go test-python
+	$(call print_status,CI,Quick CI pipeline finished)
+
+# Release pipeline
+ci-release: ci ci-performance build-docker deploy-staging ci-smoke-test
+	$(call print_status,CI,Release pipeline finished)
+
+# Help target
+help:
+	@echo "CI/CD Makefile for Statecharts Project"
+	@echo ""
+	@echo "Setup targets:"
+	@echo "  ci-setup      - Set up CI environment and install tools"
+	@echo "  setup-tools   - Install development tools"
+	@echo "  check-tools   - Verify tool installation"
+	@echo ""
+	@echo "Code quality targets:"
+	@echo "  ci-lint       - Run all linting checks"
+	@echo "  lint-go       - Lint Go code"
+	@echo "  lint-python   - Lint Python code"
+	@echo "  lint-rust     - Lint Rust code"
+	@echo "  lint-web      - Lint web/JavaScript code"
+	@echo ""
+	@echo "Testing targets:"
+	@echo "  ci-test       - Run all tests"
+	@echo "  test-go       - Run Go tests"
+	@echo "  test-python   - Run Python tests"
+	@echo "  test-rust     - Run Rust tests"
+	@echo "  test-web      - Run web tests"
+	@echo ""
+	@echo "Security targets:"
+	@echo "  ci-security   - Run all security scans"
+	@echo "  security-go   - Run Go security scans"
+	@echo ""
+	@echo "Performance targets:"
+	@echo "  ci-performance - Run all performance tests"
+	@echo "  benchmark-go   - Run Go benchmarks"
+	@echo ""
+	@echo "Build targets:"
+	@echo "  ci-build      - Build all components"
+	@echo "  build-go      - Build Go binaries"
+	@echo "  build-docker  - Build Docker images"
+	@echo ""
+	@echo "Deployment targets:"
+	@echo "  ci-deploy     - Deploy to staging"
+	@echo "  ci-smoke-test - Run smoke tests"
+	@echo ""
+	@echo "Pipeline targets:"
+	@echo "  ci            - Complete CI pipeline"
+	@echo "  ci-quick      - Quick CI for PRs"
+	@echo "  ci-release    - Release pipeline"
+	@echo ""
+	@echo "Utility targets:"
+	@echo "  generate-reports - Generate CI reports"
+	@echo "  clean-ci         - Clean CI artifacts"
+	@echo "  help             - Show this help"

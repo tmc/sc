@@ -1,0 +1,371 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+      prerelease_identifier:
+        description: 'Prerelease identifier (alpha, beta, rc)'
+        required: false
+        default: 'alpha'
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.version.outputs.new_version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: |
+          npm install -g semantic-release @semantic-release/changelog @semantic-release/git
+          npm install -g conventional-changelog-cli standard-version
+      
+      - name: Determine new version
+        id: version
+        run: |
+          # Get current version from git tags
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          CURRENT_VERSION=${CURRENT_VERSION#v}
+          
+          # Calculate new version based on input
+          case "${{ github.event.inputs.release_type }}" in
+            major)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1+1".0.0"}')
+              ;;
+            minor)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2+1".0"}')
+              ;;
+            patch)
+              NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+              ;;
+            prerelease)
+              BASE_VERSION=$(echo $CURRENT_VERSION | sed 's/-.*$//')
+              PRERELEASE_VERSION=$(echo $CURRENT_VERSION | grep -oE '(alpha|beta|rc)\.[0-9]+' || echo "${{ github.event.inputs.prerelease_identifier }}.0")
+              PRERELEASE_TYPE=$(echo $PRERELEASE_VERSION | cut -d. -f1)
+              PRERELEASE_NUM=$(echo $PRERELEASE_VERSION | cut -d. -f2)
+              
+              if [[ "$PRERELEASE_TYPE" == "${{ github.event.inputs.prerelease_identifier }}" ]]; then
+                PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
+              else
+                PRERELEASE_NUM=1
+              fi
+              
+              NEW_VERSION="${BASE_VERSION}-${{ github.event.inputs.prerelease_identifier }}.${PRERELEASE_NUM}"
+              ;;
+          esac
+          
+          echo "new_version=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: v$NEW_VERSION"
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog for the new version
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse ${LAST_TAG}..HEAD)
+          fi
+          
+          # Categorize commits
+          cat > CHANGELOG_CONTENT.md << EOF
+          ## What's Changed
+          
+          ### Features
+          $(echo "$COMMITS" | grep -E "^- feat(\(.*\))?:" || echo "None")
+          
+          ### Bug Fixes
+          $(echo "$COMMITS" | grep -E "^- fix(\(.*\))?:" || echo "None")
+          
+          ### Performance Improvements
+          $(echo "$COMMITS" | grep -E "^- perf(\(.*\))?:" || echo "None")
+          
+          ### Documentation
+          $(echo "$COMMITS" | grep -E "^- docs(\(.*\))?:" || echo "None")
+          
+          ### Other Changes
+          $(echo "$COMMITS" | grep -vE "^- (feat|fix|perf|docs)(\(.*\))?:" || echo "None")
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${{ steps.version.outputs.new_version }}
+          EOF
+          
+          # Save changelog for later use
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG_CONTENT.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Update version files
+        run: |
+          VERSION=${{ steps.version.outputs.new_version }}
+          VERSION=${VERSION#v}
+          
+          # Update version in various files
+          # Go module
+          if [ -f "version.go" ]; then
+            sed -i "s/const Version = .*/const Version = \"$VERSION\"/" version.go
+          fi
+          
+          # Python SDK
+          if [ -f "sdks/python/pyproject.toml" ]; then
+            sed -i "s/version = .*/version = \"$VERSION\"/" sdks/python/pyproject.toml
+          fi
+          
+          # Rust SDK
+          if [ -f "sdks/rust/Cargo.toml" ]; then
+            sed -i "s/^version = .*/version = \"$VERSION\"/" sdks/rust/Cargo.toml
+          fi
+          
+          # NPM package
+          if [ -f "cmd/web-visualizer/package.json" ]; then
+            cd cmd/web-visualizer
+            npm version $VERSION --no-git-tag-version
+            cd ../..
+          fi
+      
+      - name: Create release commit
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add -A
+          git commit -m "chore(release): prepare release ${{ steps.version.outputs.new_version }}" || echo "No changes to commit"
+      
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    outputs:
+      release_url: ${{ steps.create_release.outputs.html_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.new_version }}
+          name: Release ${{ needs.prepare-release.outputs.new_version }}
+          body: ${{ needs.prepare-release.outputs.changelog }}
+          draft: false
+          prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+          generate_release_notes: true
+
+  build-artifacts:
+    name: Build Release Artifacts
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: statecharts-linux-amd64
+          - os: macos-latest
+            artifact_name: statecharts-darwin-amd64
+          - os: windows-latest
+            artifact_name: statecharts-windows-amd64.exe
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.new_version }}
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      
+      - name: Build binary
+        run: |
+          go build -ldflags="-s -w -X main.Version=${{ needs.prepare-release.outputs.new_version }}" \
+            -o ${{ matrix.artifact_name }} \
+            ./cmd/web-visualizer
+      
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag: ${{ needs.prepare-release.outputs.new_version }}
+          files: ${{ matrix.artifact_name }}
+
+  publish-packages:
+    name: Publish Packages
+    needs: [prepare-release, create-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.new_version }}
+      
+      - name: Set up environments
+        run: |
+          # Set up Go
+          echo "Setting up Go..."
+          
+          # Set up Python
+          python -m pip install --upgrade pip
+          pip install build twine
+          
+          # Set up Rust
+          echo "Setting up Rust..."
+          
+          # Set up Node.js
+          echo "Setting up Node.js..."
+      
+      - name: Publish Go module
+        run: |
+          # Go modules are automatically published when tagged
+          echo "Go module will be available at proxy.golang.org"
+      
+      - name: Build and publish Python package
+        working-directory: sdks/python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m build
+          python -m twine upload dist/* --skip-existing
+      
+      - name: Build and publish Rust crate
+        working-directory: sdks/rust
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo publish --dry-run
+          cargo publish || echo "Crate already published"
+      
+      - name: Build and publish npm package
+        working-directory: cmd/web-visualizer
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --dry-run
+          # npm publish
+
+  docker-release:
+    name: Build and Push Docker Images
+    needs: [prepare-release, create-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.new_version }}
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/statecharts
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.prepare-release.outputs.new_version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.prepare-release.outputs.new_version }}
+            type=semver,pattern={{major}},value=${{ needs.prepare-release.outputs.new_version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.prepare-release.outputs.new_version }}
+
+  announce-release:
+    name: Announce Release
+    needs: [prepare-release, create-release, publish-packages, docker-release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🎉 New Release: ${{ needs.prepare-release.outputs.new_version }}
+            
+            📦 Packages published:
+            - Go: Available at proxy.golang.org
+            - Python: Available on PyPI
+            - Rust: Available on crates.io
+            - Docker: Available on Docker Hub and GHCR
+            
+            🔗 Release URL: ${{ needs.create-release.outputs.release_url }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: success()
+      
+      - name: Create discussion
+        uses: abirismyname/create-discussion@v1
+        with:
+          title: "Release ${{ needs.prepare-release.outputs.new_version }}"
+          body: |
+            We've just released version ${{ needs.prepare-release.outputs.new_version }}!
+            
+            ${{ needs.prepare-release.outputs.changelog }}
+            
+            Check out the [release page](${{ needs.create-release.outputs.release_url }}) for more details.
+          repository-id: ${{ secrets.DISCUSSION_REPOSITORY_ID }}
+          category-id: ${{ secrets.DISCUSSION_CATEGORY_ID }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

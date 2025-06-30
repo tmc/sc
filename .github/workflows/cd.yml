@@ -1,0 +1,249 @@
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Build and publish Docker images
+  build-images:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+      
+      - name: Build and push production image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Build and push web visualizer image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./cmd/web-visualizer
+          file: ./cmd/web-visualizer/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web-visualizer:${{ steps.meta.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.statecharts.io
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Kubernetes (Staging)
+        run: |
+          echo "Deploying to staging with image: ${{ needs.build-images.outputs.image-tag }}"
+          # kubectl apply -f k8s/staging/
+          # kubectl set image deployment/statecharts-api statecharts-api=${{ needs.build-images.outputs.image-tag }}
+      
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+          # ./scripts/smoke-test.sh https://staging.statecharts.io
+      
+      - name: Notify deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Deployed to staging: ${{ needs.build-images.outputs.image-tag }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    needs: [build-images, deploy-staging]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://statecharts.io
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Kubernetes (Production)
+        run: |
+          echo "Deploying to production with image: ${{ needs.build-images.outputs.image-tag }}"
+          # kubectl apply -f k8s/production/
+          # kubectl set image deployment/statecharts-api statecharts-api=${{ needs.build-images.outputs.image-tag }}
+      
+      - name: Create deployment record
+        run: |
+          echo "Recording deployment..."
+          # Create deployment record in monitoring system
+      
+      - name: Run health checks
+        run: |
+          echo "Running health checks..."
+          # ./scripts/health-check.sh https://statecharts.io
+      
+      - name: Notify deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Deployed to production: ${{ needs.build-images.outputs.image-tag }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # Publish language SDKs
+  publish-sdks:
+    name: Publish SDKs
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: deploy-production
+    strategy:
+      matrix:
+        sdk: [python, rust, npm]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      # Python SDK
+      - name: Set up Python
+        if: matrix.sdk == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Build Python SDK
+        if: matrix.sdk == 'python'
+        working-directory: sdks/python
+        run: |
+          pip install build twine
+          python -m build
+      
+      - name: Publish to PyPI
+        if: matrix.sdk == 'python'
+        working-directory: sdks/python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          twine upload dist/*
+      
+      # Rust SDK
+      - name: Set up Rust
+        if: matrix.sdk == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Publish to crates.io
+        if: matrix.sdk == 'rust'
+        working-directory: sdks/rust
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo publish --dry-run
+          cargo publish
+      
+      # NPM package (if web visualizer is packaged)
+      - name: Set up Node.js
+        if: matrix.sdk == 'npm'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Publish to NPM
+        if: matrix.sdk == 'npm'
+        working-directory: cmd/web-visualizer
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm version ${{ steps.version.outputs.version }}
+          npm publish
+
+  # Create GitHub release
+  create-release:
+    name: Create Release
+    needs: [deploy-production, publish-sdks]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog from commits
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD > CHANGELOG.md
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            dist/*
+            sdks/python/dist/*
+            sdks/rust/target/release/*

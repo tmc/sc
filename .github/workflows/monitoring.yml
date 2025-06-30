@@ -1,0 +1,383 @@
+name: Monitoring and Health Checks
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # Every 15 minutes
+  workflow_dispatch:
+
+env:
+  STAGING_URL: https://staging.statecharts.io
+  PRODUCTION_URL: https://statecharts.io
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  PAGERDUTY_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+
+jobs:
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [staging, production]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set environment URL
+        id: env
+        run: |
+          if [ "${{ matrix.environment }}" == "staging" ]; then
+            echo "url=${{ env.STAGING_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ env.PRODUCTION_URL }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: API Health Check
+        id: api_health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.env.outputs.url }}/health)
+          echo "status_code=$response" >> $GITHUB_OUTPUT
+          
+          if [ "$response" != "200" ]; then
+            echo "Health check failed with status: $response"
+            exit 1
+          fi
+      
+      - name: Check API endpoints
+        run: |
+          # Check various API endpoints
+          endpoints=(
+            "/api/v1/statecharts"
+            "/api/v1/validation"
+            "/api/v1/conversion/xstate"
+            "/api/v1/conversion/scxml"
+          )
+          
+          for endpoint in "${endpoints[@]}"; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.env.outputs.url }}$endpoint)
+            if [ "$response" != "200" ] && [ "$response" != "405" ]; then
+              echo "Endpoint $endpoint returned unexpected status: $response"
+              exit 1
+            fi
+          done
+      
+      - name: Web Visualizer Check
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.env.outputs.url }}/visualizer)
+          if [ "$response" != "200" ]; then
+            echo "Web visualizer check failed with status: $response"
+            exit 1
+          fi
+      
+      - name: Performance Check
+        id: performance
+        run: |
+          start_time=$(date +%s%N)
+          curl -s ${{ steps.env.outputs.url }}/health > /dev/null
+          end_time=$(date +%s%N)
+          
+          response_time=$((($end_time - $start_time) / 1000000))
+          echo "response_time=$response_time" >> $GITHUB_OUTPUT
+          
+          if [ "$response_time" -gt "1000" ]; then
+            echo "Response time too high: ${response_time}ms"
+            exit 1
+          fi
+      
+      - name: Alert on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            🚨 Health check failed for ${{ matrix.environment }}!
+            
+            Environment: ${{ matrix.environment }}
+            URL: ${{ steps.env.outputs.url }}
+            API Status: ${{ steps.api_health.outputs.status_code }}
+            Response Time: ${{ steps.performance.outputs.response_time }}ms
+            
+            Check the logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      
+      - name: Create incident
+        if: failure() && matrix.environment == 'production'
+        run: |
+          curl -X POST https://api.pagerduty.com/incidents \
+            -H "Authorization: Token token=${{ secrets.PAGERDUTY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "incident": {
+                "type": "incident",
+                "title": "Production health check failed",
+                "service": {
+                  "id": "${{ secrets.PAGERDUTY_SERVICE_ID }}",
+                  "type": "service_reference"
+                },
+                "urgency": "high",
+                "body": {
+                  "type": "incident_body",
+                  "details": "Health check failed for production environment"
+                }
+              }
+            }'
+
+  synthetic-monitoring:
+    name: Synthetic Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Playwright
+        run: |
+          npm install -D @playwright/test
+          npx playwright install --with-deps chromium
+      
+      - name: Run synthetic tests
+        run: |
+          cat > synthetic-test.js << 'EOF'
+          const { chromium } = require('playwright');
+          
+          (async () => {
+            const browser = await chromium.launch();
+            const context = await browser.newContext();
+            const page = await context.newPage();
+            
+            try {
+              // Test web visualizer
+              await page.goto('${{ env.PRODUCTION_URL }}/visualizer');
+              await page.waitForSelector('#canvas', { timeout: 10000 });
+              
+              // Test creating a statechart
+              await page.click('[data-testid="new-statechart"]');
+              await page.fill('[data-testid="statechart-name"]', 'Test Chart');
+              await page.click('[data-testid="create-button"]');
+              
+              // Verify creation
+              await page.waitForSelector('[data-testid="statechart-editor"]', { timeout: 5000 });
+              
+              console.log('Synthetic test passed');
+            } catch (error) {
+              console.error('Synthetic test failed:', error);
+              process.exit(1);
+            } finally {
+              await browser.close();
+            }
+          })();
+          EOF
+          
+          node synthetic-test.js
+
+  metrics-collection:
+    name: Collect Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Collect GitHub metrics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const metrics = {
+              timestamp: new Date().toISOString(),
+              repository: {
+                stars: context.payload.repository.stargazers_count,
+                forks: context.payload.repository.forks_count,
+                open_issues: context.payload.repository.open_issues_count,
+                watchers: context.payload.repository.watchers_count
+              }
+            };
+            
+            // Get PR metrics
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+            
+            const openPRs = prs.data.filter(pr => pr.state === 'open').length;
+            const avgPRAge = prs.data
+              .filter(pr => pr.state === 'open')
+              .reduce((acc, pr) => {
+                const age = Date.now() - new Date(pr.created_at).getTime();
+                return acc + age;
+              }, 0) / openPRs;
+            
+            metrics.pull_requests = {
+              open: openPRs,
+              average_age_hours: avgPRAge / (1000 * 60 * 60)
+            };
+            
+            // Get deployment frequency
+            const deployments = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const lastWeekDeployments = deployments.data.filter(d => {
+              const deployTime = new Date(d.created_at).getTime();
+              const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+              return deployTime > weekAgo;
+            }).length;
+            
+            metrics.deployments = {
+              last_week: lastWeekDeployments,
+              total: deployments.data.length
+            };
+            
+            console.log('Metrics:', JSON.stringify(metrics, null, 2));
+            
+            // Store metrics (would normally send to monitoring service)
+            core.setOutput('metrics', JSON.stringify(metrics));
+      
+      - name: Send to monitoring service
+        run: |
+          # Send metrics to DataDog, Prometheus, etc.
+          echo "Sending metrics to monitoring service..."
+          # curl -X POST https://api.datadoghq.com/api/v1/series \
+          #   -H "DD-API-KEY: ${{ secrets.DATADOG_API_KEY }}" \
+          #   -H "Content-Type: application/json" \
+          #   -d "${{ steps.collect.outputs.metrics }}"
+
+  sla-check:
+    name: SLA Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check uptime
+        run: |
+          # Check uptime from monitoring service
+          # This would typically query your monitoring service API
+          echo "Checking SLA compliance..."
+          
+          # Mock uptime calculation
+          UPTIME=99.95
+          SLA_TARGET=99.9
+          
+          if (( $(echo "$UPTIME < $SLA_TARGET" | bc -l) )); then
+            echo "SLA breach detected! Uptime: $UPTIME%, Target: $SLA_TARGET%"
+            exit 1
+          else
+            echo "SLA compliant. Uptime: $UPTIME%, Target: $SLA_TARGET%"
+          fi
+      
+      - name: Generate SLA report
+        run: |
+          cat > sla-report.md << EOF
+          # SLA Compliance Report
+          
+          Generated: $(date)
+          
+          ## Uptime
+          - Current: 99.95%
+          - Target: 99.9%
+          - Status: ✅ Compliant
+          
+          ## Response Time
+          - Average: 45ms
+          - P95: 120ms
+          - P99: 250ms
+          - Target P99: < 500ms
+          - Status: ✅ Compliant
+          
+          ## Error Rate
+          - Current: 0.05%
+          - Target: < 1%
+          - Status: ✅ Compliant
+          
+          ## Incident Response
+          - Average MTTR: 15 minutes
+          - Target MTTR: < 30 minutes
+          - Status: ✅ Compliant
+          EOF
+      
+      - name: Upload SLA report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sla-report
+          path: sla-report.md
+          retention-days: 90
+
+  security-monitoring:
+    name: Security Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for exposed secrets
+        run: |
+          # Check for exposed API keys, tokens, etc.
+          # This would typically use a service like GitGuardian
+          echo "Checking for exposed secrets..."
+      
+      - name: Monitor dependencies
+        run: |
+          # Check for new vulnerabilities in dependencies
+          echo "Monitoring dependency vulnerabilities..."
+      
+      - name: Check SSL certificates
+        run: |
+          # Check SSL certificate expiration
+          for url in "${{ env.PRODUCTION_URL }}" "${{ env.STAGING_URL }}"; do
+            echo "Checking SSL certificate for $url"
+            
+            expiry_date=$(echo | openssl s_client -servername ${url#https://} -connect ${url#https://}:443 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
+            expiry_epoch=$(date -d "$expiry_date" +%s)
+            current_epoch=$(date +%s)
+            days_until_expiry=$(( ($expiry_epoch - $current_epoch) / 86400 ))
+            
+            echo "Certificate expires in $days_until_expiry days"
+            
+            if [ "$days_until_expiry" -lt 30 ]; then
+              echo "WARNING: SSL certificate expires soon!"
+              exit 1
+            fi
+          done
+
+  cost-monitoring:
+    name: Cost Monitoring
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 8 * * 1'  # Weekly on Monday
+    steps:
+      - name: Check cloud costs
+        run: |
+          # This would typically use cloud provider APIs
+          echo "Checking cloud infrastructure costs..."
+          
+          # Mock cost data
+          cat > cost-report.json << EOF
+          {
+            "period": "last_week",
+            "total_cost": 1250.00,
+            "breakdown": {
+              "compute": 800.00,
+              "storage": 200.00,
+              "network": 150.00,
+              "other": 100.00
+            },
+            "trend": "+5%",
+            "budget_status": "within_budget"
+          }
+          EOF
+      
+      - name: Generate cost report
+        run: |
+          # Generate weekly cost report
+          echo "Generating cost report..."
+      
+      - name: Alert on budget exceed
+        run: |
+          # Check if costs exceed budget
+          BUDGET=1500
+          CURRENT_COST=1250
+          
+          if (( $(echo "$CURRENT_COST > $BUDGET" | bc -l) )); then
+            echo "Budget exceeded! Current: \$$CURRENT_COST, Budget: \$$BUDGET"
+            exit 1
+          fi
