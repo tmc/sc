@@ -85,6 +85,14 @@ func (s *Statechart) FindEnabledTransitions(config *sc.Configuration, context *s
 		}
 	}
 
+	// Create event object for guard evaluation
+	eventObj := &sc.Event{
+		Label: event,
+		Parameters: &structpb.Struct{
+			Fields: make(map[string]*structpb.Value),
+		},
+	}
+
 	// Check each transition
 	for _, transition := range s.Transitions {
 		if transition.Event != event {
@@ -104,8 +112,8 @@ func (s *Statechart) FindEnabledTransitions(config *sc.Configuration, context *s
 			continue
 		}
 
-		// Evaluate guard condition
-		guardPasses, err := s.EvaluateGuard(transition.Guard, context)
+		// Evaluate guard condition with full context
+		guardPasses, err := s.EvaluateGuardWithTransition(transition.Guard, context, eventObj, transition)
 		if err != nil {
 			return nil, fmt.Errorf("failed to evaluate guard for transition %s: %w", transition.Label, err)
 		}
@@ -492,43 +500,67 @@ func (s *Statechart) calculateNewConfiguration(oldConfig *sc.Configuration, exit
 	return &sc.Configuration{States: stateRefs}, nil
 }
 
-// EvaluateGuard evaluates a guard condition.
+// EvaluateGuard evaluates a guard condition using the comprehensive guard evaluator.
 func (s *Statechart) EvaluateGuard(guard *sc.Guard, context *structpb.Struct) (bool, error) {
+	return s.EvaluateGuardWithEvent(guard, context, nil)
+}
+
+// EvaluateGuardWithEvent evaluates a guard condition with event context.
+func (s *Statechart) EvaluateGuardWithEvent(guard *sc.Guard, context *structpb.Struct, event *sc.Event) (bool, error) {
 	if guard == nil || guard.Expression == "" {
 		return true, nil // No guard means always true
 	}
 
-	// This is a simplified guard evaluation
-	// In a production system, you would implement a proper expression evaluator
-	return s.evaluateGuardExpression(guard.Expression, context)
+	// Create evaluation context
+	evalContext := &EvaluationContext{
+		Variables: context,
+		Event:     event,
+		StateData: make(map[string]interface{}),
+	}
+
+	// Use the global guard evaluator
+	result, err := globalGuardEvaluator.EvaluateGuard(guard, evalContext)
+	if err != nil {
+		return false, fmt.Errorf("guard evaluation failed: %w", err)
+	}
+
+	return result.Value, nil
 }
 
-// evaluateGuardExpression evaluates a guard expression.
-// This is a simplified implementation that handles basic expressions.
-func (s *Statechart) evaluateGuardExpression(expression string, context *structpb.Struct) (bool, error) {
-	// Simple expression evaluation for common patterns
-	// In a real implementation, you would use a proper expression parser/evaluator
-	
-	switch expression {
-	case "true":
-		return true, nil
-	case "false":
-		return false, nil
-	default:
-		// Handle context-based expressions like "context.count < 5"
-		if context != nil && context.Fields != nil {
-			// This is a very basic parser for demonstration
-			// Real implementation would use a proper expression language
-			if expression == "context.count < 5" {
-				if countValue, exists := context.Fields["count"]; exists {
-					if count, ok := countValue.GetKind().(*structpb.Value_NumberValue); ok {
-						return count.NumberValue < 5, nil
-					}
-				}
-			}
-		}
-		return true, nil // Default to true for unknown expressions
+// EvaluateGuardWithTransition evaluates a guard condition with full transition context.
+func (s *Statechart) EvaluateGuardWithTransition(guard *sc.Guard, context *structpb.Struct, event *sc.Event, transition *sc.Transition) (bool, error) {
+	if guard == nil || guard.Expression == "" {
+		return true, nil // No guard means always true
 	}
+
+	// Create evaluation context with full information
+	evalContext := &EvaluationContext{
+		Variables:  context,
+		Event:      event,
+		StateData:  make(map[string]interface{}),
+		Transition: transition,
+	}
+
+	// Add transition-specific state data
+	if transition != nil {
+		evalContext.StateData["sourceStates"] = transition.From
+		evalContext.StateData["targetStates"] = transition.To
+		evalContext.StateData["transitionLabel"] = transition.Label
+	}
+
+	// Use the global guard evaluator
+	result, err := globalGuardEvaluator.EvaluateGuard(guard, evalContext)
+	if err != nil {
+		return false, fmt.Errorf("guard evaluation failed: %w", err)
+	}
+
+	return result.Value, nil
+}
+
+// evaluateGuardExpression provides backward compatibility.
+// This is deprecated in favor of the new guard evaluation system.
+func (s *Statechart) evaluateGuardExpression(expression string, context *structpb.Struct) (bool, error) {
+	return EvaluateGuardExpression(expression, context)
 }
 
 // ExecuteAction executes an action.
@@ -680,6 +712,11 @@ func (s *Statechart) cloneContext(context *structpb.Struct) *structpb.Struct {
 
 // IsTransitionEnabled checks if a specific transition is enabled.
 func (s *Statechart) IsTransitionEnabled(transition *sc.Transition, config *sc.Configuration, context *structpb.Struct) (bool, error) {
+	return s.IsTransitionEnabledWithEvent(transition, config, context, nil)
+}
+
+// IsTransitionEnabledWithEvent checks if a specific transition is enabled with event context.
+func (s *Statechart) IsTransitionEnabledWithEvent(transition *sc.Transition, config *sc.Configuration, context *structpb.Struct, event *sc.Event) (bool, error) {
 	if transition == nil || config == nil {
 		return false, fmt.Errorf("transition and configuration cannot be nil")
 	}
@@ -704,8 +741,8 @@ func (s *Statechart) IsTransitionEnabled(transition *sc.Transition, config *sc.C
 		return false, nil
 	}
 
-	// Evaluate guard
-	return s.EvaluateGuard(transition.Guard, context)
+	// Evaluate guard with full context
+	return s.EvaluateGuardWithTransition(transition.Guard, context, event, transition)
 }
 
 // GetTransitionsByEvent returns all transitions triggered by a specific event.

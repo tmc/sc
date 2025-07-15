@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/tmc/sc"
+	"github.com/tmc/sc/semantics/v1"
 )
 
 // HarelValidationRule represents a formal validation rule based on Harel's semantics
@@ -83,7 +84,7 @@ func GetHarelValidationRules() []HarelValidationRule {
 // validateStateHierarchyWellFormed checks that the state hierarchy forms a proper tree
 func validateStateHierarchyWellFormed(statechart *sc.Statechart) error {
 	if statechart.RootState == nil {
-		return fmt.Errorf("statechart has no root state")
+		return semantics.ValidationErrorf(semantics.ErrCodeStatechartMissingRoot, "statechart has no root state")
 	}
 
 	// Track all states and their parents
@@ -92,13 +93,17 @@ func validateStateHierarchyWellFormed(statechart *sc.Statechart) error {
 
 	visitState = func(state *sc.State, parentLabel string) error {
 		if state.Label == "" {
-			return fmt.Errorf("state has empty label")
+			return semantics.ValidationErrorf(semantics.ErrCodeStateEmpty, "state has empty label")
 		}
 
 		// Check for duplicate state in hierarchy
 		if existingParent, exists := stateParents[state.Label]; exists {
-			return fmt.Errorf("state %s appears multiple times in hierarchy (parents: %s, %s)", 
-				state.Label, existingParent, parentLabel)
+			return semantics.NewErrorBuilder(semantics.ErrCodeStateDuplicate, semantics.CategoryValidation, 
+				"state appears multiple times in hierarchy").
+				WithContext("state_label", state.Label).
+				WithContext("existing_parent", existingParent).
+				WithContext("new_parent", parentLabel).
+				Build()
 		}
 
 		stateParents[state.Label] = parentLabel
@@ -135,8 +140,13 @@ func validateOrthogonalStatesDisjoint(statechart *sc.Statechart) error {
 				for j := i + 1; j < len(regionStates); j++ {
 					for stateName := range regionStates[i] {
 						if regionStates[j][stateName] {
-							return fmt.Errorf("orthogonal regions of %s overlap: state %s appears in multiple regions", 
-								state.Label, stateName)
+							return semantics.NewErrorBuilder(semantics.ErrCodeOrthogonalStatesOverlap, semantics.CategoryValidation,
+								"orthogonal regions overlap").
+								WithContext("parent_state", state.Label).
+								WithContext("overlapping_state", stateName).
+								WithContext("region_1", i).
+								WithContext("region_2", j).
+								Build()
 						}
 					}
 				}
@@ -184,22 +194,31 @@ func validateTransitionSourceTargetValidity(statechart *sc.Statechart) error {
 	// Validate all transitions
 	for i, transition := range statechart.Transitions {
 		if transition.Label == "" {
-			return fmt.Errorf("transition %d has empty label", i)
+			return semantics.NewErrorBuilder(semantics.ErrCodeTransitionMissingLabel, semantics.CategoryValidation,
+				"transition has empty label").
+				WithContext("transition_index", i).
+				Build()
 		}
 
 		// Check source states
 		for _, source := range transition.From {
 			if !stateNames[source] {
-				return fmt.Errorf("transition %s references invalid source state: %s", 
-					transition.Label, source)
+				return semantics.NewErrorBuilder(semantics.ErrCodeTransitionInvalidSource, semantics.CategoryValidation,
+					"transition references invalid source state").
+					WithContext("transition_label", transition.Label).
+					WithContext("invalid_source", source).
+					Build()
 			}
 		}
 
 		// Check target states
 		for _, target := range transition.To {
 			if !stateNames[target] {
-				return fmt.Errorf("transition %s references invalid target state: %s", 
-					transition.Label, target)
+				return semantics.NewErrorBuilder(semantics.ErrCodeTransitionInvalidTarget, semantics.CategoryValidation,
+					"transition references invalid target state").
+					WithContext("transition_label", transition.Label).
+					WithContext("invalid_target", target).
+					Build()
 			}
 		}
 	}
@@ -213,7 +232,7 @@ func validateEventConsistency(statechart *sc.Statechart) error {
 	declaredEvents := make(map[string]bool)
 	for _, event := range statechart.Events {
 		if event.Label == "" {
-			return fmt.Errorf("event has empty label")
+			return semantics.ValidationErrorf(semantics.ErrCodeEventInvalidLabel, "event has empty label")
 		}
 		declaredEvents[event.Label] = true
 	}
@@ -221,8 +240,11 @@ func validateEventConsistency(statechart *sc.Statechart) error {
 	// Check that all transition events are declared
 	for _, transition := range statechart.Transitions {
 		if transition.Event != "" && !declaredEvents[transition.Event] {
-			return fmt.Errorf("transition %s references undeclared event: %s", 
-				transition.Label, transition.Event)
+			return semantics.NewErrorBuilder(semantics.ErrCodeEventUndeclared, semantics.CategoryValidation,
+				"transition references undeclared event").
+				WithContext("transition_label", transition.Label).
+				WithContext("undeclared_event", transition.Event).
+				Build()
 		}
 	}
 
@@ -238,12 +260,19 @@ func validateConfigurationConsistency(statechart *sc.Statechart) error {
 		switch state.Type {
 		case sc.StateTypeBasic:
 			if len(state.Children) > 0 {
-				return fmt.Errorf("basic state %s cannot have children", state.Label)
+				return semantics.NewErrorBuilder(semantics.ErrCodeStateInvalidChildren, semantics.CategoryValidation,
+					"basic state cannot have children").
+					WithContext("state_label", state.Label).
+					WithContext("child_count", len(state.Children)).
+					Build()
 			}
 
 		case sc.StateTypeNormal:
 			if len(state.Children) == 0 {
-				return fmt.Errorf("normal (XOR) state %s must have children", state.Label)
+				return semantics.NewErrorBuilder(semantics.ErrCodeStateInvalidChildren, semantics.CategoryValidation,
+					"normal (XOR) state must have children").
+					WithContext("state_label", state.Label).
+					Build()
 			}
 			
 			// Check for exactly one initial state
@@ -254,21 +283,30 @@ func validateConfigurationConsistency(statechart *sc.Statechart) error {
 				}
 			}
 			if initialCount != 1 {
-				return fmt.Errorf("normal state %s must have exactly one initial child, found %d", 
-					state.Label, initialCount)
+				return semantics.NewErrorBuilder(semantics.ErrCodeStateInvalidInitial, semantics.CategoryValidation,
+					"normal state must have exactly one initial child").
+					WithContext("state_label", state.Label).
+					WithContext("initial_count", initialCount).
+					Build()
 			}
 
 		case sc.StateTypeParallel:
 			if len(state.Children) < 2 {
-				return fmt.Errorf("parallel (AND) state %s must have at least 2 children, found %d", 
-					state.Label, len(state.Children))
+				return semantics.NewErrorBuilder(semantics.ErrCodeParallelStateInsufficientRegions, semantics.CategoryValidation,
+					"parallel (AND) state must have at least 2 children").
+					WithContext("state_label", state.Label).
+					WithContext("child_count", len(state.Children)).
+					Build()
 			}
 			
 			// All children of parallel states are implicitly active
 			for _, child := range state.Children {
 				if child.IsInitial {
-					return fmt.Errorf("children of parallel state %s cannot be marked as initial: %s", 
-						state.Label, child.Label)
+					return semantics.NewErrorBuilder(semantics.ErrCodeStateInvalidInitial, semantics.CategoryValidation,
+						"children of parallel state cannot be marked as initial").
+						WithContext("parent_state", state.Label).
+						WithContext("child_state", child.Label).
+						Build()
 				}
 			}
 		}
@@ -284,7 +322,7 @@ func validateConfigurationConsistency(statechart *sc.Statechart) error {
 	}
 
 	if statechart.RootState == nil {
-		return fmt.Errorf("statechart has no root state")
+		return semantics.ValidationErrorf(semantics.ErrCodeStatechartMissingRoot, "statechart has no root state")
 	}
 
 	return validateConsistency(statechart.RootState)
@@ -299,8 +337,12 @@ func validateNoStateNameConflicts(statechart *sc.Statechart) error {
 		currentPath := path + "/" + state.Label
 		
 		if existingPath, exists := stateNames[state.Label]; exists {
-			return fmt.Errorf("state name conflict: %s appears at both %s and %s", 
-				state.Label, existingPath, currentPath)
+			return semantics.NewErrorBuilder(semantics.ErrCodeStateDuplicate, semantics.CategoryValidation,
+				"state name conflict").
+				WithContext("state_label", state.Label).
+				WithContext("existing_path", existingPath).
+				WithContext("current_path", currentPath).
+				Build()
 		}
 		
 		stateNames[state.Label] = currentPath
@@ -315,7 +357,7 @@ func validateNoStateNameConflicts(statechart *sc.Statechart) error {
 	}
 
 	if statechart.RootState == nil {
-		return fmt.Errorf("statechart has no root state")
+		return semantics.ValidationErrorf(semantics.ErrCodeStatechartMissingRoot, "statechart has no root state")
 	}
 
 	return checkNames(statechart.RootState, "")
@@ -325,28 +367,42 @@ func validateNoStateNameConflicts(statechart *sc.Statechart) error {
 func validateTransitionWellFormedness(statechart *sc.Statechart) error {
 	for i, transition := range statechart.Transitions {
 		if transition.Label == "" {
-			return fmt.Errorf("transition %d has empty label", i)
+			return semantics.NewErrorBuilder(semantics.ErrCodeTransitionMissingLabel, semantics.CategoryValidation,
+				"transition has empty label").
+				WithContext("transition_index", i).
+				Build()
 		}
 
 		if len(transition.From) == 0 {
-			return fmt.Errorf("transition %s has no source states", transition.Label)
+			return semantics.NewErrorBuilder(semantics.ErrCodeTransitionMalformed, semantics.CategoryValidation,
+				"transition has no source states").
+				WithContext("transition_label", transition.Label).
+				Build()
 		}
 
 		if len(transition.To) == 0 {
-			return fmt.Errorf("transition %s has no target states", transition.Label)
+			return semantics.NewErrorBuilder(semantics.ErrCodeTransitionMalformed, semantics.CategoryValidation,
+				"transition has no target states").
+				WithContext("transition_label", transition.Label).
+				Build()
 		}
 
 		// Validate guard expression if present
 		if transition.Guard != nil {
 			if err := validateGuardExpression(transition.Guard.Expression); err != nil {
-				return fmt.Errorf("transition %s has invalid guard: %v", transition.Label, err)
+				return semantics.WrapErrorf(semantics.ErrCodeGuardInvalidExpression, err,
+					"transition %s has invalid guard", transition.Label)
 			}
 		}
 
 		// Validate actions if present
 		for j, action := range transition.Actions {
 			if action.Label == "" {
-				return fmt.Errorf("transition %s action %d has empty label", transition.Label, j)
+				return semantics.NewErrorBuilder(semantics.ErrCodeActionInvalidLabel, semantics.CategoryValidation,
+					"transition action has empty label").
+					WithContext("transition_label", transition.Label).
+					WithContext("action_index", j).
+					Build()
 			}
 		}
 	}
@@ -357,12 +413,16 @@ func validateTransitionWellFormedness(statechart *sc.Statechart) error {
 // validateGuardExpression performs basic validation of guard expressions
 func validateGuardExpression(expression string) error {
 	if expression == "" {
-		return fmt.Errorf("guard expression is empty")
+		return semantics.ValidationErrorf(semantics.ErrCodeGuardInvalidExpression, "guard expression is empty")
 	}
 	
 	// Basic syntax check - could be extended with proper parsing
 	if strings.Contains(expression, ";;") {
-		return fmt.Errorf("guard expression contains invalid syntax: ;;")
+		return semantics.NewErrorBuilder(semantics.ErrCodeGuardInvalidExpression, semantics.CategoryValidation,
+			"guard expression contains invalid syntax").
+			WithContext("expression", expression).
+			WithContext("invalid_token", ";;").
+			Build()
 	}
 	
 	return nil
@@ -383,7 +443,10 @@ func validateInitialStateExists(statechart *sc.Statechart) error {
 			}
 			
 			if !hasInitial {
-				return fmt.Errorf("compound state %s has no initial state", state.Label)
+				return semantics.NewErrorBuilder(semantics.ErrCodeStateInvalidInitial, semantics.CategoryValidation,
+					"compound state has no initial state").
+					WithContext("state_label", state.Label).
+					Build()
 			}
 		}
 
@@ -397,7 +460,7 @@ func validateInitialStateExists(statechart *sc.Statechart) error {
 	}
 
 	if statechart.RootState == nil {
-		return fmt.Errorf("statechart has no root state")
+		return semantics.ValidationErrorf(semantics.ErrCodeStatechartMissingRoot, "statechart has no root state")
 	}
 
 	return checkInitial(statechart.RootState)
@@ -409,7 +472,10 @@ func validateNoSelfContainment(statechart *sc.Statechart) error {
 
 	checkContainment = func(state *sc.State, ancestors map[string]bool) error {
 		if ancestors[state.Label] {
-			return fmt.Errorf("circular containment detected: state %s contains itself", state.Label)
+			return semantics.NewErrorBuilder(semantics.ErrCodeStateCircularContainment, semantics.CategoryValidation,
+				"circular containment detected").
+				WithContext("state_label", state.Label).
+				Build()
 		}
 
 		newAncestors := make(map[string]bool)

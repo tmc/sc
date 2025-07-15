@@ -3,6 +3,7 @@ package semantics
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/tmc/sc"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -485,14 +486,34 @@ func (m *MachineWrapper) evaluateGuard(guard *sc.Guard) (bool, error) {
 		return true, nil // No guard means always pass
 	}
 
-	// For now, implement a simple expression evaluator
-	// In a production system, you would want a proper expression parser/evaluator
-	result, err := m.evaluateExpression(guard.Expression)
+	// Create evaluation context with current machine state
+	evalContext := &EvaluationContext{
+		Variables:    m.Context,
+		ActiveStates: m.getActiveStateLabels(),
+		Statechart:   m.Statechart,
+		TimeContext: &TimeContext{
+			CurrentTime: time.Now().UnixMilli(),
+		},
+	}
+
+	// Use the global guard evaluator for comprehensive evaluation
+	result, err := globalGuardEvaluator.EvaluateGuard(guard, evalContext)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate guard expression '%s': %w", guard.Expression, err)
 	}
 
-	return result, nil
+	return result.Value, nil
+}
+
+// getActiveStateLabels returns the labels of currently active states
+func (m *MachineWrapper) getActiveStateLabels() []string {
+	var labels []string
+	for _, stateRef := range m.Configuration.States {
+		if stateRef != nil {
+			labels = append(labels, stateRef.Label)
+		}
+	}
+	return labels
 }
 
 // executeAction executes an action, potentially modifying the machine context.
