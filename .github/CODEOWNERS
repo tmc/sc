@@ -1,0 +1,36 @@
+# Code ownership rules for the statecharts project
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global ownership
+* @tmc
+
+# Core Go implementation
+/proto/ @tmc
+/gen/ @tmc
+/semantics/ @tmc
+/validation/ @tmc
+/bridges/ @tmc
+
+# SDK implementations
+/sdks/go/ @tmc
+/sdks/python/ @tmc
+/sdks/rust/ @tmc
+
+# Web visualizer and frontend
+/cmd/web-visualizer/ @tmc
+
+# Documentation
+/docs/ @tmc
+*.md @tmc
+
+# CI/CD and DevOps
+/.github/ @tmc
+/scripts/ @tmc
+/docker* @tmc
+/Makefile* @tmc
+
+# Configuration files
+/.golangci.yml @tmc
+/pyproject.toml @tmc
+/Cargo.toml @tmc
+/package.json @tmc

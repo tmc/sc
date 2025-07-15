@@ -1,0 +1,120 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)",
+    ":enablePreCommit",
+    "group:allNonMajor",
+    "schedule:weekends"
+  ],
+  "timezone": "America/New_York",
+  "labels": ["dependencies", "renovate"],
+  "assignees": ["tmc"],
+  "reviewers": ["tmc"],
+  "packageRules": [
+    {
+      "description": "Automatically merge minor and patch-level updates",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Disable automerge for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Group Go dependencies",
+      "matchManagers": ["gomod"],
+      "groupName": "Go dependencies",
+      "groupSlug": "go"
+    },
+    {
+      "description": "Group Python dependencies",
+      "matchManagers": ["pip_setup", "pip_requirements", "poetry"],
+      "groupName": "Python dependencies",
+      "groupSlug": "python"
+    },
+    {
+      "description": "Group Rust dependencies",
+      "matchManagers": ["cargo"],
+      "groupName": "Rust dependencies",
+      "groupSlug": "rust"
+    },
+    {
+      "description": "Group npm dependencies",
+      "matchManagers": ["npm"],
+      "groupName": "npm dependencies",
+      "groupSlug": "npm"
+    },
+    {
+      "description": "Group Docker dependencies",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "Docker dependencies",
+      "groupSlug": "docker"
+    },
+    {
+      "description": "Security updates",
+      "matchDatasources": ["go", "npm", "pypi", "crate"],
+      "matchUpdateTypes": ["patch"],
+      "prPriority": 10,
+      "labels": ["security"],
+      "automerge": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "vulnerability"],
+    "assignees": ["tmc"],
+    "reviewers": ["tmc"]
+  },
+  "prCreation": "immediate",
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 2,
+  "rebaseWhen": "behind-base-branch",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths",
+    "npmDedupe"
+  ],
+  "gomod": {
+    "enabled": true,
+    "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
+  },
+  "npm": {
+    "enabled": true,
+    "packageRules": [
+      {
+        "matchPackagePatterns": ["*"],
+        "rangeStrategy": "bump"
+      }
+    ]
+  },
+  "python": {
+    "enabled": true
+  },
+  "cargo": {
+    "enabled": true
+  },
+  "docker": {
+    "enabled": true,
+    "pinDigests": true
+  },
+  "github-actions": {
+    "enabled": true,
+    "fileMatch": ["\\.github/workflows/.*\\.ya?ml$"]
+  },
+  "regexManagers": [
+    {
+      "description": "Update protoc version in CI",
+      "fileMatch": ["\\.github/workflows/.*\\.ya?ml$"],
+      "matchStrings": ["PROTOC_VERSION: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "protocolbuffers/protobuf"
+    }
+  ]
+}
