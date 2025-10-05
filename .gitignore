@@ -65,3 +65,12 @@ appledocs/
 # Binaries
 cmd/stately-scraper/stately-scraper
 cmd/web-visualizer/web-visualizer-enhanced
+cmd/web-visualizer/test-server
+cmd/web-visualizer/web-visualizer
+cmd/event_demo/event_demo
+
+# Generated data
+cmd/web-visualizer/data/
+
+# Node modules
+node_modules/
