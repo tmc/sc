@@ -57,6 +57,10 @@ coverage.out
 *.pid
 .env.local
 .env.*.local
+.cache/
+output/
+markdown/
+appledocs/
 
 # Binaries
 cmd/stately-scraper/stately-scraper

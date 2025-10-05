@@ -2,18 +2,29 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/tmc/sc"
+	"github.com/tmc/sc/internal/version"
 	"github.com/tmc/sc/semantics/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func main() {
+	versionFlag := flag.Bool("version", false, "Print version information")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(version.Info())
+		os.Exit(0)
+	}
+
 	fmt.Println("=== Statechart Event Processing Demo ===")
-	
+
 	// Create a simple turnstile state machine
 	machine := createTurnstileStateMachine()
 	

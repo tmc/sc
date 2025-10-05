@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -14,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/tmc/sc"
+	"github.com/tmc/sc/internal/version"
 	"github.com/tmc/sc/semantics/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -25,6 +28,7 @@ type Server struct {
 	mutex       sync.RWMutex
 	clients     map[*websocket.Conn]*Client
 	persistence *PersistenceManager
+	searchIndex *SearchIndex
 	metrics     *MetricsCollector
 	startTime   time.Time
 }
@@ -101,6 +105,14 @@ func NewServer() *Server {
 	dataDir := getEnv("DATA_DIR", "./data")
 	os.MkdirAll(dataDir, 0755)
 
+	// Initialize search index
+	dbPath := filepath.Join(dataDir, "search.db")
+	searchIndex, err := NewSearchIndex(dbPath)
+	if err != nil {
+		log.Printf("Failed to initialize search index: %v", err)
+		searchIndex = nil
+	}
+
 	return &Server{
 		machines:  make(map[string]*semantics.MachineWrapper),
 		clients:   make(map[*websocket.Conn]*Client),
@@ -113,7 +125,8 @@ func NewServer() *Server {
 		persistence: &PersistenceManager{
 			dataDir: dataDir,
 		},
-		metrics: &MetricsCollector{},
+		searchIndex: searchIndex,
+		metrics:     &MetricsCollector{},
 	}
 }
 
@@ -226,6 +239,13 @@ func (s *Server) CreateMachine(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to persist machine %s: %v", req.ID, err)
 	}
 
+	// Index machine for search
+	if s.searchIndex != nil {
+		if err := s.searchIndex.IndexMachine(req.ID, machine, req.Tags, req.Metadata); err != nil {
+			log.Printf("Failed to index machine %s: %v", req.ID, err)
+		}
+	}
+
 	// Notify WebSocket clients
 	s.broadcastMachineUpdate(req.ID, "created", machine)
 
@@ -315,6 +335,13 @@ func (s *Server) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to persist updated machine %s: %v", machineID, err)
 	}
 
+	// Re-index machine for search
+	if s.searchIndex != nil {
+		if err := s.searchIndex.IndexMachine(machineID, machine, req.Tags, req.Metadata); err != nil {
+			log.Printf("Failed to re-index machine %s: %v", machineID, err)
+		}
+	}
+
 	// Notify WebSocket clients
 	s.broadcastMachineUpdate(machineID, "updated", machine)
 
@@ -351,6 +378,13 @@ func (s *Server) DeleteMachine(w http.ResponseWriter, r *http.Request) {
 	// Remove from persistence
 	if err := s.persistence.DeleteMachine(machineID); err != nil {
 		log.Printf("Failed to delete persisted machine %s: %v", machineID, err)
+	}
+
+	// Remove from search index
+	if s.searchIndex != nil {
+		if err := s.searchIndex.DeleteMachine(machineID); err != nil {
+			log.Printf("Failed to remove machine %s from index: %v", machineID, err)
+		}
 	}
 
 	// Notify WebSocket clients
@@ -571,8 +605,7 @@ func (s *Server) ValidateMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) SearchMachines(w http.ResponseWriter, r *http.Request) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	start := time.Now()
 
 	var req MachineSearchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -585,6 +618,43 @@ func (s *Server) SearchMachines(w http.ResponseWriter, r *http.Request) {
 	if req.Limit == 0 {
 		req.Limit = 10
 	}
+
+	// Use FTS5 index if available and query is provided
+	if s.searchIndex != nil && req.Query != "" {
+		results, err := s.searchIndex.Search(req.Query, req.Limit, req.Offset)
+		if err != nil {
+			log.Printf("Search index error, falling back to linear scan: %v", err)
+		} else {
+			// Build response from search results
+			machines := make([]map[string]interface{}, 0, len(results))
+			for _, result := range results {
+				machines = append(machines, map[string]interface{}{
+					"id":            result.ID,
+					"state":         result.State,
+					"configuration": result.Configuration,
+					"rank":          result.Rank,
+					"snippet":       result.Snippet,
+				})
+			}
+
+			total, _ := s.searchIndex.Count()
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Search-Time-Ms", fmt.Sprintf("%.2f", float64(time.Since(start).Microseconds())/1000.0))
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"machines":   machines,
+				"total":      total,
+				"offset":     req.Offset,
+				"limit":      req.Limit,
+				"query_time": time.Since(start).String(),
+			})
+			return
+		}
+	}
+
+	// Fallback to linear scan for backward compatibility
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
 	machines := make([]map[string]interface{}, 0)
 	count := 0
@@ -612,11 +682,13 @@ func (s *Server) SearchMachines(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Search-Time-Ms", fmt.Sprintf("%.2f", float64(time.Since(start).Microseconds())/1000.0))
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"machines": machines,
-		"total":    len(s.machines),
-		"offset":   req.Offset,
-		"limit":    req.Limit,
+		"machines":   machines,
+		"total":      len(s.machines),
+		"offset":     req.Offset,
+		"limit":      req.Limit,
+		"query_time": time.Since(start).String(),
 	})
 }
 
@@ -865,6 +937,14 @@ func (m *MetricsCollector) incrementErrorCount() {
 
 
 func main() {
+	versionFlag := flag.Bool("version", false, "Print version information")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(version.Info())
+		os.Exit(0)
+	}
+
 	server := NewServer()
 
 	// Load persisted machines on startup
