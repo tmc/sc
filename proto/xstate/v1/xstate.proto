@@ -1,0 +1,250 @@
+syntax = "proto3";
+
+package xstate.v1;
+
+option go_package = "github.com/tmc/sc/gen/xstate/v1;xstatepb";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// ===========================================================================
+// XSTATE/STATELY EXTENSION TYPES
+//
+// This file defines typed extension messages for XState/Stately metadata.
+// These types are stored in the `extensions` field of State and Transition
+// messages from the core statecharts.proto schema.
+//
+// DESIGN RATIONALE:
+// - Keep core statecharts.proto pure Harel formalism
+// - XState-specific concepts (visual layout, invoke, assets) live here
+// - Enable full round-trip fidelity with XState/Stately editor
+//
+// USAGE:
+// Pack these messages into State.extensions or Transition.extensions
+// using google.protobuf.Any:
+//
+//   layout := &xstatepb.XStateLayout{...}
+//   any, _ := anypb.New(layout)
+//   state.Extensions = append(state.Extensions, any)
+//
+// ===========================================================================
+
+// ─────────────────────────── Visual Layout ─────────────────────────────────
+
+// XStateLayout captures visual positioning for editor display.
+// Stored in State.extensions or Transition.extensions.
+message XStateLayout {
+  // x,y coordinates on the editor canvas.
+  Position position = 1;
+  // Width and height dimensions.
+  Size size = 2;
+  // Visual color hint: blue, green, orange, purple, red, yellow.
+  string color = 3;
+  // Internal editor-assigned unique identifier.
+  string unique_id = 4;
+}
+
+// Position represents x,y coordinates in the editor canvas.
+message Position {
+  // Horizontal position.
+  double x = 1;
+  // Vertical position.
+  double y = 2;
+}
+
+// Size represents width and height dimensions.
+message Size {
+  // Width in pixels.
+  double width = 1;
+  // Height in pixels.
+  double height = 2;
+}
+
+// ─────────────────────────── State Metadata ────────────────────────────────
+
+// XStateStateData captures XState-specific state properties.
+// Stored in State.extensions.
+message XStateStateData {
+  // Natural language documentation for the state.
+  string description = 1;
+  // State tags for matching and categorization.
+  repeated string tags = 2;
+  // Visual assets attached to the state (Figma links, images).
+  repeated XStateAsset assets = 3;
+  // Actor invocations that run while the state is active.
+  repeated XStateInvoke invokes = 4;
+  // Arbitrary key-value metadata pairs.
+  repeated MetaEntry meta_entries = 5;
+}
+
+// ─────────────────────────── Transition Metadata ───────────────────────────
+
+// XStateTransitionData captures XState-specific transition properties.
+// Stored in Transition.extensions.
+message XStateTransitionData {
+  // Internal transition flag (skips entry/exit actions when true).
+  bool internal = 1;
+  // Classification of how the transition is triggered.
+  TransitionTriggerType trigger_type = 2;
+  // Documentation for the transition.
+  string description = 3;
+}
+
+// TransitionTriggerType classifies how a transition is triggered.
+// Maps to XState eventTypeData.type values.
+enum TransitionTriggerType {
+  // Unspecified trigger type.
+  TRANSITION_TRIGGER_TYPE_UNSPECIFIED = 0;
+  // Regular named event trigger.
+  TRANSITION_TRIGGER_TYPE_EVENT = 1;
+  // Eventless/completion transition (always).
+  TRANSITION_TRIGGER_TYPE_ALWAYS = 2;
+  // Delayed transition (after).
+  TRANSITION_TRIGGER_TYPE_AFTER = 3;
+  // Actor completed successfully (invocation.done).
+  TRANSITION_TRIGGER_TYPE_INVOKE_DONE = 4;
+  // Actor errored (invocation.error).
+  TRANSITION_TRIGGER_TYPE_INVOKE_ERROR = 5;
+  // Child state completed (state.done).
+  TRANSITION_TRIGGER_TYPE_STATE_DONE = 6;
+}
+
+// ─────────────────────────── Invoke/Actor ──────────────────────────────────
+
+// XStateInvoke represents an actor invocation on a state.
+// In XState, invokes spawn actors that run while the state is active.
+message XStateInvoke {
+  // Unique identifier for this invocation.
+  string id = 1;
+  // Reference to the actor source/implementation.
+  string src = 2;
+  // Kind of invocation: "named", "inline", etc.
+  string kind = 3;
+  // Input parameters passed to the actor.
+  google.protobuf.Struct input = 4;
+  // Additional settings for the invocation.
+  google.protobuf.Struct settings = 5;
+}
+
+// ─────────────────────────── Assets ────────────────────────────────────────
+
+// XStateAsset represents visual assets attached to states.
+// Supports Figma links and uploaded images.
+message XStateAsset {
+  // Display name for the asset.
+  string name = 1;
+  // Asset template: "@figma.link", "@stately.image".
+  string template = 2;
+  // Template-specific properties (URL, fileId, nodeId, etc.).
+  google.protobuf.Struct properties = 3;
+}
+
+// ─────────────────────────── Metadata ──────────────────────────────────────
+
+// MetaEntry represents an arbitrary key-value pair.
+// Maps to XState metaEntries: [[key, value], ...]
+message MetaEntry {
+  // Metadata key.
+  string key = 1;
+  // Metadata value.
+  string value = 2;
+}
+
+// ─────────────────────────── Machine Metadata ──────────────────────────────
+
+// XStateMachineData captures machine-level XState metadata.
+// Can be stored in Statechart.metadata as JSON or in a dedicated extension.
+message XStateMachineData {
+  // Machine UUID.
+  string id = 1;
+  // Project version UUID.
+  string project_version_id = 2;
+  // Fork parent UUID if this machine was forked.
+  string fork_parent_id = 3;
+  // UUID of the last user to edit this machine.
+  string last_edited_by_id = 4;
+  // Original XState JavaScript code.
+  string original_code = 5;
+  // Timestamp when the machine was created.
+  google.protobuf.Timestamp created_at = 6;
+  // Timestamp when the machine was last updated.
+  google.protobuf.Timestamp updated_at = 7;
+  // Type schemas for machine elements.
+  XStateSchemas schemas = 8;
+  // Action, guard, and actor implementations.
+  XStateImplementations implementations = 9;
+}
+
+// XStateSchemas captures type schemas for machine elements.
+message XStateSchemas {
+  // Tag schemas.
+  google.protobuf.Struct tags = 1;
+  // Input schema.
+  google.protobuf.Struct input = 2;
+  // Output schema.
+  google.protobuf.Struct output = 3;
+  // Actor schemas.
+  google.protobuf.Struct actors = 4;
+  // Delay schemas.
+  google.protobuf.Struct delays = 5;
+  // Event payload schemas.
+  google.protobuf.Struct events = 6;
+  // Guard schemas.
+  google.protobuf.Struct guards = 7;
+  // Action schemas.
+  google.protobuf.Struct actions = 8;
+  // Context variable schemas.
+  google.protobuf.Struct context = 9;
+}
+
+// XStateImplementations maps implementation details for actions, guards, actors.
+message XStateImplementations {
+  // Action implementations keyed by action name.
+  map<string, XStateActionImpl> actions = 1;
+  // Guard implementations keyed by guard name.
+  map<string, XStateGuardImpl> guards = 2;
+  // Actor implementations keyed by actor name.
+  map<string, XStateActorImpl> actors = 3;
+}
+
+// XStateActionImpl describes an action implementation.
+message XStateActionImpl {
+  // Action identifier.
+  string id = 1;
+  // Display name for the action.
+  string name = 2;
+  // JavaScript implementation code.
+  string code = 3;
+  // Parameter schema.
+  google.protobuf.Struct schema = 4;
+  // Import statements required by this action.
+  repeated string imports = 5;
+}
+
+// XStateGuardImpl describes a guard implementation.
+message XStateGuardImpl {
+  // Guard identifier.
+  string id = 1;
+  // Display name for the guard.
+  string name = 2;
+  // Parameter definitions.
+  google.protobuf.Struct params = 3;
+  // Import statements required by this guard.
+  repeated string imports = 4;
+}
+
+// XStateActorImpl describes an actor implementation.
+message XStateActorImpl {
+  // Actor identifier.
+  string id = 1;
+  // Display name for the actor.
+  string name = 2;
+  // Actor kind.
+  string kind = 3;
+  // Input schema.
+  google.protobuf.Struct input = 4;
+  // Output schema.
+  google.protobuf.Struct output = 5;
+  // Import statements required by this actor.
+  repeated string imports = 6;
+}
