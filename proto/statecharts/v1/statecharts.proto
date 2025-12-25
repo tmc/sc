@@ -4,7 +4,9 @@ package statecharts.v1;
 
 option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartspb";
 
+import "google/protobuf/any.proto";
 import "google/protobuf/struct.proto";
+import "statecharts/v1/expressions.proto";
 
 // ===========================================================================
 //  FORMAL STATECHART SPECIFICATION
@@ -106,6 +108,25 @@ enum StateType {
 }
 
 /**
+ * HistoryType distinguishes shallow vs deep history pseudostates.
+ *
+ * FORMAL DEFINITION [UML 2.5, Section 14.5.5]:
+ * History pseudostates enable restoration of prior configurations when
+ * re-entering composite states, supporting two semantic variants:
+ * - SHALLOW: Restores only the immediate child state of the composite
+ * - DEEP: Restores the full nested configuration recursively
+ *
+ * SEMANTIC PROPERTIES:
+ * - H (shallow): restore(H, σ) = {s ∈ σ_prev | parent(s) = parent(H)}
+ * - H* (deep): restore(H*, σ) = σ_prev ∩ descendants(parent(H*))
+ */
+enum HistoryType {
+  HISTORY_TYPE_UNSPECIFIED = 0;  // Default: treated as SHALLOW
+  HISTORY_TYPE_SHALLOW     = 1;  // H: restore immediate child only
+  HISTORY_TYPE_DEEP        = 2;  // H*: restore full nested configuration
+}
+
+/**
  * MachineState encodes the execution status of a statechart interpreter.
  * 
  * OPERATIONAL SEMANTICS [HN96, Section 4]:
@@ -156,10 +177,21 @@ message State {
   repeated State  children     = 3;   // Hierarchy: {c | (s,c) ∈ ρ}
   bool            is_initial   = 4;   // Default child: λ(parent) = {s} when true
   bool            is_final     = 5;   // Terminal state: no outgoing transitions
-  
+
   // Action mappings γ: S → A* [H87, HN96, Section 6]
   repeated Action entry_actions = 6;   // γₑₙₜᵣᵧ(s): executed on state entry
   repeated Action exit_actions  = 7;   // γₑₓᵢₜ(s): executed on state exit
+
+  // History pseudostate fields [UML 2.5, Section 14.5.5]
+  // Optional - only set when state is a history pseudostate
+  bool            is_history   = 8;   // True if this is a history pseudostate
+  HistoryType     history_type = 9;   // SHALLOW (H) or DEEP (H*) history
+
+  // Extension points for tool-specific data
+  // These fields allow extractors and importers to preserve provenance
+  // and domain-specific metadata without modifying the core schema.
+  google.protobuf.Struct metadata = 10;          // Ad-hoc key-value annotations
+  repeated google.protobuf.Any extensions = 11;  // Typed extension messages
 }
 
 /**
@@ -202,6 +234,10 @@ message Transition {
   
   // Priority for conflict resolution [HN96, Section 4.3]
   int32           priority = 7;  // Explicit priority (higher = more priority)
+
+  // Extension points for tool-specific data
+  google.protobuf.Struct metadata = 8;          // Ad-hoc key-value annotations
+  repeated google.protobuf.Any extensions = 9;  // Typed extension messages
 }
 
 /**
@@ -232,8 +268,17 @@ message Event {
  * Implementation languages should provide deterministic evaluation semantics.
  */
 message Guard {
-  string expression = 1;  // Boolean expression: g ∈ G
-  string language   = 2;  // Expression language (for semantic clarity)
+  // Legacy: raw expression string (deprecated, use condition field)
+  string expression = 1 [deprecated = true];  // Boolean expression: g ∈ G
+  string language   = 2;  // Expression language hint (for legacy expressions)
+
+  // Structured expression: evaluatable guard condition
+  // When present, takes precedence over the deprecated expression field.
+  //
+  // EVALUATION SEMANTICS:
+  //   eval(condition, Γ, e) → Bool
+  // where Γ is the current context and e is the triggering event.
+  Expression condition = 3;
 }
 
 /**
@@ -250,9 +295,23 @@ message Guard {
  */
 message Action {
   string                 label      = 1;  // Action identifier
-  string                 expression = 2;  // Executable code: α ∈ A
-  string                 language   = 3;  // Implementation language
+  string                 expression = 2 [deprecated = true];  // Legacy: executable code string
+  string                 language   = 3;  // Implementation language hint (for legacy)
   google.protobuf.Struct parameters = 4;  // Action parameters
+
+  // Structured expression: evaluatable action body
+  // When present, takes precedence over the deprecated expression field.
+  //
+  // EXECUTION SEMANTICS:
+  //   exec(body, Γ) → Γ'
+  // where Γ is the current context and Γ' is the updated context.
+  //
+  // For CEL expressions, actions typically use assignment syntax:
+  //   "context.health = context.health - damage"
+  //
+  // For Starlark expressions, actions can include control flow:
+  //   "def on_enter(ctx): ctx.emit('SOUND', {'name': 'beep'})"
+  Expression body = 5;
 }
 
 /**
