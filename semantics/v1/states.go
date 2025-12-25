@@ -375,3 +375,69 @@ func (s *Statechart) defaultCompletion(states ...StateLabel) ([]StateLabel, erro
 
 	return filteredStates, nil
 }
+
+// IsFinalConfiguration checks if the configuration represents a final state.
+// A configuration is final when all leaf (basic) states in it are marked as final.
+// This is used for auto-stop semantics when the machine reaches a terminal state.
+func (s *Statechart) IsFinalConfiguration(config *sc.Configuration) (bool, error) {
+	if config == nil || len(config.States) == 0 {
+		return false, nil
+	}
+
+	leafStates := s.getLeafStates(config)
+	if len(leafStates) == 0 {
+		return false, nil
+	}
+
+	for _, stateRef := range leafStates {
+		state, err := s.findState(StateLabel(stateRef.Label))
+		if err != nil {
+			return false, fmt.Errorf("failed to find state %s: %w", stateRef.Label, err)
+		}
+		if !state.IsFinal {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// getLeafStates returns only the leaf (basic) states from a configuration.
+// Leaf states are those with no children (StateType = BASIC or no children).
+func (s *Statechart) getLeafStates(config *sc.Configuration) []*sc.StateRef {
+	var leafStates []*sc.StateRef
+
+	for _, stateRef := range config.States {
+		state, err := s.findState(StateLabel(stateRef.Label))
+		if err != nil {
+			continue
+		}
+		// A leaf state has no children or is of BASIC type
+		if len(state.Children) == 0 || state.Type == sc.StateTypeBasic {
+			leafStates = append(leafStates, stateRef)
+		}
+	}
+
+	return leafStates
+}
+
+// IsHistoryState returns true if the given state is a history pseudostate.
+func (s *Statechart) IsHistoryState(state StateLabel) (bool, error) {
+	stateObj, err := s.findState(state)
+	if err != nil {
+		return false, err
+	}
+	return stateObj.IsHistory, nil
+}
+
+// GetHistoryType returns the history type (shallow or deep) for a history state.
+func (s *Statechart) GetHistoryType(state StateLabel) (sc.HistoryType, error) {
+	stateObj, err := s.findState(state)
+	if err != nil {
+		return sc.HistoryType_HISTORY_TYPE_UNSPECIFIED, err
+	}
+	if !stateObj.IsHistory {
+		return sc.HistoryType_HISTORY_TYPE_UNSPECIFIED, fmt.Errorf("state %s is not a history state", state)
+	}
+	return stateObj.HistoryType, nil
+}

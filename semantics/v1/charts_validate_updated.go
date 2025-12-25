@@ -76,7 +76,7 @@ func (c *ValidatorClient) ValidateStatechart(ctx context.Context, statechart *St
 				errorMsg += fmt.Sprintf("\n  - %s: %s", v.Rule, v.Message)
 			}
 		}
-		return fmt.Errorf(errorMsg)
+		return fmt.Errorf("%s", errorMsg)
 	}
 
 	return nil
@@ -125,7 +125,7 @@ func (c *ValidatorClient) ValidateTrace(ctx context.Context, statechart *Statech
 				errorMsg += fmt.Sprintf("\n  - %s: %s", v.Rule, v.Message)
 			}
 		}
-		return fmt.Errorf(errorMsg)
+		return fmt.Errorf("%s", errorMsg)
 	}
 
 	return nil

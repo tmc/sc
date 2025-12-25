@@ -51,7 +51,7 @@ func (s *Statechart) Validate() error {
 	if s.RootState == nil {
 		return fmt.Errorf("root state is nil")
 	}
-	
+
 	// Validate state labels are unique
 	stateLabels := make(map[string]bool)
 	err := visitStates(s.RootState, func(state *sc.State) error {
@@ -67,7 +67,7 @@ func (s *Statechart) Validate() error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Validate each state has consistent type and children
 	err = visitStates(s.RootState, func(state *sc.State) error {
 		if state.Type == sc.StateTypeBasic && len(state.Children) > 0 {
@@ -76,12 +76,12 @@ func (s *Statechart) Validate() error {
 		if (state.Type == sc.StateTypeNormal || state.Type == sc.StateTypeParallel) && len(state.Children) == 0 {
 			return fmt.Errorf("compound state %s must have children", state.Label)
 		}
-		
-		// Check for exactly one initial child in normal states
+
+		// Check for exactly one initial child in normal states (excluding history pseudostates)
 		if state.Type == sc.StateTypeNormal && len(state.Children) > 0 {
 			initialCount := 0
 			for _, child := range state.Children {
-				if child.IsInitial {
+				if child.IsInitial && !child.IsHistory {
 					initialCount++
 				}
 			}
@@ -89,11 +89,51 @@ func (s *Statechart) Validate() error {
 				return fmt.Errorf("normal state %s must have exactly one initial child, found %d", state.Label, initialCount)
 			}
 		}
-		
+
+		// Validate history pseudostates
+		if state.IsHistory {
+			// History states must be leaf states (no children)
+			if len(state.Children) > 0 {
+				return fmt.Errorf("history state %s cannot have children", state.Label)
+			}
+			// History states must have a valid history type
+			if state.HistoryType == sc.HistoryType_HISTORY_TYPE_UNSPECIFIED {
+				// Default to shallow history if not specified
+				state.HistoryType = sc.HistoryType_HISTORY_TYPE_SHALLOW
+			}
+		}
+
 		return nil
 	})
-	
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Validate transitions - check that final states have no outgoing transitions
+	for _, transition := range s.Transitions {
+		for _, sourceLabel := range transition.From {
+			state, err := s.findState(StateLabel(sourceLabel))
+			if err != nil {
+				return fmt.Errorf("transition source state %s not found", sourceLabel)
+			}
+			if state.IsFinal {
+				return fmt.Errorf("final state %s cannot have outgoing transitions", sourceLabel)
+			}
+			if state.IsHistory {
+				return fmt.Errorf("history state %s cannot be a transition source", sourceLabel)
+			}
+		}
+
+		// Validate transition targets exist
+		for _, targetLabel := range transition.To {
+			_, err := s.findState(StateLabel(targetLabel))
+			if err != nil {
+				return fmt.Errorf("transition target state %s not found", targetLabel)
+			}
+		}
+	}
+
+	return nil
 }
 
 // InitialConfiguration computes the default initial configuration of the statechart.

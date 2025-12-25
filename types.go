@@ -42,6 +42,9 @@ type Machine = v1.Machine
 // Step describes a step in the execution of a Statechart.
 type Step = v1.Step
 
+// HistoryType distinguishes shallow vs deep history pseudostates.
+type HistoryType = v1.HistoryType
+
 // Core statechart types from Harel formalism [H87, HN96]
 
 // Core Harel statechart types [H87, Section 2.1]
@@ -61,6 +64,13 @@ const (
 	MachineStateUnspecified = v1.MachineState_MACHINE_STATE_UNSPECIFIED
 	MachineStateRunning     = v1.MachineState_MACHINE_STATE_RUNNING
 	MachineStateStopped     = v1.MachineState_MACHINE_STATE_STOPPED
+)
+
+// History pseudostate types [UML 2.5, Section 14.5.5]
+const (
+	HistoryType_HISTORY_TYPE_UNSPECIFIED = v1.HistoryType_HISTORY_TYPE_UNSPECIFIED
+	HistoryType_HISTORY_TYPE_SHALLOW     = v1.HistoryType_HISTORY_TYPE_SHALLOW
+	HistoryType_HISTORY_TYPE_DEEP        = v1.HistoryType_HISTORY_TYPE_DEEP
 )
 
 // EventType, TransitionType, ActionType, and BroadcastSpec constants removed

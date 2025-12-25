@@ -121,6 +121,19 @@ func (m *MachineWrapper) IsStopped() bool {
 	return m.State == sc.MachineStateStopped
 }
 
+// IsFinal returns true if the machine has reached a final configuration.
+// A final configuration is one where all leaf states are marked as final.
+func (m *MachineWrapper) IsFinal() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	isFinal, err := m.statechart.IsFinalConfiguration(m.Configuration)
+	if err != nil {
+		return false
+	}
+	return isFinal
+}
+
 // GetCurrentConfiguration returns a copy of the current configuration.
 func (m *MachineWrapper) GetCurrentConfiguration() *sc.Configuration {
 	m.mu.RLock()
@@ -273,6 +286,25 @@ func (m *MachineWrapper) step(eventName string) (bool, error) {
 		Context:                m.getContextUnsafe(),
 	}
 	m.addStep(step)
+
+	// Check if the new configuration is final (all leaf states are final)
+	// If so, auto-stop the machine per Harel semantics
+	isFinal, err := m.statechart.IsFinalConfiguration(m.Configuration)
+	if err != nil {
+		m.addError(fmt.Errorf("failed to check final configuration: %w", err))
+		// Don't fail the step, just log the error
+	} else if isFinal {
+		m.State = sc.MachineStateStopped
+		// Record the final step
+		finalStep := &sc.Step{
+			Events:                 []*sc.Event{{Label: "__FINAL__"}},
+			Transitions:            []*sc.Transition{},
+			StartingConfiguration:  m.cloneConfiguration(m.Configuration),
+			ResultingConfiguration: m.cloneConfiguration(m.Configuration),
+			Context:                m.getContextUnsafe(),
+		}
+		m.addStep(finalStep)
+	}
 
 	return true, nil
 }

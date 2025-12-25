@@ -313,6 +313,28 @@ func (s *Statechart) executeSelectedTransitions(transitions []*sc.Transition, co
 	// Create new context for action execution
 	newContext := s.cloneContext(context)
 
+	// Initialize history map if needed
+	historyUpdates := make(map[string]*sc.Configuration)
+
+	// Save history for composite states being exited (before exit actions)
+	for _, stateLabel := range exitStates {
+		// Check ancestors of exited states for history-bearing composite states
+		ancestors, err := s.findAncestors(stateLabel)
+		if err != nil {
+			continue // Skip on error
+		}
+		for _, ancestorLabel := range ancestors {
+			if ancestorLabel == RootState {
+				continue
+			}
+			// Save history for this composite state
+			savedHistory, err := s.saveHistoryForCompositeState(ancestorLabel, config)
+			if err == nil && savedHistory != nil {
+				historyUpdates[string(ancestorLabel)] = savedHistory
+			}
+		}
+	}
+
 	// Execute exit actions
 	for _, stateLabel := range exitStates {
 		if err := s.executeExitActions(stateLabel, newContext); err != nil {
@@ -330,6 +352,43 @@ func (s *Statechart) executeSelectedTransitions(transitions []*sc.Transition, co
 			executedActions = append(executedActions, action)
 		}
 	}
+
+	// Resolve history states in enterStates - replace history pseudostates with actual states
+	resolvedEnterStates := make([]StateLabel, 0, len(enterStates))
+	for _, stateLabel := range enterStates {
+		isHistory, err := s.IsHistoryState(stateLabel)
+		if err != nil {
+			resolvedEnterStates = append(resolvedEnterStates, stateLabel)
+			continue
+		}
+		if isHistory {
+			// Create a temporary config with history for resolution
+			tempConfig := &sc.Configuration{
+				States:  config.States,
+				History: make(map[string]*sc.Configuration),
+			}
+			// Copy existing history
+			if config.History != nil {
+				for k, v := range config.History {
+					tempConfig.History[k] = v
+				}
+			}
+			// Add new history updates
+			for k, v := range historyUpdates {
+				tempConfig.History[k] = v
+			}
+
+			// Resolve the history state
+			resolvedStates, err := s.resolveHistoryState(stateLabel, tempConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve history state %s: %w", stateLabel, err)
+			}
+			resolvedEnterStates = append(resolvedEnterStates, resolvedStates...)
+		} else {
+			resolvedEnterStates = append(resolvedEnterStates, stateLabel)
+		}
+	}
+	enterStates = resolvedEnterStates
 
 	// Execute entry actions
 	for _, stateLabel := range enterStates {
@@ -350,14 +409,29 @@ func (s *Statechart) executeSelectedTransitions(transitions []*sc.Transition, co
 		return nil, fmt.Errorf("failed to complete configuration: %w", err)
 	}
 
-	// Filter out the root state from the completed configuration
+	// Filter out the root state and preserve history
 	var filteredStates []*sc.StateRef
 	for _, state := range completedConfig.States {
 		if state.Label != s.RootState.Label {
 			filteredStates = append(filteredStates, state)
 		}
 	}
-	completedConfig = &sc.Configuration{States: filteredStates}
+
+	// Create the final configuration with updated history
+	finalHistory := make(map[string]*sc.Configuration)
+	if config.History != nil {
+		for k, v := range config.History {
+			finalHistory[k] = v
+		}
+	}
+	for k, v := range historyUpdates {
+		finalHistory[k] = v
+	}
+
+	completedConfig = &sc.Configuration{
+		States:  filteredStates,
+		History: finalHistory,
+	}
 
 	step := &TransitionStep{
 		Transitions:         transitions,
@@ -683,6 +757,132 @@ func (s *Statechart) executeExitActions(state StateLabel, context *structpb.Stru
 	// Execute convention-based exit actions
 	exitActionLabel := "exit_" + string(state)
 	return s.executeActionByLabel(exitActionLabel, context)
+}
+
+// saveHistoryForCompositeState saves the active substates of a composite state to the history map.
+// This is called when exiting a composite state that has history pseudostates.
+func (s *Statechart) saveHistoryForCompositeState(compositeState StateLabel, config *sc.Configuration) (*sc.Configuration, error) {
+	stateObj, err := s.findState(compositeState)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find composite state %s: %w", compositeState, err)
+	}
+
+	// Only composite states (OR/AND) need history
+	if stateObj.Type == sc.StateTypeBasic || len(stateObj.Children) == 0 {
+		return nil, nil // Not a composite state
+	}
+
+	// Check if this composite state has a history pseudostate
+	hasHistoryChild := false
+	for _, child := range stateObj.Children {
+		if child.IsHistory {
+			hasHistoryChild = true
+			break
+		}
+	}
+
+	if !hasHistoryChild {
+		return nil, nil // No history pseudostate, don't save
+	}
+
+	// Get all descendant states of this composite state
+	descendants, err := s.ChildrenPlus(compositeState)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get descendants of %s: %w", compositeState, err)
+	}
+	descendantSet := make(map[StateLabel]bool)
+	for _, d := range descendants {
+		descendantSet[d] = true
+	}
+
+	// Find active states that are descendants of this composite state
+	var activeSubstates []*sc.StateRef
+	for _, stateRef := range config.States {
+		if stateRef != nil && descendantSet[StateLabel(stateRef.Label)] {
+			// Don't include history pseudostates in history
+			subStateObj, err := s.findState(StateLabel(stateRef.Label))
+			if err == nil && !subStateObj.IsHistory {
+				activeSubstates = append(activeSubstates, &sc.StateRef{Label: stateRef.Label})
+			}
+		}
+	}
+
+	if len(activeSubstates) == 0 {
+		return nil, nil // No active substates to save
+	}
+
+	return &sc.Configuration{States: activeSubstates}, nil
+}
+
+// resolveHistoryState resolves a history pseudostate to actual target states.
+// For shallow history (H), returns the immediate child that was active.
+// For deep history (H*), returns the full nested configuration.
+// If no history exists, returns the default initial state.
+func (s *Statechart) resolveHistoryState(historyState StateLabel, config *sc.Configuration) ([]StateLabel, error) {
+	stateObj, err := s.findState(historyState)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find history state %s: %w", historyState, err)
+	}
+
+	if !stateObj.IsHistory {
+		return nil, fmt.Errorf("state %s is not a history pseudostate", historyState)
+	}
+
+	// Get the parent (composite) state of this history pseudostate
+	parent, err := s.GetParent(historyState)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parent of history state %s: %w", historyState, err)
+	}
+	parentLabel := StateLabel(parent.Label)
+
+	// Look up saved history
+	var savedHistory *sc.Configuration
+	if config.History != nil {
+		savedHistory = config.History[string(parentLabel)]
+	}
+
+	if savedHistory == nil || len(savedHistory.States) == 0 {
+		// No history - fall back to default initial state
+		defaultState, err := s.Default(parentLabel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get default state for %s: %w", parentLabel, err)
+		}
+		return []StateLabel{defaultState}, nil
+	}
+
+	// Restore from history based on history type
+	if stateObj.HistoryType == sc.HistoryType_HISTORY_TYPE_DEEP {
+		// Deep history: restore full nested configuration
+		var result []StateLabel
+		for _, stateRef := range savedHistory.States {
+			result = append(result, StateLabel(stateRef.Label))
+		}
+		return result, nil
+	}
+
+	// Shallow history: restore only immediate children of the parent
+	var result []StateLabel
+	childSet := make(map[string]bool)
+	for _, child := range parent.Children {
+		childSet[child.Label] = true
+	}
+
+	for _, stateRef := range savedHistory.States {
+		if childSet[stateRef.Label] {
+			result = append(result, StateLabel(stateRef.Label))
+		}
+	}
+
+	if len(result) == 0 {
+		// No immediate children found in history, fall back to default
+		defaultState, err := s.Default(parentLabel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get default state for %s: %w", parentLabel, err)
+		}
+		return []StateLabel{defaultState}, nil
+	}
+
+	return result, nil
 }
 
 // executeEntryActions executes entry actions for a state.
