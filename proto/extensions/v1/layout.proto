@@ -1,0 +1,359 @@
+syntax = "proto3";
+
+package extensions.v1;
+
+option go_package = "github.com/tmc/sc/gen/extensions/v1;extensionspb";
+
+// ===========================================================================
+// LAYOUT EXTENSION - Tool-Agnostic Visual Positioning
+//
+// This extension provides standardized visual positioning data consumable by
+// multiple rendering backends: Mermaid, D3.js, Graphviz, web editors.
+//
+// COORDINATE SYSTEM:
+// The layout uses a Cartesian coordinate system with:
+//   - Origin (0,0) at top-left of canvas
+//   - X-axis: increases rightward (positive = right)
+//   - Y-axis: increases downward (positive = down)
+//   - Units: logical pixels (renderer applies scaling)
+//
+// This convention follows standard screen coordinates [W3C CSS 2.1, Section 9]
+// and enables direct mapping to SVG, Canvas, and DOM positioning.
+//
+// DESIGN RATIONALE:
+// Unlike tool-specific layouts (XState's editor positions), this extension
+// defines a minimal, portable representation. Key properties:
+//   - Self-contained: No dependencies on specific rendering libraries
+//   - Lossless: Supports round-trip through multiple tools
+//   - Extensible: Style hints are optional and ignorable
+//
+// USE CASES:
+// 1. Mermaid diagram generation with user-specified positioning
+// 2. D3.js visualization with stable node anchors
+// 3. Graphviz export preserving manual layout decisions
+// 4. Web editor state persistence (undo/redo, collaboration)
+// 5. Multi-tool round-trip: Editor A -> Proto -> Editor B
+//
+// REFERENCES:
+// [SVG2] W3C SVG 2, https://www.w3.org/TR/SVG2/
+// [CSS] W3C CSS 2.1, Section 9: Visual formatting model
+// ===========================================================================
+
+// ─────────────────────────── State Layout ──────────────────────────────────
+
+/**
+ * StateLayout provides visual positioning for a state node.
+ *
+ * STORAGE:
+ * Pack into State.extensions using google.protobuf.Any:
+ *   layout := &extensionspb.StateLayout{...}
+ *   any, _ := anypb.New(layout)
+ *   state.Extensions = append(state.Extensions, any)
+ *
+ * WELL-FORMEDNESS:
+ * 1. position SHOULD be set for non-root states
+ * 2. size SHOULD be set for composite states (OR/AND)
+ * 3. z_index: higher values render on top of lower values
+ * 4. anchors: indices referenced by TransitionLayout.source_anchor/target_anchor
+ *
+ * SEMANTIC PROPERTIES:
+ * - position_locked = true: Layout algorithms MUST NOT reposition this state
+ * - layout_hint: Suggested algorithm, tools MAY ignore
+ */
+message StateLayout {
+  // Position of state bounding box origin (top-left corner).
+  // In parent's coordinate space for nested states.
+  Point position = 1;
+
+  // Bounding box dimensions.
+  // For BASIC states, renderer may use defaults if unset.
+  Dimensions size = 2;
+
+  // Visual styling hints.
+  // Tools SHOULD interpret these but MAY apply defaults.
+  VisualStyle style = 3;
+
+  // Z-ordering: higher values render on top.
+  // Default 0; use negative values for background elements.
+  int32 z_index = 4;
+
+  // Named anchor points for transition attachment.
+  // If empty, tools use default edge midpoints.
+  repeated Anchor anchors = 5;
+
+  // Layout algorithm hint for automatic positioning.
+  // Values: "manual", "auto", "force-directed", "hierarchical", "orthogonal".
+  // Tools use their default if unset or unrecognized.
+  string layout_hint = 6;
+
+  // Whether position is user-specified (locked) vs auto-computed.
+  // When true, layout algorithms MUST preserve this position.
+  bool position_locked = 7;
+
+  // Minimum size constraint (for resizable states).
+  Dimensions min_size = 8;
+
+  // Maximum size constraint.
+  Dimensions max_size = 9;
+
+  // Padding inside composite states (for child layout).
+  EdgeInsets padding = 10;
+
+  // Expansion state for collapsible composite states.
+  bool collapsed = 11;
+}
+
+// ─────────────────────────── Transition Layout ─────────────────────────────
+
+/**
+ * TransitionLayout provides visual routing for transition edges.
+ *
+ * STORAGE:
+ * Pack into Transition.extensions using google.protobuf.Any.
+ *
+ * EDGE ROUTING:
+ * Transitions are rendered as directed edges from source to target.
+ * The waypoints field defines intermediate control points:
+ *   - Empty: direct edge (straight or curved per edge_style)
+ *   - Non-empty: polyline through waypoints
+ *
+ * LABEL POSITIONING:
+ * Labels (event, guard, action) are positioned along the edge:
+ *   - label_position: parametric position t ∈ [0,1]
+ *     - 0.0 = at source
+ *     - 0.5 = midpoint (default)
+ *     - 1.0 = at target
+ *   - label_offset: perpendicular displacement
+ *     - positive = right side (following edge direction)
+ *     - negative = left side
+ */
+message TransitionLayout {
+  // Ordered waypoints for edge routing.
+  // Excludes source and target endpoints (those come from states).
+  repeated Point waypoints = 1;
+
+  // Edge rendering style.
+  // "straight": direct line between waypoints
+  // "curved": smooth bezier curves
+  // "orthogonal": right-angle segments only
+  // "bezier": explicit bezier control points
+  string edge_style = 2;
+
+  // Arrowhead style at target end.
+  // "filled": solid triangle (default)
+  // "open": outlined triangle
+  // "none": no arrowhead
+  string arrow_style = 3;
+
+  // Label position along edge: t ∈ [0.0, 1.0].
+  // 0.0 = source, 0.5 = midpoint, 1.0 = target.
+  double label_position = 4;
+
+  // Label offset perpendicular to edge.
+  // Positive = right side, negative = left side.
+  double label_offset = 5;
+
+  // Visual styling for the edge.
+  VisualStyle style = 6;
+
+  // Source anchor index (references StateLayout.anchors by position).
+  // -1 or unset = auto-select best anchor.
+  int32 source_anchor = 7;
+
+  // Target anchor index.
+  int32 target_anchor = 8;
+
+  // Self-loop properties (when source == target).
+  SelfLoopLayout self_loop = 9;
+
+  // Curvature for curved edges: 0.0 = straight, positive = curve right.
+  double curvature = 10;
+}
+
+/**
+ * SelfLoopLayout defines rendering for self-transitions.
+ * When a transition's source and target are the same state,
+ * it must be rendered as a loop.
+ */
+message SelfLoopLayout {
+  // Loop direction: "n", "ne", "e", "se", "s", "sw", "w", "nw".
+  string direction = 1;
+
+  // Loop radius in pixels.
+  double radius = 2;
+}
+
+// ─────────────────────────── Geometric Primitives ──────────────────────────
+
+/**
+ * Point represents a 2D coordinate in the layout coordinate system.
+ *
+ * COORDINATE SEMANTICS:
+ * - Origin (0,0) at top-left of canvas
+ * - X increases rightward
+ * - Y increases downward
+ * - Units are logical pixels
+ */
+message Point {
+  double x = 1;
+  double y = 2;
+}
+
+/**
+ * Dimensions represents width and height.
+ */
+message Dimensions {
+  double width = 1;
+  double height = 2;
+}
+
+/**
+ * EdgeInsets defines padding/margins on four sides.
+ */
+message EdgeInsets {
+  double top = 1;
+  double right = 2;
+  double bottom = 3;
+  double left = 4;
+}
+
+/**
+ * Anchor defines a named connection point on a state boundary.
+ *
+ * ANCHOR POSITIONING:
+ * Relative position uses normalized coordinates:
+ *   - (0, 0) = top-left corner
+ *   - (1, 0) = top-right corner
+ *   - (0.5, 0.5) = center
+ *   - (1, 1) = bottom-right corner
+ *
+ * DIRECTION HINTS:
+ * The direction field suggests preferred edge routing:
+ *   - "n", "s", "e", "w": cardinal directions
+ *   - "ne", "nw", "se", "sw": diagonals
+ *   - "auto": let renderer decide
+ */
+message Anchor {
+  // Unique identifier for this anchor.
+  string id = 1;
+
+  // Position as fraction of state bounds.
+  // (0,0) = top-left, (1,1) = bottom-right.
+  Point relative_position = 2;
+
+  // Preferred edge direction: "n", "s", "e", "w", "ne", "nw", "se", "sw", "auto".
+  string direction = 3;
+}
+
+// ─────────────────────────── Visual Styling ────────────────────────────────
+
+/**
+ * VisualStyle provides portable styling hints.
+ *
+ * COLOR FORMAT:
+ * Colors use CSS color syntax for maximum portability:
+ *   - Hex: "#RRGGBB", "#RGB", "#RRGGBBAA"
+ *   - Named: "red", "blue", "transparent"
+ *   - RGB: "rgb(255, 0, 0)", "rgba(255, 0, 0, 0.5)"
+ *
+ * SEMANTICS:
+ * These are HINTS. Renderers:
+ *   - SHOULD interpret recognized properties
+ *   - MAY apply their own defaults for unset properties
+ *   - MAY ignore properties they don't support
+ */
+message VisualStyle {
+  // Fill color (CSS color string).
+  string fill_color = 1;
+
+  // Stroke/border color.
+  string stroke_color = 2;
+
+  // Stroke width in pixels.
+  double stroke_width = 3;
+
+  // Stroke pattern: "solid", "dashed", "dotted".
+  string stroke_pattern = 4;
+
+  // Corner radius for rounded rectangles.
+  double corner_radius = 5;
+
+  // Overall opacity: 0.0 (transparent) to 1.0 (opaque).
+  double opacity = 6;
+
+  // Font family for labels: "sans-serif", "monospace", "Arial", etc.
+  string font_family = 7;
+
+  // Font size in points.
+  double font_size = 8;
+
+  // Font weight: "normal", "bold", or numeric "100"-"900".
+  string font_weight = 9;
+
+  // Text color for labels.
+  string text_color = 10;
+
+  // Shadow configuration (optional).
+  Shadow shadow = 11;
+}
+
+/**
+ * Shadow defines drop shadow styling.
+ */
+message Shadow {
+  // Horizontal offset in pixels.
+  double offset_x = 1;
+
+  // Vertical offset in pixels.
+  double offset_y = 2;
+
+  // Blur radius in pixels.
+  double blur = 3;
+
+  // Shadow color (CSS color string).
+  string color = 4;
+}
+
+// ─────────────────────────── Canvas Layout ─────────────────────────────────
+
+/**
+ * CanvasLayout provides global canvas/diagram settings.
+ *
+ * STORAGE:
+ * Can be stored in Statechart-level metadata or as a dedicated extension.
+ *
+ * USE CASES:
+ * - Set diagram dimensions for export
+ * - Configure snap-to-grid for editing
+ * - Define default layout direction
+ * - Establish spacing guidelines
+ */
+message CanvasLayout {
+  // Canvas dimensions.
+  Dimensions size = 1;
+
+  // Background color (CSS color string).
+  string background_color = 2;
+
+  // Grid spacing for snap-to-grid (0 = no grid).
+  double grid_spacing = 3;
+
+  // Default layout direction: "TB" (top-bottom), "LR" (left-right),
+  // "BT" (bottom-top), "RL" (right-left).
+  string direction = 4;
+
+  // Default horizontal spacing between sibling states.
+  double horizontal_spacing = 5;
+
+  // Default vertical spacing between sibling states.
+  double vertical_spacing = 6;
+
+  // Padding around state groups/clusters.
+  double group_padding = 7;
+
+  // Viewport/camera position (for editors).
+  Point viewport_position = 8;
+
+  // Zoom level: 1.0 = 100%, 2.0 = 200%.
+  double zoom = 9;
+}

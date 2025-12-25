@@ -1,0 +1,352 @@
+syntax = "proto3";
+
+package extensions.v1;
+
+option go_package = "github.com/tmc/sc/gen/extensions/v1;extensionspb";
+
+import "google/protobuf/timestamp.proto";
+import "extensions/v1/common.proto";
+
+// ===========================================================================
+// ANNOTATIONS EXTENSION - Documentation and Metadata
+//
+// This extension provides structured documentation and categorization for
+// statechart elements, enabling rich tooling beyond the core Harel formalism.
+//
+// DESIGN RATIONALE:
+// While State.metadata provides ad-hoc key-value storage, this extension
+// defines a STRUCTURED schema for common documentation patterns:
+//   - Descriptions with Markdown support
+//   - Semantic tagging for filtering and search
+//   - Author attribution for collaboration
+//   - Deprecation notices for versioning
+//   - Risk assessment for safety-critical systems
+//
+// MARKDOWN SUPPORT:
+// Text fields marked as "Markdown supported" accept CommonMark syntax.
+// Renderers SHOULD process Markdown; tools that don't can display raw text.
+//
+// USE CASES:
+// 1. Documentation generation (Markdown, HTML, PDF)
+// 2. Semantic search across statechart libraries
+// 3. Filtering states by tag/category in visual editors
+// 4. Requirement traceability for regulatory compliance
+// 5. Risk assessment for safety-critical systems (ISO 26262, DO-178C)
+// 6. Change tracking and blame attribution
+//
+// REFERENCES:
+// [CM] CommonMark Specification, https://spec.commonmark.org/
+// [SPDX] Software Package Data Exchange, https://spdx.dev/
+// [ISO26262] Road vehicles - Functional safety
+// [DO-178C] Software Considerations in Airborne Systems
+// ===========================================================================
+
+// ─────────────────────────── State Annotations ─────────────────────────────
+
+/**
+ * StateAnnotations provides documentation for a state.
+ *
+ * STORAGE:
+ * Pack into State.extensions using google.protobuf.Any.
+ *
+ * SEMANTIC PROPERTIES:
+ * - Annotations are ADVISORY; they don't affect execution semantics
+ * - Tools SHOULD display annotations but MAY ignore unknown fields
+ * - Empty annotations are equivalent to no annotation
+ */
+message StateAnnotations {
+  // Full description of the state (Markdown supported).
+  // Explain purpose, invariants, and relationships to other states.
+  string description = 1;
+
+  // Brief summary for tooltips and listings (plain text, ~80 chars).
+  string summary = 2;
+
+  // Semantic tags for categorization and filtering.
+  // Examples: ["error-handling", "user-input", "background-task"].
+  // Tags SHOULD be lowercase, hyphenated, and hierarchical-capable.
+  repeated string tags = 3;
+
+  // Category path for hierarchical organization.
+  // Example: ["ui", "modal", "confirmation"] represents ui.modal.confirmation.
+  repeated string category = 4;
+
+  // Author attribution.
+  Author author = 5;
+
+  // Semantic version when this state was introduced.
+  // Follows SemVer: "1.2.0", "2.0.0-beta.1".
+  string since_version = 6;
+
+  // Deprecation notice (if state is deprecated).
+  Deprecation deprecation = 7;
+
+  // Related states for documentation cross-references.
+  // Contains state labels for linking.
+  repeated string related_states = 8;
+
+  // External documentation links.
+  repeated Link links = 9;
+
+  // Requirement traceability identifiers.
+  // Examples: ["REQ-001", "US-123", "JIRA-456"].
+  repeated string requirements = 10;
+
+  // Risk assessment for safety-critical states.
+  RiskAssessment risk = 11;
+
+  // Change history entries.
+  repeated ChangeEntry change_history = 12;
+
+  // Invariants that hold while in this state (human-readable).
+  repeated string invariants = 13;
+
+  // Preconditions for entering this state (human-readable).
+  repeated string preconditions = 14;
+}
+
+// ─────────────────────────── Transition Annotations ────────────────────────
+
+/**
+ * TransitionAnnotations provides documentation for a transition.
+ *
+ * STORAGE:
+ * Pack into Transition.extensions using google.protobuf.Any.
+ */
+message TransitionAnnotations {
+  // Full description of the transition (Markdown supported).
+  string description = 1;
+
+  // Brief summary for tooltips (plain text, ~80 chars).
+  string summary = 2;
+
+  // Semantic tags for categorization.
+  repeated string tags = 3;
+
+  // Author attribution.
+  Author author = 4;
+
+  // Version when this transition was introduced.
+  string since_version = 5;
+
+  // Deprecation notice.
+  Deprecation deprecation = 6;
+
+  // Requirement traceability identifiers.
+  repeated string requirements = 7;
+
+  // Preconditions beyond the guard (human-readable documentation).
+  // These complement the formal guard expression.
+  repeated string preconditions = 8;
+
+  // Postconditions established by this transition (human-readable).
+  repeated string postconditions = 9;
+
+  // Side effects of executing this transition.
+  // Examples: ["sends email notification", "updates database", "logs event"].
+  repeated string side_effects = 10;
+
+  // Change history entries.
+  repeated ChangeEntry change_history = 11;
+
+  // Performance notes (e.g., "may be slow on large inputs").
+  string performance_notes = 12;
+}
+
+// ─────────────────────────── Event Annotations ─────────────────────────────
+
+/**
+ * EventAnnotations provides documentation for an event.
+ *
+ * STORAGE:
+ * Can be linked via event label lookup or stored in Statechart-level metadata.
+ * Since Event messages are lightweight in core schema, annotations provide
+ * additional documentation.
+ */
+message EventAnnotations {
+  // Event label (for linking).
+  string event_label = 1;
+
+  // Full description of the event (Markdown supported).
+  string description = 2;
+
+  // Event payload schema in JSON Schema format.
+  // Allows tooling to validate event payloads.
+  string payload_schema = 3;
+
+  // Example payloads as JSON strings.
+  repeated string examples = 4;
+
+  // Systems/components that produce this event.
+  repeated string producers = 5;
+
+  // States that react to this event.
+  repeated string consumers = 6;
+
+  // Whether this is an internal or external event.
+  bool internal = 7;
+
+  // Event frequency: "rare", "occasional", "frequent", "continuous".
+  string frequency = 8;
+
+  // Priority/urgency: "low", "normal", "high", "critical".
+  string priority = 9;
+}
+
+// ─────────────────────────── Supporting Types ──────────────────────────────
+
+// Author, License, Link, ChangeEntry are imported from common.proto
+
+/**
+ * Deprecation marks an element as deprecated.
+ *
+ * SEMANTICS:
+ * Deprecated elements are still functional but SHOULD be avoided.
+ * Tools MAY emit warnings when deprecated elements are used.
+ */
+message Deprecation {
+  // Whether this element is deprecated.
+  bool deprecated = 1;
+
+  // Version when deprecation was announced.
+  string since_version = 2;
+
+  // Reason for deprecation (Markdown supported).
+  string reason = 3;
+
+  // Label of replacement element (if any).
+  string replacement = 4;
+
+  // Version when element will be removed.
+  string removal_version = 5;
+
+  // Migration instructions (Markdown supported).
+  string migration_guide = 6;
+}
+
+/**
+ * RiskAssessment captures safety and compliance information.
+ *
+ * USE CASES:
+ * - Safety-critical systems (automotive, aerospace, medical)
+ * - Security-sensitive states (authentication, authorization)
+ * - Compliance tracking (GDPR, HIPAA, SOX)
+ *
+ * REFERENCES:
+ * [ISO26262] Automotive Safety Integrity Levels (ASIL)
+ * [DO-178C] Design Assurance Levels (DAL)
+ */
+message RiskAssessment {
+  // Risk level: "negligible", "low", "medium", "high", "critical".
+  string level = 1;
+
+  // Risk category: "safety", "security", "compliance", "performance", "availability".
+  string category = 2;
+
+  // Detailed risk description (Markdown supported).
+  string description = 3;
+
+  // Mitigation measures in place.
+  repeated string mitigations = 4;
+
+  // Regulatory references: ["ISO-26262-ASIL-B", "DO-178C-DAL-C", "GDPR-Art-32"].
+  repeated string regulatory_refs = 5;
+
+  // Failure modes and effects.
+  repeated FailureMode failure_modes = 6;
+
+  // Required review level: "none", "peer", "expert", "formal".
+  string review_level = 7;
+
+  // Whether safety analysis is complete.
+  bool analysis_complete = 8;
+}
+
+/**
+ * FailureMode documents a potential failure scenario.
+ */
+message FailureMode {
+  // Failure mode identifier.
+  string id = 1;
+
+  // Description of the failure.
+  string description = 2;
+
+  // Probability: "improbable", "remote", "occasional", "probable", "frequent".
+  string probability = 3;
+
+  // Severity: "negligible", "minor", "major", "hazardous", "catastrophic".
+  string severity = 4;
+
+  // Detection method.
+  string detection = 5;
+
+  // Mitigation strategy.
+  string mitigation = 6;
+}
+
+// ─────────────────────────── Statechart Annotations ────────────────────────
+
+/**
+ * StatechartAnnotations provides documentation for the entire statechart.
+ *
+ * STORAGE:
+ * Store in Statechart-level metadata or as a dedicated extension type.
+ */
+message StatechartAnnotations {
+  // Full description of the statechart's purpose (Markdown supported).
+  string description = 1;
+
+  // Brief summary.
+  string summary = 2;
+
+  // Semantic tags.
+  repeated string tags = 3;
+
+  // Category path.
+  repeated string category = 4;
+
+  // Primary author/owner.
+  Author owner = 5;
+
+  // Contributors.
+  repeated Author contributors = 6;
+
+  // Current version.
+  string version = 7;
+
+  // License information.
+  License license = 8;
+
+  // External links.
+  repeated Link links = 9;
+
+  // Requirement traceability.
+  repeated string requirements = 10;
+
+  // Change history.
+  repeated ChangeEntry change_history = 11;
+
+  // Overall risk assessment.
+  RiskAssessment risk = 12;
+
+  // Glossary of domain terms.
+  repeated GlossaryEntry glossary = 13;
+}
+
+/**
+ * GlossaryEntry defines a domain term.
+ */
+message GlossaryEntry {
+  // The term being defined.
+  string term = 1;
+
+  // Definition (Markdown supported).
+  string definition = 2;
+
+  // Related terms.
+  repeated string related = 3;
+
+  // External reference for the term.
+  string reference = 4;
+}

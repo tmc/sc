@@ -1,0 +1,635 @@
+syntax = "proto3";
+
+package extensions.v1;
+
+option go_package = "github.com/tmc/sc/gen/extensions/v1;extensionspb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+
+// ===========================================================================
+// SIMULATION EXTENSION - Execution Simulation Configuration
+//
+// This extension provides timing, delays, probabilities, and mock
+// configurations for statechart simulation and model checking.
+//
+// DESIGN RATIONALE:
+// The core Harel formalism is event-driven and synchronous. Simulation
+// requires additional semantics:
+//   - TEMPORAL: Timeouts, delays, deadlines
+//   - STOCHASTIC: Probabilities, distributions, random choice
+//   - MOCKING: Simulated external systems, failure injection
+//
+// This extension adds these concerns without modifying the core schema,
+// enabling both pure formal verification and realistic simulation.
+//
+// TIMED SEMANTICS:
+// We extend the transition relation with time:
+//   δ_t ⊆ S × E × G × A × S × TimeConstraint
+// where TimeConstraint = (min_delay, max_delay, deadline)
+//
+// This follows the timed automata approach [AD94] while remaining
+// compatible with untimed execution.
+//
+// USE CASES:
+// 1. Performance simulation (latency, throughput)
+// 2. Stress testing with failure injection
+// 3. Model checking with timing constraints
+// 4. Stochastic analysis (Markov chains)
+// 5. Resource consumption estimation
+// 6. Real-time systems verification
+//
+// REFERENCES:
+// [AD94] R. Alur and D. Dill, "A theory of timed automata," 1994
+// [SPN] M. Ajmone Marsan, "Stochastic Petri Nets," 1990
+// [PRISM] M. Kwiatkowska et al., "PRISM: Probabilistic Model Checking"
+// ===========================================================================
+
+// ─────────────────────────── State Simulation ──────────────────────────────
+
+/**
+ * StateSimConfig provides simulation settings for a state.
+ *
+ * STORAGE:
+ * Pack into State.extensions using google.protobuf.Any.
+ *
+ * EXECUTION SEMANTICS:
+ * - Timing constraints are enforced during simulation
+ * - Resource consumption is tracked for capacity analysis
+ * - Mocks replace real implementations for testing
+ * - Failures are injected according to configuration
+ */
+message StateSimConfig {
+  // Timing constraints for this state.
+  TimingConstraints timing = 1;
+
+  // Resource consumption profile while in state.
+  ResourceProfile resources = 2;
+
+  // Mock configuration for entry actions.
+  MockConfig entry_mock = 3;
+
+  // Mock configuration for exit actions.
+  MockConfig exit_mock = 4;
+
+  // Failure injection settings.
+  FailureConfig failure = 5;
+
+  // Logging/tracing verbosity.
+  // 0 = none, 1 = entry/exit, 2 = +actions, 3 = +context changes
+  int32 trace_level = 6;
+
+  // Cost/weight for optimization algorithms.
+  double cost = 7;
+
+  // Reward for reinforcement learning scenarios.
+  double reward = 8;
+
+  // Priority for resource allocation.
+  int32 priority = 9;
+}
+
+/**
+ * TimingConstraints defines temporal requirements for a state.
+ *
+ * TIMED SEMANTICS [AD94]:
+ * A state s with timing constraints defines clock invariants:
+ *   - min_dwell: x ≥ min_dwell before exit enabled
+ *   - max_dwell: x ≤ max_dwell or timeout event generated
+ *   - deadline: absolute deadline from system start
+ *
+ * where x is a clock reset upon state entry.
+ */
+message TimingConstraints {
+  // Minimum time before exiting state (dwell time).
+  // Exit transitions are disabled until min_dwell elapsed.
+  google.protobuf.Duration min_dwell = 1;
+
+  // Maximum time before forced exit (timeout).
+  // If reached, timeout_event is generated.
+  google.protobuf.Duration max_dwell = 2;
+
+  // Expected/typical dwell time (for statistics/analysis).
+  google.protobuf.Duration expected_dwell = 3;
+
+  // Dwell time distribution for stochastic simulation.
+  Distribution dwell_distribution = 4;
+
+  // Absolute deadline from simulation start.
+  google.protobuf.Duration deadline = 5;
+
+  // Entry delay (simulated processing time before becoming active).
+  DelayRange entry_delay = 6;
+
+  // Exit delay (cleanup time after exit decision).
+  DelayRange exit_delay = 7;
+
+  // Event generated on max_dwell expiry.
+  // If empty, state is force-exited to parent's default.
+  string timeout_event = 8;
+
+  // Event generated on deadline violation.
+  string deadline_event = 9;
+}
+
+// ─────────────────────────── Transition Simulation ─────────────────────────
+
+/**
+ * TransitionSimConfig provides simulation settings for a transition.
+ *
+ * STORAGE:
+ * Pack into Transition.extensions using google.protobuf.Any.
+ *
+ * STOCHASTIC SEMANTICS [SPN]:
+ * For non-deterministic choice between enabled transitions:
+ *   P(t_i selected) = weight_i / Σ weight_j
+ * where the sum is over all enabled transitions.
+ */
+message TransitionSimConfig {
+  // Probability weight for non-deterministic choice.
+  // Higher weight = more likely to be selected.
+  // Default 1.0 for uniform distribution.
+  double weight = 1;
+
+  // Execution delay range.
+  DelayRange delay = 2;
+
+  // Mock configuration for transition actions.
+  MockConfig mock = 3;
+
+  // Failure injection for this transition.
+  FailureConfig failure = 4;
+
+  // Cost/weight for shortest path algorithms.
+  double cost = 5;
+
+  // Reward for reinforcement learning.
+  double reward = 6;
+
+  // Rate parameter for continuous-time Markov chains.
+  // Firing rate λ: inter-arrival time ~ Exp(λ).
+  double rate = 7;
+
+  // Enabling condition delay (time after enabled before fireable).
+  google.protobuf.Duration enable_delay = 8;
+}
+
+// ─────────────────────────── Timing Primitives ─────────────────────────────
+
+/**
+ * DelayRange specifies a delay with optional variance.
+ *
+ * DISTRIBUTIONS:
+ * The delay is sampled from the specified distribution:
+ *   - "constant": always returns (min + max) / 2
+ *   - "uniform": uniform distribution over [min, max]
+ *   - "normal": normal distribution, params = {mean, stddev}
+ *   - "exponential": exponential distribution, params = {rate}
+ *   - "lognormal": log-normal distribution, params = {mu, sigma}
+ *   - "weibull": Weibull distribution, params = {scale, shape}
+ */
+message DelayRange {
+  // Minimum delay.
+  google.protobuf.Duration min = 1;
+
+  // Maximum delay.
+  google.protobuf.Duration max = 2;
+
+  // Distribution type.
+  string distribution = 3;
+
+  // Distribution-specific parameters.
+  map<string, double> params = 4;
+}
+
+/**
+ * Distribution specifies a probability distribution.
+ */
+message Distribution {
+  // Distribution type: "constant", "uniform", "normal", "exponential", etc.
+  string type = 1;
+
+  // Distribution parameters.
+  map<string, double> params = 2;
+
+  // Minimum value (truncation).
+  double min = 3;
+
+  // Maximum value (truncation).
+  double max = 4;
+}
+
+// ─────────────────────────── Resource Modeling ─────────────────────────────
+
+/**
+ * ResourceProfile defines resource consumption while in a state.
+ *
+ * USE CASES:
+ * - Capacity planning
+ * - Performance modeling
+ * - Cost estimation
+ * - Energy-aware scheduling
+ */
+message ResourceProfile {
+  // CPU utilization: 0.0 to 1.0 (fraction of one core).
+  double cpu_utilization = 1;
+
+  // Memory usage in bytes.
+  int64 memory_bytes = 2;
+
+  // Network bandwidth consumption in bytes/second.
+  int64 network_bps = 3;
+
+  // Disk I/O in bytes/second.
+  int64 disk_iops = 4;
+
+  // Power consumption in watts.
+  double power_watts = 5;
+
+  // Monetary cost per time unit (e.g., $/hour).
+  double cost_per_hour = 6;
+
+  // Custom resource metrics.
+  map<string, double> custom = 7;
+
+  // Resource consumption is constant vs varies over time.
+  bool constant = 8;
+
+  // Time-varying resource profile.
+  repeated ResourceSample samples = 9;
+}
+
+/**
+ * ResourceSample defines resource consumption at a point in time.
+ */
+message ResourceSample {
+  // Time offset from state entry.
+  google.protobuf.Duration offset = 1;
+
+  // Resource values at this time.
+  map<string, double> values = 2;
+}
+
+// ─────────────────────────── Mocking ───────────────────────────────────────
+
+/**
+ * MockConfig defines mock/stub behavior for simulation.
+ *
+ * MODES:
+ * - "passthrough": Use real implementation (no mocking)
+ * - "success": Always return success with default_value
+ * - "failure": Always return error with error_code
+ * - "random": Random success/failure based on failure_rate
+ * - "sequence": Return responses in order
+ * - "replay": Replay recorded responses
+ */
+message MockConfig {
+  // Whether mocking is enabled.
+  bool enabled = 1;
+
+  // Mock behavior mode.
+  string mode = 2;
+
+  // Response delay.
+  DelayRange response_delay = 3;
+
+  // Ordered mock responses (for sequence mode).
+  repeated MockResponse responses = 4;
+
+  // Random failure probability (for random mode).
+  double failure_rate = 5;
+
+  // Default return value (JSON).
+  string default_value = 6;
+
+  // Default error code.
+  string default_error_code = 7;
+
+  // Default error message.
+  string default_error_message = 8;
+
+  // Whether to record actual responses for later replay.
+  bool record = 9;
+}
+
+/**
+ * MockResponse defines a single mock response.
+ */
+message MockResponse {
+  // Response value (JSON).
+  string value = 1;
+
+  // Whether this response is an error.
+  bool is_error = 2;
+
+  // Error code.
+  string error_code = 3;
+
+  // Error message.
+  string error_message = 4;
+
+  // Response delay.
+  google.protobuf.Duration delay = 5;
+
+  // Condition for this response (CEL expression).
+  string condition = 6;
+}
+
+// ─────────────────────────── Failure Injection ─────────────────────────────
+
+/**
+ * FailureConfig defines failure injection for testing resilience.
+ *
+ * FAILURE TYPES:
+ * - "crash": Immediate termination, no cleanup
+ * - "timeout": Operation hangs indefinitely
+ * - "exception": Throws specified error
+ * - "corrupt": Returns corrupted/invalid data
+ * - "slow": Adds extreme delay
+ * - "partial": Partial completion
+ *
+ * TRIGGERS:
+ * - "random": Based on failure_rate probability
+ * - "after_n": After N successful executions
+ * - "condition": When CEL condition is true
+ * - "scheduled": At specific simulation time
+ */
+message FailureConfig {
+  // Failure injection enabled.
+  bool enabled = 1;
+
+  // Failure type.
+  string failure_type = 2;
+
+  // Failure probability per execution (for random trigger).
+  double failure_rate = 3;
+
+  // Trigger type.
+  string trigger = 4;
+
+  // N for "after_n" trigger.
+  int64 trigger_after_n = 5;
+
+  // CEL condition for "condition" trigger.
+  string trigger_condition = 6;
+
+  // Scheduled failure time for "scheduled" trigger.
+  google.protobuf.Duration trigger_at = 7;
+
+  // Recovery behavior: "none", "retry", "skip", "escalate", "fallback".
+  string recovery = 8;
+
+  // Maximum retry attempts.
+  int32 max_retries = 9;
+
+  // Delay between retries.
+  DelayRange retry_delay = 10;
+
+  // Fallback value (JSON) if recovery = "fallback".
+  string fallback_value = 11;
+
+  // Error details for exception type.
+  string error_code = 12;
+  string error_message = 13;
+
+  // Corruption parameters for corrupt type.
+  CorruptionConfig corruption = 14;
+
+  // Only inject in these states (empty = all).
+  repeated string only_in_states = 15;
+
+  // Never inject in these states.
+  repeated string exclude_states = 16;
+}
+
+/**
+ * CorruptionConfig defines data corruption parameters.
+ */
+message CorruptionConfig {
+  // Corruption type: "bit_flip", "truncate", "null", "garbage", "swap".
+  string type = 1;
+
+  // Corruption probability for each field/byte.
+  double probability = 2;
+
+  // Fields to corrupt (empty = random).
+  repeated string fields = 3;
+}
+
+// ─────────────────────────── Simulation Scenarios ──────────────────────────
+
+/**
+ * SimulationScenario defines a complete simulation configuration.
+ *
+ * USE CASES:
+ * - Performance benchmarking
+ * - Load testing
+ * - Chaos engineering
+ * - What-if analysis
+ */
+message SimulationScenario {
+  // Scenario identifier.
+  string id = 1;
+
+  // Scenario name.
+  string name = 2;
+
+  // Description.
+  string description = 3;
+
+  // Simulation time limit (virtual time).
+  google.protobuf.Duration time_limit = 4;
+
+  // Wall-clock time limit.
+  google.protobuf.Duration wall_time_limit = 5;
+
+  // Maximum events to process.
+  int64 max_events = 6;
+
+  // Scheduled event injections.
+  repeated ScheduledEvent scheduled_events = 7;
+
+  // Random event generation.
+  RandomEventConfig random_events = 8;
+
+  // Global resource constraints.
+  ResourceConstraints constraints = 9;
+
+  // Random seed for reproducibility.
+  // 0 = use current time.
+  int64 random_seed = 10;
+
+  // Number of simulation runs.
+  int32 run_count = 11;
+
+  // Metrics to collect.
+  repeated string metrics = 12;
+
+  // Warmup period (metrics not collected).
+  google.protobuf.Duration warmup = 13;
+
+  // Global failure injection.
+  FailureConfig global_failure = 14;
+
+  // Time speedup factor: 1.0 = real-time, 10.0 = 10x faster.
+  double time_scale = 15;
+
+  // Initial context for all runs.
+  google.protobuf.Struct initial_context = 16;
+}
+
+/**
+ * ScheduledEvent defines an event at a specific simulation time.
+ */
+message ScheduledEvent {
+  // Time offset from simulation start.
+  google.protobuf.Duration time = 1;
+
+  // Event name.
+  string event = 2;
+
+  // Event payload (JSON).
+  string payload = 3;
+
+  // Whether to repeat.
+  bool repeat = 4;
+
+  // Repeat interval.
+  google.protobuf.Duration interval = 5;
+
+  // Maximum repetitions (0 = unlimited).
+  int32 max_repetitions = 6;
+
+  // Condition for injection (CEL).
+  string condition = 7;
+}
+
+/**
+ * RandomEventConfig defines random event generation.
+ *
+ * ARRIVAL PROCESS:
+ * Events arrive according to a Poisson process with rate λ.
+ * Event type is selected based on weights.
+ */
+message RandomEventConfig {
+  // Event specifications.
+  repeated RandomEvent events = 1;
+
+  // Global event arrival rate (events per second).
+  double rate = 2;
+
+  // Arrival process: "poisson", "uniform", "burst".
+  string arrival_process = 3;
+
+  // Burst configuration (for burst arrival).
+  BurstConfig burst = 4;
+}
+
+/**
+ * RandomEvent defines a randomly generated event type.
+ */
+message RandomEvent {
+  // Event name.
+  string event = 1;
+
+  // Selection weight (relative probability).
+  double weight = 2;
+
+  // Payload generator: "constant", "random_int", "random_string", "random_json".
+  string payload_generator = 3;
+
+  // Generator parameters.
+  google.protobuf.Struct generator_params = 4;
+
+  // Condition for allowing this event (CEL).
+  string condition = 5;
+}
+
+/**
+ * BurstConfig defines burst event generation.
+ */
+message BurstConfig {
+  // Events per burst.
+  int32 burst_size = 1;
+
+  // Time between bursts.
+  google.protobuf.Duration burst_interval = 2;
+
+  // Delay between events within burst.
+  google.protobuf.Duration intra_burst_delay = 3;
+}
+
+/**
+ * ResourceConstraints defines global simulation limits.
+ */
+message ResourceConstraints {
+  // Maximum concurrent active states.
+  int32 max_concurrent_states = 1;
+
+  // Maximum events per second.
+  double max_event_rate = 2;
+
+  // Maximum memory usage.
+  int64 max_memory_bytes = 3;
+
+  // Maximum CPU utilization.
+  double max_cpu = 4;
+
+  // Maximum queue depth.
+  int32 max_queue_depth = 5;
+
+  // Action on constraint violation: "reject", "queue", "drop", "error".
+  string overflow_action = 6;
+}
+
+// ─────────────────────────── Simulation Results ────────────────────────────
+
+/**
+ * SimulationResult captures the outcome of a simulation run.
+ */
+message SimulationResult {
+  // Scenario identifier.
+  string scenario_id = 1;
+
+  // Run number (for multi-run scenarios).
+  int32 run_number = 2;
+
+  // Random seed used.
+  int64 random_seed = 3;
+
+  // Simulation duration (virtual time).
+  google.protobuf.Duration duration = 4;
+
+  // Wall-clock duration.
+  google.protobuf.Duration wall_duration = 5;
+
+  // Total events processed.
+  int64 events_processed = 6;
+
+  // Final configuration.
+  repeated string final_configuration = 7;
+
+  // Final context.
+  google.protobuf.Struct final_context = 8;
+
+  // Collected metrics.
+  map<string, double> metrics = 9;
+
+  // Resource utilization summary.
+  map<string, double> resource_utilization = 10;
+
+  // Failures injected.
+  int64 failures_injected = 11;
+
+  // Failures recovered.
+  int64 failures_recovered = 12;
+
+  // Constraint violations.
+  repeated string violations = 13;
+
+  // Termination reason: "time_limit", "event_limit", "final_state", "error".
+  string termination_reason = 14;
+
+  // Error details (if terminated with error).
+  string error = 15;
+}

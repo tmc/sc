@@ -1,0 +1,634 @@
+syntax = "proto3";
+
+package extensions.v1;
+
+option go_package = "github.com/tmc/sc/gen/extensions/v1;extensionspb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// ===========================================================================
+// TESTING EXTENSION - Test Scenarios and Coverage
+//
+// This extension provides test case definitions, expected execution traces,
+// and coverage tracking for statechart testing tools.
+//
+// DESIGN RATIONALE:
+// Testing statecharts requires:
+//   1. Defining event sequences (inputs)
+//   2. Specifying expected configurations (outputs)
+//   3. Tracking state/transition coverage
+//   4. Supporting property-based invariants
+//
+// This extension standardizes these concerns for interoperability between
+// test runners, coverage tools, and model checkers.
+//
+// TESTING APPROACHES SUPPORTED:
+// 1. Trace-based testing: specific event sequences with expected outcomes
+// 2. Property-based testing: invariants that must hold in any execution
+// 3. Coverage-based testing: ensure all states/transitions are exercised
+// 4. Mutation testing: verify tests detect injected faults
+//
+// USE CASES:
+// 1. Automated test execution with sc CLI
+// 2. CI/CD integration for statechart validation
+// 3. Coverage reporting and gap analysis
+// 4. Regression test suites
+// 5. Property-based test generation
+// 6. Mutation testing frameworks
+//
+// REFERENCES:
+// [UTP2] UML Testing Profile 2.0, OMG
+// [MBT] Model-Based Testing, Utting & Legeard
+// [QuickCheck] Property-Based Testing, Claessen & Hughes
+// ===========================================================================
+
+// ─────────────────────────── Test Suite ────────────────────────────────────
+
+/**
+ * TestSuite groups related test cases.
+ *
+ * STORAGE:
+ * Can be attached to Statechart-level extensions or stored separately.
+ *
+ * EXECUTION SEMANTICS:
+ * 1. Run setup actions before each test
+ * 2. Execute test cases (order may vary based on priority)
+ * 3. Run teardown actions after each test
+ * 4. Aggregate results
+ */
+message TestSuite {
+  // Unique identifier for the suite.
+  string id = 1;
+
+  // Human-readable suite name.
+  string name = 2;
+
+  // Suite description (Markdown supported).
+  string description = 3;
+
+  // Test cases in this suite.
+  repeated TestCase test_cases = 4;
+
+  // Setup actions run before EACH test case.
+  repeated TestAction setup = 5;
+
+  // Teardown actions run after EACH test case.
+  repeated TestAction teardown = 6;
+
+  // Tags for filtering: ["smoke", "integration", "slow"].
+  repeated string tags = 7;
+
+  // Suite-level timeout (applies to all tests).
+  google.protobuf.Duration timeout = 8;
+
+  // Whether to run tests in parallel.
+  bool parallel = 9;
+
+  // Maximum parallel test count.
+  int32 max_parallelism = 10;
+
+  // Fail-fast: stop suite on first failure.
+  bool fail_fast = 11;
+}
+
+// ─────────────────────────── Test Case ─────────────────────────────────────
+
+/**
+ * TestCase defines a single test scenario.
+ *
+ * TEST STRUCTURE:
+ * A test case specifies:
+ *   1. Initial context (variables, configuration)
+ *   2. Event sequence to send
+ *   3. Assertions to verify after execution
+ *
+ * EXECUTION SEMANTICS [MBT]:
+ * 1. Reset machine to initial configuration
+ * 2. Apply initial_context overrides
+ * 3. For each event in sequence:
+ *    a. Wait delay_ms (if specified)
+ *    b. Send event with payload
+ *    c. Process run-to-completion
+ *    d. Check timing-based assertions
+ * 4. Verify final assertions
+ */
+message TestCase {
+  // Unique test identifier.
+  string id = 1;
+
+  // Human-readable test name.
+  string name = 2;
+
+  // Test description (Markdown supported).
+  string description = 3;
+
+  // Initial context/variables override.
+  // Applied after machine reset, before event sequence.
+  google.protobuf.Struct initial_context = 4;
+
+  // Initial configuration override.
+  // If set, machine starts in this configuration instead of default.
+  repeated string initial_states = 5;
+
+  // Event sequence to execute.
+  repeated TestEvent events = 6;
+
+  // Assertions to verify.
+  repeated TestAssertion assertions = 7;
+
+  // Invariants that must hold throughout execution.
+  repeated TestInvariant invariants = 8;
+
+  // Whether test is enabled.
+  bool enabled = 9;
+
+  // Skip reason (if disabled).
+  string skip_reason = 10;
+
+  // Tags for filtering: ["smoke", "regression", "edge-case"].
+  repeated string tags = 11;
+
+  // Test timeout.
+  google.protobuf.Duration timeout = 12;
+
+  // Priority: higher = run first.
+  int32 priority = 13;
+
+  // Expected outcome: "pass", "fail", "skip", "flaky".
+  string expected_outcome = 14;
+
+  // Known issues that cause expected failures.
+  repeated string known_issues = 15;
+
+  // Author attribution.
+  string author = 16;
+
+  // Requirement traceability.
+  repeated string requirements = 17;
+}
+
+/**
+ * TestEvent represents an event to send during test execution.
+ *
+ * TIMING:
+ * - delay_before: wait before sending this event
+ * - Events are sent in order, one at a time
+ * - Each event triggers run-to-completion before next
+ */
+message TestEvent {
+  // Event name (must match defined events).
+  string event = 1;
+
+  // Event payload as structured data.
+  google.protobuf.Struct payload = 2;
+
+  // Delay before sending this event.
+  google.protobuf.Duration delay_before = 3;
+
+  // Description of what this event tests.
+  string comment = 4;
+
+  // Assertions to check AFTER this specific event.
+  repeated TestAssertion assertions = 5;
+}
+
+/**
+ * TestAction represents a setup/teardown action.
+ *
+ * ACTION TYPES:
+ * - "set_context": Set context variable(s)
+ * - "reset": Reset machine to initial state
+ * - "invoke": Call external function/mock
+ * - "wait": Delay for specified duration
+ * - "log": Log a message
+ */
+message TestAction {
+  // Action type.
+  string type = 1;
+
+  // Action-specific parameters.
+  google.protobuf.Struct params = 2;
+
+  // Description of action purpose.
+  string comment = 3;
+}
+
+// ─────────────────────────── Assertions ────────────────────────────────────
+
+/**
+ * TestAssertion defines an expected outcome to verify.
+ *
+ * ASSERTION SEMANTICS:
+ * Assertions are evaluated at specific timing points:
+ * - "after_event": After specific event in sequence
+ * - "final": After all events complete
+ * - "any_time": Must hold at some point during execution
+ * - "always": Must hold at every step (use TestInvariant instead)
+ */
+message TestAssertion {
+  // Assertion type.
+  AssertionType type = 1;
+
+  // Expected value (interpretation depends on type).
+  // For state assertions: state label
+  // For configuration: comma-separated labels or JSON array
+  // For context: JSON value
+  string expected = 2;
+
+  // Field name for context assertions.
+  string field = 3;
+
+  // Custom failure message.
+  string message = 4;
+
+  // When to check: "after_event", "final", "any_time".
+  string timing = 5;
+
+  // Event index after which to check (for "after_event" timing).
+  // 0 = after first event, -1 = after last event.
+  int32 after_event_index = 6;
+
+  // Negation: assert the opposite.
+  bool negated = 7;
+}
+
+/**
+ * AssertionType classifies test assertions.
+ */
+enum AssertionType {
+  ASSERTION_TYPE_UNSPECIFIED = 0;
+
+  // ──────── Configuration Assertions ────────
+
+  // Assert specific state is active in current configuration.
+  // expected = state label
+  ASSERTION_TYPE_STATE_ACTIVE = 1;
+
+  // Assert specific state is NOT active.
+  // expected = state label
+  ASSERTION_TYPE_STATE_NOT_ACTIVE = 2;
+
+  // Assert exact configuration match.
+  // expected = comma-separated state labels or JSON array
+  ASSERTION_TYPE_CONFIGURATION_EQUALS = 3;
+
+  // Assert configuration contains these states (subset).
+  // expected = comma-separated state labels or JSON array
+  ASSERTION_TYPE_CONFIGURATION_CONTAINS = 4;
+
+  // Assert configuration is a subset of these states.
+  // expected = comma-separated state labels or JSON array
+  ASSERTION_TYPE_CONFIGURATION_SUBSET = 5;
+
+  // ──────── Context Assertions ────────
+
+  // Assert context variable equals value.
+  // field = variable name, expected = JSON value
+  ASSERTION_TYPE_CONTEXT_EQUALS = 6;
+
+  // Assert context variable matches pattern.
+  // field = variable name, expected = regex pattern
+  ASSERTION_TYPE_CONTEXT_MATCHES = 7;
+
+  // Assert context variable exists.
+  // field = variable name
+  ASSERTION_TYPE_CONTEXT_EXISTS = 8;
+
+  // ──────── Execution Assertions ────────
+
+  // Assert action was executed.
+  // expected = action label
+  ASSERTION_TYPE_ACTION_EXECUTED = 9;
+
+  // Assert action was NOT executed.
+  // expected = action label
+  ASSERTION_TYPE_ACTION_NOT_EXECUTED = 10;
+
+  // Assert event was emitted/raised.
+  // expected = event label
+  ASSERTION_TYPE_EVENT_EMITTED = 11;
+
+  // Assert specific transition was taken.
+  // expected = transition label
+  ASSERTION_TYPE_TRANSITION_TAKEN = 12;
+
+  // ──────── Expression Assertions ────────
+
+  // Assert CEL expression evaluates to true.
+  // expected = CEL expression
+  ASSERTION_TYPE_EXPRESSION = 13;
+}
+
+/**
+ * TestInvariant defines a property that must hold throughout execution.
+ *
+ * SEMANTICS:
+ * Invariants are checked at every step of execution, not just at end.
+ * Violation at any step causes test failure.
+ */
+message TestInvariant {
+  // Invariant identifier.
+  string id = 1;
+
+  // Human-readable name.
+  string name = 2;
+
+  // Description of what this invariant ensures.
+  string description = 3;
+
+  // Invariant expression (CEL).
+  // Variables available: configuration, context, event, step
+  string expression = 4;
+
+  // Error message on violation.
+  string violation_message = 5;
+
+  // Severity: "error", "warning".
+  string severity = 6;
+}
+
+// ─────────────────────────── Coverage ──────────────────────────────────────
+
+/**
+ * StateCoverageMarker tracks coverage for a state.
+ *
+ * STORAGE:
+ * Pack into State.extensions.
+ *
+ * COVERAGE REQUIREMENTS:
+ * - "must_enter": State must be entered at least once
+ * - "must_exit": State must be exited (not stuck)
+ * - "must_dwell": State must be occupied for min_dwell_ms
+ * - "all_exits": All outgoing transitions must be taken
+ */
+message StateCoverageMarker {
+  // Coverage requirements for this state.
+  repeated string requirements = 1;
+
+  // Minimum dwell time for "must_dwell" requirement.
+  google.protobuf.Duration min_dwell = 2;
+
+  // Whether state was covered in last run.
+  bool covered = 3;
+
+  // Total coverage count across runs.
+  int64 coverage_count = 4;
+
+  // Entry count (times state was entered).
+  int64 entry_count = 5;
+
+  // Exit count (times state was exited).
+  int64 exit_count = 6;
+
+  // Test case IDs that cover this state.
+  repeated string covered_by = 7;
+
+  // Total time spent in state across all runs.
+  google.protobuf.Duration total_dwell_time = 8;
+}
+
+/**
+ * TransitionCoverageMarker tracks coverage for a transition.
+ *
+ * STORAGE:
+ * Pack into Transition.extensions.
+ *
+ * COVERAGE REQUIREMENTS:
+ * - "must_fire": Transition must fire at least once
+ * - "guard_true": Transition must fire with guard evaluating true
+ * - "guard_false": Guard must evaluate false at least once
+ */
+message TransitionCoverageMarker {
+  // Coverage requirements for this transition.
+  repeated string requirements = 1;
+
+  // Whether transition was covered in last run.
+  bool covered = 2;
+
+  // Total fire count across runs.
+  int64 fire_count = 3;
+
+  // Test case IDs that cover this transition.
+  repeated string covered_by = 4;
+
+  // Guard evaluation coverage.
+  bool guard_true_covered = 5;
+  bool guard_false_covered = 6;
+
+  // Count of guard true evaluations.
+  int64 guard_true_count = 7;
+
+  // Count of guard false evaluations.
+  int64 guard_false_count = 8;
+}
+
+/**
+ * CoverageReport summarizes test coverage results.
+ */
+message CoverageReport {
+  // Report identifier.
+  string id = 1;
+
+  // Report generation timestamp.
+  google.protobuf.Timestamp generated_at = 2;
+
+  // Statechart identifier.
+  string statechart_id = 3;
+
+  // Test suite/run identifier.
+  string test_run_id = 4;
+
+  // State coverage statistics.
+  CoverageStats state_coverage = 5;
+
+  // Transition coverage statistics.
+  CoverageStats transition_coverage = 6;
+
+  // Event coverage statistics.
+  CoverageStats event_coverage = 7;
+
+  // Guard expression coverage.
+  CoverageStats guard_coverage = 8;
+
+  // Uncovered states.
+  repeated string uncovered_states = 9;
+
+  // Uncovered transitions.
+  repeated string uncovered_transitions = 10;
+
+  // Suggested test cases to improve coverage.
+  repeated SuggestedTestCase suggestions = 11;
+}
+
+/**
+ * CoverageStats provides coverage statistics.
+ */
+message CoverageStats {
+  // Total items.
+  int32 total = 1;
+
+  // Covered items.
+  int32 covered = 2;
+
+  // Coverage percentage: covered/total * 100.
+  double percentage = 3;
+
+  // Coverage requirement met.
+  bool requirement_met = 4;
+
+  // Required coverage percentage.
+  double required_percentage = 5;
+}
+
+/**
+ * SuggestedTestCase suggests a test to improve coverage.
+ */
+message SuggestedTestCase {
+  // Target to cover (state or transition label).
+  string target = 1;
+
+  // Target type: "state", "transition", "guard_branch".
+  string target_type = 2;
+
+  // Suggested event sequence.
+  repeated string event_sequence = 3;
+
+  // Expected states to reach target.
+  repeated string via_states = 4;
+
+  // Confidence score: 0.0 to 1.0.
+  double confidence = 5;
+}
+
+// ─────────────────────────── Expected Traces ───────────────────────────────
+
+/**
+ * ExpectedTrace defines an expected execution sequence.
+ *
+ * USE CASES:
+ * - Trace-based testing: verify exact execution path
+ * - Regression testing: ensure behavior doesn't change
+ * - Documentation: show expected execution flow
+ */
+message ExpectedTrace {
+  // Trace identifier.
+  string id = 1;
+
+  // Trace name.
+  string name = 2;
+
+  // Trace description.
+  string description = 3;
+
+  // Ordered sequence of expected steps.
+  repeated TraceStep steps = 4;
+
+  // Whether order is strict.
+  // true: steps must occur in exact order
+  // false: all steps must occur but order may vary
+  bool strict_order = 5;
+
+  // Whether trace must be complete.
+  // true: no additional steps allowed
+  // false: additional steps are okay
+  bool complete = 6;
+}
+
+/**
+ * TraceStep defines a single expected step in a trace.
+ *
+ * STEP TYPES:
+ * - "entry": State entry (target = state label)
+ * - "exit": State exit (target = state label)
+ * - "transition": Transition taken (target = transition label, event optional)
+ * - "action": Action executed (target = action label)
+ * - "event": Event processed (target = event label)
+ */
+message TraceStep {
+  // Step type.
+  string type = 1;
+
+  // Target element label.
+  string target = 2;
+
+  // Expected event (for transition steps).
+  string event = 3;
+
+  // Expected context values at this step.
+  google.protobuf.Struct context = 4;
+
+  // Optional timing constraint.
+  google.protobuf.Duration max_time_since_start = 5;
+
+  // Step must occur (vs optional).
+  bool required = 6;
+}
+
+// ─────────────────────────── Test Results ──────────────────────────────────
+
+/**
+ * TestResult captures the outcome of a test case execution.
+ */
+message TestResult {
+  // Test case ID.
+  string test_case_id = 1;
+
+  // Test case name.
+  string test_case_name = 2;
+
+  // Outcome: "passed", "failed", "skipped", "error".
+  string outcome = 3;
+
+  // Execution duration.
+  google.protobuf.Duration duration = 4;
+
+  // Execution timestamp.
+  google.protobuf.Timestamp executed_at = 5;
+
+  // Failure details (if failed).
+  TestFailure failure = 6;
+
+  // Execution trace (actual steps taken).
+  repeated TraceStep actual_trace = 7;
+
+  // Final configuration.
+  repeated string final_configuration = 8;
+
+  // Final context.
+  google.protobuf.Struct final_context = 9;
+
+  // Coverage contributed by this test.
+  repeated string states_covered = 10;
+  repeated string transitions_covered = 11;
+}
+
+/**
+ * TestFailure captures failure details.
+ */
+message TestFailure {
+  // Failure type: "assertion", "invariant", "timeout", "error".
+  string type = 1;
+
+  // Failed assertion/invariant.
+  TestAssertion failed_assertion = 2;
+
+  // Error message.
+  string message = 3;
+
+  // Stack trace (if applicable).
+  string stack_trace = 4;
+
+  // Expected value.
+  string expected = 5;
+
+  // Actual value.
+  string actual = 6;
+
+  // Step index where failure occurred.
+  int32 at_step = 7;
+
+  // Event that triggered failure.
+  string at_event = 8;
+}

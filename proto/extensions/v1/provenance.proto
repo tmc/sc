@@ -1,0 +1,676 @@
+syntax = "proto3";
+
+package extensions.v1;
+
+option go_package = "github.com/tmc/sc/gen/extensions/v1;extensionspb";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "extensions/v1/common.proto";
+
+// ===========================================================================
+// PROVENANCE EXTENSION - Origin and Extraction Information
+//
+// This extension tracks the source of statechart elements for:
+//   - Extracted statecharts (from source code, binaries, documentation)
+//   - Generated statecharts (from specifications, models, AI)
+//   - Imported statecharts (format conversions from SCXML, XState, etc.)
+//
+// DESIGN RATIONALE:
+// When statecharts are extracted from existing systems, provenance enables:
+//   - Debugging: trace back to original source location
+//   - Re-extraction: detect drift from source
+//   - Auditing: compliance, security, license tracking
+//   - Attribution: copyright, authorship, tool chains
+//   - Verification: confidence scores, review status
+//
+// This extension follows the W3C PROV-O ontology concepts while providing
+// a practical schema for statechart-specific needs.
+//
+// USE CASES:
+// 1. Zelda3 extractor: ROM address → state/transition mapping
+// 2. Source code analysis: function/line → guard expression
+// 3. SCXML import: preserve original element IDs
+// 4. AI generation: track model, prompt, confidence
+// 5. Regulatory compliance: audit trail for safety-critical systems
+// 6. License tracking: SPDX compliance for extracted code
+//
+// REFERENCES:
+// [PROV-O] W3C PROV-O: The PROV Ontology, https://www.w3.org/TR/prov-o/
+// [SPDX] Software Package Data Exchange, https://spdx.dev/
+// [CycloneDX] OWASP CycloneDX SBOM Standard
+// ===========================================================================
+
+// ─────────────────────────── State Provenance ──────────────────────────────
+
+/**
+ * StateProvenance tracks the origin of a state.
+ *
+ * STORAGE:
+ * Pack into State.extensions using google.protobuf.Any.
+ *
+ * CONFIDENCE SEMANTICS:
+ * The confidence score represents extraction certainty:
+ *   - 1.0: Explicit state declaration found (e.g., `state "Idle"`)
+ *   - 0.8: High-confidence inference (e.g., clear switch case)
+ *   - 0.5: Moderate inference (e.g., inferred from control flow)
+ *   - 0.2: Low-confidence guess (e.g., naming heuristic)
+ *   - 0.0: Placeholder or unknown
+ */
+message StateProvenance {
+  // Source location where state was extracted from.
+  SourceLocation source = 1;
+
+  // Extraction tool information.
+  Tool extractor = 2;
+
+  // Extraction timestamp.
+  google.protobuf.Timestamp extracted_at = 3;
+
+  // Confidence score: 0.0 (guess) to 1.0 (certain).
+  double confidence = 4;
+
+  // Extraction method.
+  ExtractionMethod method = 5;
+
+  // Original identifier in source system.
+  // May differ from current label due to normalization.
+  string original_id = 6;
+
+  // Original name/label in source system.
+  string original_name = 7;
+
+  // Original type in source system (e.g., SCXML state type).
+  string original_type = 8;
+
+  // Free-form notes from extraction process.
+  string notes = 9;
+
+  // Derivation chain (if derived from another state).
+  repeated DerivationStep derivation = 10;
+
+  // Human reviewer (if manually verified).
+  string reviewed_by = 11;
+
+  // Review timestamp.
+  google.protobuf.Timestamp reviewed_at = 12;
+
+  // Review status: "pending", "approved", "rejected", "needs_revision".
+  string review_status = 13;
+
+  // Review notes.
+  string review_notes = 14;
+
+  // Issues/warnings from extraction.
+  repeated ExtractionIssue issues = 15;
+}
+
+/**
+ * ExtractionMethod classifies how an element was extracted.
+ */
+enum ExtractionMethod {
+  EXTRACTION_METHOD_UNSPECIFIED = 0;
+
+  // Parsed from explicit declaration (highest confidence).
+  // Example: SCXML <state id="...">, XState machine definition.
+  EXTRACTION_METHOD_PARSED = 1;
+
+  // Static analysis of source code.
+  // Example: switch statement analysis, enum extraction.
+  EXTRACTION_METHOD_STATIC_ANALYSIS = 2;
+
+  // Dynamic tracing/recording.
+  // Example: Runtime instrumentation, debugger traces.
+  EXTRACTION_METHOD_DYNAMIC_TRACE = 3;
+
+  // Binary/ROM analysis.
+  // Example: Disassembly, memory pattern matching.
+  EXTRACTION_METHOD_BINARY_ANALYSIS = 4;
+
+  // Documentation analysis.
+  // Example: Extracted from design docs, diagrams.
+  EXTRACTION_METHOD_DOCUMENTATION = 5;
+
+  // Machine learning/AI inference.
+  // Example: LLM analysis, pattern recognition.
+  EXTRACTION_METHOD_ML_INFERENCE = 6;
+
+  // Manual specification.
+  // Example: Hand-authored by human.
+  EXTRACTION_METHOD_MANUAL = 7;
+
+  // Heuristic-based inference.
+  // Example: Naming conventions, structural patterns.
+  EXTRACTION_METHOD_HEURISTIC = 8;
+
+  // Unknown or mixed methods.
+  EXTRACTION_METHOD_UNKNOWN = 9;
+}
+
+// ─────────────────────────── Transition Provenance ─────────────────────────
+
+/**
+ * TransitionProvenance tracks the origin of a transition.
+ *
+ * STORAGE:
+ * Pack into Transition.extensions using google.protobuf.Any.
+ */
+message TransitionProvenance {
+  // Source location where transition was extracted from.
+  SourceLocation source = 1;
+
+  // Guard expression source location (may differ from transition).
+  SourceLocation guard_source = 2;
+
+  // Action source locations.
+  repeated SourceLocation action_sources = 3;
+
+  // Extraction tool information.
+  Tool extractor = 4;
+
+  // Extraction timestamp.
+  google.protobuf.Timestamp extracted_at = 5;
+
+  // Confidence score.
+  double confidence = 6;
+
+  // Extraction method.
+  ExtractionMethod method = 7;
+
+  // Original representation in source.
+  // Example: C conditional, assembly branch.
+  string original_expression = 8;
+
+  // Whether guard was inferred (vs explicit).
+  bool guard_inferred = 9;
+
+  // Whether target was inferred (vs explicit).
+  bool target_inferred = 10;
+
+  // Notes from extraction.
+  string notes = 11;
+
+  // Derivation chain.
+  repeated DerivationStep derivation = 12;
+
+  // Review information.
+  string reviewed_by = 13;
+  google.protobuf.Timestamp reviewed_at = 14;
+  string review_status = 15;
+
+  // Issues from extraction.
+  repeated ExtractionIssue issues = 16;
+}
+
+// ─────────────────────────── Source Location ───────────────────────────────
+
+/**
+ * SourceLocation identifies a location in source material.
+ *
+ * COORDINATE SYSTEMS:
+ * For text sources:
+ *   - line/column: 1-indexed, human-readable
+ *   - offset/length: 0-indexed bytes for machine processing
+ *
+ * For binary sources:
+ *   - offset: byte offset in binary
+ *   - length: span length in bytes
+ *   - section: binary section name
+ *
+ * VERSION CONTROL:
+ * When available, include commit hash and branch for precise reference.
+ * This enables:
+ *   - Reproducible extraction
+ *   - Drift detection on re-extraction
+ *   - Blame/attribution
+ */
+message SourceLocation {
+  // File path or URL (relative or absolute).
+  string path = 1;
+
+  // Line number (1-indexed, for text sources).
+  int32 line = 2;
+
+  // Column number (1-indexed, for text sources).
+  int32 column = 3;
+
+  // End line (for multi-line spans).
+  int32 end_line = 4;
+
+  // End column.
+  int32 end_column = 5;
+
+  // Byte offset from file start (0-indexed).
+  int64 offset = 6;
+
+  // Span length in bytes.
+  int64 length = 7;
+
+  // Binary section name (for binaries).
+  // Example: ".text", ".data", ".rodata".
+  string section = 8;
+
+  // Binary segment (for segmented formats).
+  // Example: SNES bank number, PE section.
+  string segment = 9;
+
+  // Git commit hash.
+  string commit = 10;
+
+  // Branch or tag name.
+  string branch = 11;
+
+  // Repository URL.
+  string repository = 12;
+
+  // Source type classifier.
+  SourceType source_type = 13;
+
+  // Checksum of source file.
+  string checksum = 14;
+
+  // Checksum algorithm: "sha256", "md5", "crc32".
+  string checksum_algorithm = 15;
+
+  // Human-readable snippet of source (for context).
+  string snippet = 16;
+}
+
+/**
+ * SourceType classifies the type of source material.
+ */
+enum SourceType {
+  SOURCE_TYPE_UNSPECIFIED = 0;
+
+  // C/C++ source code.
+  SOURCE_TYPE_C = 1;
+
+  // Assembly language.
+  SOURCE_TYPE_ASSEMBLY = 2;
+
+  // SCXML state machine definition.
+  SOURCE_TYPE_SCXML = 3;
+
+  // XState/Stately machine definition.
+  SOURCE_TYPE_XSTATE = 4;
+
+  // Binary/ROM file.
+  SOURCE_TYPE_BINARY = 5;
+
+  // Documentation (Markdown, text, PDF).
+  SOURCE_TYPE_DOCUMENTATION = 6;
+
+  // UML diagram.
+  SOURCE_TYPE_UML = 7;
+
+  // Other structured format.
+  SOURCE_TYPE_OTHER = 8;
+
+  // Rust source code.
+  SOURCE_TYPE_RUST = 9;
+
+  // Go source code.
+  SOURCE_TYPE_GO = 10;
+
+  // Python source code.
+  SOURCE_TYPE_PYTHON = 11;
+
+  // TypeScript/JavaScript source code.
+  SOURCE_TYPE_TYPESCRIPT = 12;
+
+  // Protocol buffer definition.
+  SOURCE_TYPE_PROTOBUF = 13;
+}
+
+// ─────────────────────────── Tool Information ──────────────────────────────
+
+/**
+ * Tool identifies a tool that processed the statechart.
+ *
+ * CHAIN OF CUSTODY:
+ * For multi-stage extraction pipelines, each tool is recorded
+ * in the derivation chain, preserving full provenance.
+ */
+message Tool {
+  // Tool name.
+  // Example: "zelda3-extractor", "scxml-importer", "claude-code".
+  string name = 1;
+
+  // Tool version (SemVer preferred).
+  string version = 2;
+
+  // Tool URL/homepage.
+  string url = 3;
+
+  // Tool configuration used.
+  google.protobuf.Struct config = 4;
+
+  // Exact invocation command.
+  string command = 5;
+
+  // Tool type classifier.
+  ToolType type = 6;
+
+  // Tool vendor/author.
+  string vendor = 7;
+
+  // Tool license.
+  string license = 8;
+}
+
+/**
+ * ToolType classifies the type of extraction/processing tool.
+ */
+enum ToolType {
+  TOOL_TYPE_UNSPECIFIED = 0;
+
+  // Source code extractor.
+  TOOL_TYPE_EXTRACTOR = 1;
+
+  // Format converter/importer.
+  TOOL_TYPE_IMPORTER = 2;
+
+  // Validator/verifier.
+  TOOL_TYPE_VALIDATOR = 3;
+
+  // Code generator.
+  TOOL_TYPE_GENERATOR = 4;
+
+  // AI/ML model.
+  TOOL_TYPE_AI = 5;
+
+  // Human editor.
+  TOOL_TYPE_EDITOR = 6;
+
+  // Transformer/optimizer.
+  TOOL_TYPE_TRANSFORMER = 7;
+}
+
+// ─────────────────────────── Derivation ────────────────────────────────────
+
+/**
+ * DerivationStep records a transformation in the derivation chain.
+ *
+ * PROVENANCE MODEL [PROV-O]:
+ * Each step represents a prov:wasDerivedFrom relationship:
+ *   entity₂ prov:wasDerivedFrom entity₁
+ * with additional activity and agent information.
+ */
+message DerivationStep {
+  // Step index in derivation chain (0 = original).
+  int32 step = 1;
+
+  // Transformation type.
+  TransformationType transformation = 2;
+
+  // Description of transformation.
+  string description = 3;
+
+  // Tool that performed transformation.
+  Tool tool = 4;
+
+  // Timestamp of transformation.
+  google.protobuf.Timestamp timestamp = 5;
+
+  // Input state/entity (before transformation).
+  string input_id = 6;
+
+  // Output state/entity (after transformation).
+  string output_id = 7;
+
+  // Transformation parameters.
+  google.protobuf.Struct params = 8;
+}
+
+/**
+ * TransformationType classifies derivation transformations.
+ */
+enum TransformationType {
+  TRANSFORMATION_TYPE_UNSPECIFIED = 0;
+
+  // Direct extraction from source.
+  TRANSFORMATION_TYPE_EXTRACTION = 1;
+
+  // Format conversion (e.g., SCXML → proto).
+  TRANSFORMATION_TYPE_CONVERSION = 2;
+
+  // Normalization (e.g., label cleanup).
+  TRANSFORMATION_TYPE_NORMALIZATION = 3;
+
+  // Optimization (e.g., state minimization).
+  TRANSFORMATION_TYPE_OPTIMIZATION = 4;
+
+  // Merge from multiple sources.
+  TRANSFORMATION_TYPE_MERGE = 5;
+
+  // Split into sub-machines.
+  TRANSFORMATION_TYPE_SPLIT = 6;
+
+  // Manual edit by human.
+  TRANSFORMATION_TYPE_MANUAL_EDIT = 7;
+
+  // AI-assisted modification.
+  TRANSFORMATION_TYPE_AI_EDIT = 8;
+}
+
+// ─────────────────────────── Issues ────────────────────────────────────────
+
+/**
+ * ExtractionIssue records a problem encountered during extraction.
+ *
+ * ISSUE TRACKING:
+ * Issues are informational - they don't prevent extraction but
+ * flag areas requiring attention.
+ */
+message ExtractionIssue {
+  // Issue severity: "error", "warning", "info", "hint".
+  string severity = 1;
+
+  // Issue code/type for categorization.
+  string code = 2;
+
+  // Human-readable message.
+  string message = 3;
+
+  // Source location where issue occurred.
+  SourceLocation location = 4;
+
+  // Suggested fix.
+  string suggestion = 5;
+
+  // Whether issue has been resolved.
+  bool resolved = 6;
+
+  // Resolution notes.
+  string resolution = 7;
+
+  // Related elements (labels).
+  repeated string related = 8;
+}
+
+// ─────────────────────────── Statechart Provenance ─────────────────────────
+
+/**
+ * ChartProvenance tracks statechart-level provenance.
+ *
+ * STORAGE:
+ * Store in Statechart-level metadata or as a dedicated extension.
+ */
+message ChartProvenance {
+  // Primary source system.
+  SourceSystem source_system = 1;
+
+  // Extraction pipeline (ordered tools applied).
+  repeated Tool pipeline = 2;
+
+  // Overall extraction timestamp.
+  google.protobuf.Timestamp created_at = 3;
+
+  // Last modification timestamp.
+  google.protobuf.Timestamp modified_at = 4;
+
+  // License information.
+  License license = 5;
+
+  // Attribution/copyright notice.
+  string attribution = 6;
+
+  // Link to extraction report.
+  string report_url = 7;
+
+  // Parent chart ID (if derived/forked).
+  string derived_from = 8;
+
+  // Generation number (increments on each derivation).
+  int32 generation = 9;
+
+  // Extraction configuration.
+  google.protobuf.Struct extraction_config = 10;
+
+  // Aggregate extraction statistics.
+  ExtractionStats stats = 11;
+
+  // Overall confidence score.
+  double confidence = 12;
+
+  // Review status.
+  string review_status = 13;
+}
+
+/**
+ * SourceSystem identifies the original system.
+ *
+ * EXAMPLES:
+ * - Game ROM: {name: "zelda3", version: "1.0", type: "game_rom", platform: "snes"}
+ * - Linux kernel: {name: "linux", version: "6.1", type: "source_code", platform: "linux"}
+ * - AWS: {name: "step_functions", version: "2023-01", type: "api", platform: "aws"}
+ */
+message SourceSystem {
+  // System name.
+  string name = 1;
+
+  // System version.
+  string version = 2;
+
+  // System type.
+  SystemType type = 3;
+
+  // Platform/runtime.
+  string platform = 4;
+
+  // File/artifact checksum.
+  string checksum = 5;
+
+  // Checksum algorithm.
+  string checksum_algorithm = 6;
+
+  // Source URL or identifier.
+  string url = 7;
+
+  // Additional system metadata.
+  google.protobuf.Struct metadata = 8;
+}
+
+/**
+ * SystemType classifies source system types.
+ */
+enum SystemType {
+  SYSTEM_TYPE_UNSPECIFIED = 0;
+  SYSTEM_TYPE_GAME_ROM = 1;
+  SYSTEM_TYPE_SOURCE_CODE = 2;
+  SYSTEM_TYPE_SCXML = 3;
+  SYSTEM_TYPE_XSTATE = 4;
+  SYSTEM_TYPE_DOCUMENTATION = 5;
+  SYSTEM_TYPE_API = 6;
+  SYSTEM_TYPE_BINARY = 7;
+  SYSTEM_TYPE_OTHER = 8;
+}
+
+// License is imported from common.proto
+
+/**
+ * ExtractionStats aggregates extraction statistics.
+ */
+message ExtractionStats {
+  // Total states extracted.
+  int32 states_extracted = 1;
+
+  // Total transitions extracted.
+  int32 transitions_extracted = 2;
+
+  // Total events discovered.
+  int32 events_discovered = 3;
+
+  // Source files analyzed.
+  int32 source_files = 4;
+
+  // Lines of code analyzed.
+  int64 lines_of_code = 5;
+
+  // Extraction duration.
+  int64 duration_ms = 6;
+
+  // Coverage of source analyzed.
+  double source_coverage = 7;
+
+  // Issues by severity.
+  map<string, int32> issues_by_severity = 8;
+
+  // Confidence distribution.
+  map<string, int32> confidence_distribution = 9;
+
+  // Elements requiring review.
+  int32 needs_review = 10;
+}
+
+/**
+ * ExtractionReport provides a detailed extraction summary.
+ */
+message ExtractionReport {
+  // Report identifier.
+  string id = 1;
+
+  // Report generation timestamp.
+  google.protobuf.Timestamp generated_at = 2;
+
+  // Overall status: "success", "partial", "failed".
+  string status = 3;
+
+  // Chart provenance summary.
+  ChartProvenance provenance = 4;
+
+  // Extraction statistics.
+  ExtractionStats stats = 5;
+
+  // All issues encountered.
+  repeated ExtractionIssue issues = 6;
+
+  // Elements with low confidence.
+  repeated LowConfidenceElement low_confidence = 7;
+
+  // Elements needing review.
+  repeated string needs_review = 8;
+
+  // Recommendations for improving extraction.
+  repeated string recommendations = 9;
+}
+
+/**
+ * LowConfidenceElement flags an element with low extraction confidence.
+ */
+message LowConfidenceElement {
+  // Element type: "state", "transition", "guard", "action".
+  string element_type = 1;
+
+  // Element label.
+  string label = 2;
+
+  // Confidence score.
+  double confidence = 3;
+
+  // Reason for low confidence.
+  string reason = 4;
+
+  // Suggested verification steps.
+  repeated string verification_steps = 5;
+}
