@@ -1,0 +1,513 @@
+syntax = "proto3";
+
+package statecharts.v1;
+
+option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartspb";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "statecharts/v1/statecharts.proto";
+import "statecharts/v1/expressions.proto";
+import "statecharts/v1/execution.proto";
+
+// ===========================================================================
+// SCHEMA EVOLUTION AND MIGRATION
+//
+// This file defines types for statechart versioning, schema evolution, and
+// live migration between chart versions. These capabilities enable continuous
+// evolution of statechart-based systems while maintaining operational safety.
+//
+// THEORETICAL FOUNDATION:
+// Schema evolution follows principles from database theory [BCH+07] adapted
+// for statechart semantics:
+//
+//   - Compatibility: new version accepts inputs valid for old version
+//   - Substitutability: new version preserves observable behavior
+//   - Migrability: running instances can be transformed to new version
+//
+// The migration formalism maps configurations between versions:
+//   migrate: Configuration_old × MappingRules → Configuration_new
+//
+// PRIMARY REFERENCES:
+// [H87]   D. Harel, "Statecharts: A visual formalism for complex systems,"
+//         Science of Computer Programming, vol. 8, no. 3, pp. 231–274, 1987.
+//
+// [BCH+07] P. Buneman et al., "Principles of Database Schema Evolution,"
+//          arXiv:0707.4082, 2007.
+//
+// DESIGN REFERENCE: docs/design/evolution-and-history.md
+// ===========================================================================
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 1: CHART DIFFING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * ChartDiff captures differences between two statechart versions.
+ *
+ * FORMAL DEFINITION:
+ * A diff D(SC₁, SC₂) = (V₁, V₂, ΔS, Δδ, ΔE, C, B) where:
+ *   - V₁, V₂: source and target versions
+ *   - ΔS: state changes (added, removed, modified)
+ *   - Δδ: transition changes
+ *   - ΔE: event changes
+ *   - C: overall compatibility classification
+ *   - B: list of breaking changes
+ *
+ * DIFF COMPUTATION:
+ * States are matched by label, transitions by (from, to, event) tuple.
+ * Changes are classified by their impact on migration requirements.
+ */
+message ChartDiff {
+  // Source version: V₁
+  ChartVersion from_version = 1;
+
+  // Target version: V₂
+  ChartVersion to_version = 2;
+
+  // State changes: ΔS = S₂ \ S₁ ∪ S₁ \ S₂ ∪ modified(S₁ ∩ S₂)
+  repeated StateDiff state_changes = 3;
+
+  // Transition changes: Δδ
+  repeated TransitionDiff transition_changes = 4;
+
+  // Event changes: ΔE
+  repeated EventDiff event_changes = 5;
+
+  // Overall compatibility: C = max(severity(B))
+  CompatibilityLevel compatibility = 6;
+
+  // Breaking changes requiring attention
+  repeated BreakingChange breaking_changes = 7;
+}
+
+/**
+ * StateDiff describes a change to a single state.
+ *
+ * CHANGE SEMANTICS:
+ *   - ADDED: s ∈ S₂ ∧ s ∉ S₁
+ *   - REMOVED: s ∈ S₁ ∧ s ∉ S₂
+ *   - MODIFIED: s ∈ S₁ ∩ S₂ ∧ attrs(s, SC₁) ≠ attrs(s, SC₂)
+ *   - RENAMED: ∃s₁ ∈ S₁, s₂ ∈ S₂: structure(s₁) ≈ structure(s₂) ∧ label(s₁) ≠ label(s₂)
+ *   - MOVED: parent(s, SC₁) ≠ parent(s, SC₂)
+ */
+message StateDiff {
+  ChangeType change_type = 1;
+  string state_label = 2;
+  State old_state = 3;
+  State new_state = 4;
+  repeated string modified_fields = 5;
+}
+
+/**
+ * TransitionDiff describes a change to a single transition.
+ */
+message TransitionDiff {
+  ChangeType change_type = 1;
+  string transition_label = 2;
+  Transition old_transition = 3;
+  Transition new_transition = 4;
+  repeated string modified_fields = 5;
+}
+
+/**
+ * EventDiff describes a change to an event definition.
+ */
+message EventDiff {
+  ChangeType change_type = 1;
+  string event_name = 2;
+  Event old_event = 3;
+  Event new_event = 4;
+}
+
+/**
+ * ChangeType classifies the nature of a schema change.
+ *
+ * FORMAL CLASSIFICATION:
+ *   - ADDED: element exists in new but not old
+ *   - REMOVED: element exists in old but not new
+ *   - MODIFIED: element exists in both with different attributes
+ *   - RENAMED: identity preserved, label changed
+ *   - MOVED: position in hierarchy changed
+ */
+enum ChangeType {
+  CHANGE_TYPE_UNSPECIFIED = 0;
+  CHANGE_TYPE_ADDED = 1;
+  CHANGE_TYPE_REMOVED = 2;
+  CHANGE_TYPE_MODIFIED = 3;
+  CHANGE_TYPE_RENAMED = 4;
+  CHANGE_TYPE_MOVED = 5;
+}
+
+/**
+ * BreakingChange identifies a change requiring migration attention.
+ *
+ * BREAKING CHANGE CRITERIA:
+ * A change is breaking if it can cause:
+ *   1. Invalid configuration: σ valid in SC₁ but invalid in SC₂
+ *   2. Behavioral change: same inputs produce different outputs
+ *   3. Lost functionality: capabilities in SC₁ unavailable in SC₂
+ */
+message BreakingChange {
+  BreakingChangeType type = 1;
+  string description = 2;
+  string affected_element = 3;
+  MigrationRequirement migration_required = 4;
+}
+
+/**
+ * BreakingChangeType enumerates specific breaking change patterns.
+ */
+enum BreakingChangeType {
+  BREAKING_CHANGE_TYPE_UNSPECIFIED = 0;
+
+  // State changes
+  BREAKING_CHANGE_TYPE_STATE_REMOVED = 1;
+  BREAKING_CHANGE_TYPE_STATE_TYPE_CHANGED = 2;
+  BREAKING_CHANGE_TYPE_INITIAL_STATE_CHANGED = 3;
+
+  // Transition changes
+  BREAKING_CHANGE_TYPE_TRANSITION_REMOVED = 4;
+  BREAKING_CHANGE_TYPE_TRANSITION_SOURCE_CHANGED = 5;
+  BREAKING_CHANGE_TYPE_GUARD_ADDED = 6;
+
+  // Event changes
+  BREAKING_CHANGE_TYPE_EVENT_REMOVED = 7;
+  BREAKING_CHANGE_TYPE_EVENT_PAYLOAD_CHANGED = 8;
+}
+
+/**
+ * MigrationRequirement indicates complexity of migration.
+ */
+enum MigrationRequirement {
+  MIGRATION_REQUIREMENT_UNSPECIFIED = 0;
+  MIGRATION_REQUIREMENT_NONE = 1;
+  MIGRATION_REQUIREMENT_STATE_MAPPING = 2;
+  MIGRATION_REQUIREMENT_MANUAL = 3;
+}
+
+/**
+ * DeprecationInfo marks elements scheduled for removal.
+ */
+message DeprecationInfo {
+  string deprecated_in_version = 1;
+  string removal_version = 2;
+  string migration_guide = 3;
+  string replacement = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 2: MIGRATION PLANNING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * MigrationPlan specifies how to migrate machines between chart versions.
+ *
+ * FORMAL DEFINITION:
+ * A migration plan M = (V₁, V₂, strategy, mappings, transform, validations) where:
+ *   - V₁, V₂: source and target versions
+ *   - strategy: migration approach (stop-the-world, rolling, etc.)
+ *   - mappings: state mapping rules
+ *   - transform: context transformation
+ *   - validations: post-migration checks
+ *
+ * MIGRATION INVARIANT:
+ * For valid migration: ∀ machine m with config σ in V₁:
+ *   migrate(σ, M) produces valid config σ' in V₂
+ */
+message MigrationPlan {
+  // Plan identifier
+  string id = 1;
+
+  // Source version: V₁
+  ChartVersion from_version = 2;
+
+  // Target version: V₂
+  ChartVersion to_version = 3;
+
+  // Migration strategy
+  MigrationStrategy strategy = 4;
+
+  // State mappings: how to transform configurations
+  repeated StateMapping state_mappings = 5;
+
+  // Transition mappings: for renamed transitions
+  repeated TransitionMapping transition_mappings = 6;
+
+  // Context transformation: how to transform variables
+  ContextTransformation context_transform = 7;
+
+  // Post-migration validations
+  repeated MigrationValidation validations = 8;
+
+  // Impact assessment
+  MigrationImpact impact = 9;
+
+  // Dry-run mode: validate without applying
+  bool dry_run = 10;
+
+  // In-flight transition handling
+  InFlightTransitionPolicy in_flight_policy = 11;
+
+  // Rollback configuration
+  RollbackPlan rollback_plan = 12;
+}
+
+/**
+ * MigrationStrategy determines migration execution approach.
+ *
+ * STRATEGY SEMANTICS:
+ *   - STOP_THE_WORLD: halt all machines, migrate, resume
+ *   - ROLLING: migrate machines one at a time
+ *   - BLUE_GREEN: run both versions, switch traffic
+ *   - CANARY: migrate subset, validate, proceed
+ */
+enum MigrationStrategy {
+  MIGRATION_STRATEGY_UNSPECIFIED = 0;
+  MIGRATION_STRATEGY_STOP_THE_WORLD = 1;
+  MIGRATION_STRATEGY_ROLLING = 2;
+  MIGRATION_STRATEGY_BLUE_GREEN = 3;
+  MIGRATION_STRATEGY_CANARY = 4;
+}
+
+/**
+ * StateMapping defines how to map configurations between versions.
+ *
+ * FORMAL DEFINITION:
+ * A state mapping m = (type, from, to, condition, transform) where:
+ *   - type: mapping strategy
+ *   - from ⊆ S₁: source states
+ *   - to ⊆ S₂: target states
+ *   - condition: optional guard for conditional mapping
+ *   - transform: context transformation during mapping
+ *
+ * MAPPING SEMANTICS BY TYPE:
+ *   - IDENTITY: s ∈ σ₁ ⟹ s ∈ σ₂ (label unchanged)
+ *   - RENAME: s₁ ∈ σ₁ ⟹ s₂ ∈ σ₂ (label changed)
+ *   - TO_PARENT: s ∈ σ₁ ∧ s removed ⟹ default(parent(s)) ∈ σ₂
+ *   - SPLIT: s ∈ σ₁ ⟹ f(context) ∈ σ₂ (one-to-many based on condition)
+ *   - MERGE: {s₁, s₂, ...} ∩ σ₁ ≠ ∅ ⟹ t ∈ σ₂ (many-to-one)
+ */
+message StateMapping {
+  StateMappingType type = 1;
+  repeated string from_states = 2;
+  repeated string to_states = 3;
+  Expression condition = 4;
+  ContextTransformation transform = 5;
+  int32 priority = 6;
+}
+
+/**
+ * StateMappingType enumerates state mapping strategies.
+ */
+enum StateMappingType {
+  STATE_MAPPING_TYPE_UNSPECIFIED = 0;
+  STATE_MAPPING_TYPE_IDENTITY = 1;
+  STATE_MAPPING_TYPE_RENAME = 2;
+  STATE_MAPPING_TYPE_TO_PARENT = 3;
+  STATE_MAPPING_TYPE_TO_SIBLING = 4;
+  STATE_MAPPING_TYPE_TO_INITIAL = 5;
+  STATE_MAPPING_TYPE_SPLIT = 6;
+  STATE_MAPPING_TYPE_MERGE = 7;
+  STATE_MAPPING_TYPE_CUSTOM = 8;
+  STATE_MAPPING_TYPE_ERROR = 9;
+}
+
+/**
+ * TransitionMapping maps transitions between versions.
+ */
+message TransitionMapping {
+  string from_transition = 1;
+  string to_transition = 2;
+}
+
+/**
+ * ContextTransformation specifies variable changes during migration.
+ *
+ * TRANSFORM SEMANTICS:
+ * Given context Γ, produce Γ' = transform(Γ) by:
+ *   1. Apply set: Γ'[k] = eval(expr, Γ) for each (k, expr) in set
+ *   2. Apply remove: delete Γ'[k] for each k in remove
+ *   3. Apply rename: Γ'[new] = Γ[old], delete Γ'[old]
+ */
+message ContextTransformation {
+  // Set variable values: key → CEL expression
+  map<string, string> set = 1;
+
+  // Remove variables
+  repeated string remove = 2;
+
+  // Rename variables: old_key → new_key
+  map<string, string> rename = 3;
+}
+
+/**
+ * MigrationValidation defines post-migration checks.
+ */
+message MigrationValidation {
+  string name = 1;
+  string expression = 2;
+  string error_message = 3;
+}
+
+/**
+ * MigrationImpact assesses migration risk and scope.
+ */
+message MigrationImpact {
+  uint64 machines_affected = 1;
+  uint64 machines_requiring_manual = 2;
+  google.protobuf.Duration estimated_downtime = 3;
+  RiskLevel risk = 4;
+}
+
+/**
+ * RiskLevel classifies migration risk.
+ */
+enum RiskLevel {
+  RISK_LEVEL_UNSPECIFIED = 0;
+  RISK_LEVEL_LOW = 1;
+  RISK_LEVEL_MEDIUM = 2;
+  RISK_LEVEL_HIGH = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 3: DRY-RUN AND HISTORY
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * DryRunResult contains the outcome of a migration dry-run.
+ */
+message DryRunResult {
+  repeated MachineMigrationPreview previews = 1;
+  repeated string warnings = 2;
+  repeated string errors = 3;
+  bool would_succeed = 4;
+  google.protobuf.Duration estimated_duration = 5;
+}
+
+/**
+ * MachineMigrationPreview shows expected migration outcome for one machine.
+ */
+message MachineMigrationPreview {
+  string machine_id = 1;
+  Configuration current_config = 2;
+  Configuration target_config = 3;
+  StateMappingType mapping_used = 4;
+  repeated string warnings = 5;
+}
+
+/**
+ * MigrationHistory provides an audit trail of all migrations.
+ *
+ * AUDIT PROPERTIES:
+ *   - Append-only: records never modified or deleted
+ *   - Complete: every migration attempt is recorded
+ *   - Traceable: each record links to initiator and result
+ */
+message MigrationHistory {
+  repeated MigrationRecord records = 1;
+}
+
+/**
+ * MigrationRecord captures details of a single migration execution.
+ */
+message MigrationRecord {
+  string migration_id = 1;
+  ChartVersion from_version = 2;
+  ChartVersion to_version = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp completed_at = 5;
+  MigrationResult result = 6;
+  uint64 machines_migrated = 7;
+  uint64 machines_failed = 8;
+  string initiated_by = 9;
+  string rollback_of = 10;
+}
+
+/**
+ * MigrationResult indicates migration outcome.
+ */
+enum MigrationResult {
+  MIGRATION_RESULT_UNSPECIFIED = 0;
+  MIGRATION_RESULT_SUCCESS = 1;
+  MIGRATION_RESULT_PARTIAL = 2;
+  MIGRATION_RESULT_FAILED = 3;
+  MIGRATION_RESULT_ROLLED_BACK = 4;
+  MIGRATION_RESULT_CANCELLED = 5;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 4: IN-FLIGHT HANDLING AND ROLLBACK
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * InFlightTransitionPolicy handles machines with active transitions.
+ *
+ * FORMAL DEFINITION:
+ * For machine m with in-flight transition t:
+ *   - COMPLETE: wait for t to finish, then migrate
+ *   - ABORT: cancel t, migrate immediately
+ *   - RETRY: complete t, migrate, re-evaluate pending events
+ *   - ERROR: fail migration for this machine
+ */
+message InFlightTransitionPolicy {
+  InFlightAction action = 1;
+  google.protobuf.Duration grace_period = 2;
+}
+
+/**
+ * InFlightAction specifies how to handle in-flight transitions.
+ */
+enum InFlightAction {
+  IN_FLIGHT_ACTION_UNSPECIFIED = 0;
+  IN_FLIGHT_ACTION_COMPLETE = 1;
+  IN_FLIGHT_ACTION_ABORT = 2;
+  IN_FLIGHT_ACTION_RETRY = 3;
+  IN_FLIGHT_ACTION_ERROR = 4;
+}
+
+/**
+ * RollbackPlan defines conditions and procedures for migration rollback.
+ *
+ * ROLLBACK SEMANTICS:
+ * Rollback reverts machines to pre-migration state using:
+ *   1. Checkpoint restoration (if available)
+ *   2. Reverse state mappings (inverse of forward mappings)
+ *   3. Log replay from checkpoint
+ */
+message RollbackPlan {
+  repeated RollbackTrigger triggers = 1;
+  RollbackStrategy strategy = 2;
+  repeated StateMapping rollback_mappings = 3;
+  google.protobuf.Duration rollback_window = 4;
+}
+
+/**
+ * RollbackTrigger conditions that initiate automatic rollback.
+ */
+message RollbackTrigger {
+  RollbackTriggerType type = 1;
+  string threshold = 2;
+}
+
+/**
+ * RollbackTriggerType enumerates rollback trigger conditions.
+ */
+enum RollbackTriggerType {
+  ROLLBACK_TRIGGER_TYPE_UNSPECIFIED = 0;
+  ROLLBACK_TRIGGER_TYPE_ERROR_RATE = 1;
+  ROLLBACK_TRIGGER_TYPE_LATENCY = 2;
+  ROLLBACK_TRIGGER_TYPE_MANUAL = 3;
+  ROLLBACK_TRIGGER_TYPE_HEALTH_CHECK = 4;
+}
+
+/**
+ * RollbackStrategy determines rollback execution method.
+ */
+enum RollbackStrategy {
+  ROLLBACK_STRATEGY_UNSPECIFIED = 0;
+  ROLLBACK_STRATEGY_CHECKPOINT = 1;
+  ROLLBACK_STRATEGY_REVERSE = 2;
+  ROLLBACK_STRATEGY_RECREATE = 3;
+}
