@@ -1,0 +1,811 @@
+syntax = "proto3";
+
+package statecharts.v1;
+
+option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartspb";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "statecharts/v1/statecharts.proto";
+import "statecharts/v1/expressions.proto";
+
+// ===========================================================================
+// EXECUTION HISTORY, TRACING, AND STORAGE
+//
+// This file defines types for runtime execution tracing, checkpointing, and
+// persistent storage of statechart execution history. These extensions enable
+// debugging, auditing, replay, and recovery of statechart-based systems.
+//
+// THEORETICAL FOUNDATION:
+// Execution traces formalize the operational semantics of statecharts as
+// sequences of configurations connected by transitions [HN96, Section 4]:
+//
+//   Trace τ = σ₀ →^{e₁} σ₁ →^{e₂} σ₂ → ... →^{eₙ} σₙ
+//
+// where each step σᵢ →^{eᵢ₊₁} σᵢ₊₁ represents a transition triggered by
+// event eᵢ₊₁ from configuration σᵢ to σᵢ₊₁.
+//
+// PRIMARY REFERENCES:
+// [H87]   D. Harel, "Statecharts: A visual formalism for complex systems,"
+//         Science of Computer Programming, vol. 8, no. 3, pp. 231–274, 1987.
+//         DOI: 10.1016/0167-6423(87)90035-9
+//
+// [HN96]  D. Harel and A. Naamad, "The STATEMATE semantics of statecharts,"
+//         ACM Trans. Softw. Eng. Methodol., vol. 5, no. 4, pp. 293–333, 1996.
+//         DOI: 10.1145/235321.235322
+//
+// [Lam78] L. Lamport, "Time, clocks, and the ordering of events in a
+//         distributed system," Commun. ACM, vol. 21, no. 7, pp. 558–565, 1978.
+//         DOI: 10.1145/359545.359563
+//
+// DESIGN REFERENCE: docs/design/evolution-and-history.md
+// ===========================================================================
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 1: TRANSITION LOGGING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * TransitionLogEntry records a single step in statechart execution.
+ *
+ * FORMAL DEFINITION [HN96, Section 4]:
+ * A log entry L = (t, seq, e, σ, σ', T, G, A, Γ, Γ') captures:
+ *   - t: timestamp of step execution
+ *   - seq: monotonic sequence number
+ *   - e: triggering event
+ *   - σ, σ': source and target configurations
+ *   - T: set of transitions that fired
+ *   - G: guard evaluation results
+ *   - A: actions executed
+ *   - Γ, Γ': context before and after
+ *
+ * SEMANTIC INVARIANTS:
+ * 1. seq(Lᵢ) < seq(Lᵢ₊₁) for all consecutive entries (monotonicity)
+ * 2. σ'(Lᵢ) = σ(Lᵢ₊₁) (configuration continuity)
+ * 3. Γ'(Lᵢ) = Γ(Lᵢ₊₁) (context continuity)
+ *
+ * CAUSALITY [Lam78]:
+ * For distributed statecharts, entries include causality information
+ * to establish happened-before ordering across nodes.
+ */
+message TransitionLogEntry {
+  // Unique identifier for this log entry
+  string id = 1;
+
+  // Timestamp: t ∈ Time
+  // Wall-clock time when this step was executed
+  google.protobuf.Timestamp timestamp = 2;
+
+  // Sequence number: seq ∈ ℕ
+  // Monotonically increasing within a machine instance.
+  // Used for ordering and gap detection.
+  uint64 sequence = 3;
+
+  // Triggering event: e ∈ E ∪ {τ}
+  // The event that initiated this step (τ for completion events)
+  Event trigger_event = 4;
+
+  // Source configuration: σ ∈ P(S)
+  // Active states before transition
+  Configuration source_config = 5;
+
+  // Target configuration: σ' ∈ P(S)
+  // Active states after transition
+  Configuration target_config = 6;
+
+  // Fired transitions: T ⊆ δ
+  // Set of transitions that executed in this step
+  repeated TransitionRef transitions_fired = 7;
+
+  // Guard evaluations: G = {(g, result, bindings)}
+  // Results of guard condition evaluation for debugging
+  repeated GuardEvaluation guard_results = 8;
+
+  // Executed actions: A = α₁ · α₂ · ... · αₙ
+  // Sequence of actions executed during this step
+  repeated ActionExecution actions_executed = 9;
+
+  // Context before: Γ
+  // Variable bindings before transition
+  google.protobuf.Struct context_before = 10;
+
+  // Context after: Γ'
+  // Variable bindings after transition
+  google.protobuf.Struct context_after = 11;
+
+  // Processing duration: Δt
+  // Time spent executing this step
+  google.protobuf.Duration processing_time = 12;
+
+  // Error message if step failed
+  string error = 13;
+
+  // Arbitrary metadata (trace IDs, request IDs, etc.)
+  map<string, string> metadata = 14;
+
+  // Causality information for distributed ordering [Lam78]
+  CausalityInfo causality = 15;
+}
+
+/**
+ * TransitionRef is a lightweight reference to a transition.
+ *
+ * FORMAL DEFINITION:
+ * A reference r = (label, from, to, event) identifies a transition t ∈ δ
+ * without including the full transition definition.
+ */
+message TransitionRef {
+  string label = 1;
+  repeated string from = 2;
+  repeated string to = 3;
+  string event = 4;
+}
+
+/**
+ * GuardEvaluation records the result of evaluating a guard condition.
+ *
+ * FORMAL DEFINITION [HN96, Section 4.2]:
+ * Guard evaluation Geval = (expr, result, bindings, error) where:
+ *   - expr: the guard expression g ∈ G
+ *   - result: evaluation outcome ∈ {true, false}
+ *   - bindings: variable values used during evaluation
+ *   - error: evaluation error if any
+ *
+ * DETERMINISM REQUIREMENT:
+ * For reproducible replay, guard evaluation must be deterministic:
+ *   eval(g, Γ₁) = eval(g, Γ₂) when Γ₁ = Γ₂
+ */
+message GuardEvaluation {
+  // Guard expression that was evaluated
+  string guard_expression = 1;
+
+  // Evaluation result: true if guard passed
+  bool result = 2;
+
+  // Variable bindings used during evaluation
+  // Enables debugging of why guard passed/failed
+  google.protobuf.Struct bound_values = 3;
+
+  // Error message if evaluation failed
+  string error = 4;
+}
+
+/**
+ * ActionExecution records the execution of a single action.
+ *
+ * FORMAL DEFINITION [HN96, Section 6]:
+ * Action execution Aexec = (name, params, duration, error) where:
+ *   - name: action identifier
+ *   - params: action parameters
+ *   - duration: execution time
+ *   - error: execution error if any
+ */
+message ActionExecution {
+  string action_name = 1;
+  google.protobuf.Struct parameters = 2;
+  google.protobuf.Duration duration = 3;
+  string error = 4;
+}
+
+/**
+ * CausalityInfo establishes ordering for distributed statechart execution.
+ *
+ * FORMAL DEFINITION [Lam78]:
+ * Causality tracking uses logical clocks to establish happened-before (→):
+ *   - Lamport clock: L(e) ∈ ℕ, monotonic counter
+ *   - Vector clock: V(e) = (c₁, c₂, ..., cₙ) for n nodes
+ *
+ * ORDERING PROPERTIES:
+ * 1. If a → b within same process, then L(a) < L(b)
+ * 2. If a is send and b is corresponding receive, then L(a) < L(b)
+ * 3. Vector clocks provide exact causality: V(a) < V(b) ⟺ a → b
+ */
+message CausalityInfo {
+  // Lamport timestamp: L ∈ ℕ
+  // Simple scalar clock for total ordering
+  uint64 lamport_clock = 1;
+
+  // Vector clock: V = {node_id → counter}
+  // Provides exact causality detection for distributed systems
+  map<string, uint64> vector_clock = 2;
+
+  // Parent event ID: caused_by
+  // Links this entry to the event that caused it
+  string caused_by = 3;
+
+  // Processing node identifier
+  // Which node/partition processed this event
+  string node_id = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 2: EXECUTION TRACES
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * ExecutionTrace represents a complete execution history of a machine instance.
+ *
+ * FORMAL DEFINITION [HN96, Section 4]:
+ * A trace τ = (id, σ₀, Γ₀, L*, σₙ, Γₙ) where:
+ *   - id: unique trace identifier
+ *   - σ₀, Γ₀: initial configuration and context
+ *   - L* = L₁ · L₂ · ... · Lₙ: sequence of log entries
+ *   - σₙ, Γₙ: final configuration and context
+ *
+ * WELL-FORMEDNESS CONSTRAINTS:
+ * 1. |L*| = n ⟹ seq(Lᵢ) = i for all i ∈ [1,n]
+ * 2. σ'(Lᵢ) = σ(Lᵢ₊₁) (configuration chain)
+ * 3. σ(L₁) = σ₀ and σ'(Lₙ) = σₙ (boundary conditions)
+ *
+ * REPLAY PROPERTY:
+ * Given (σ₀, Γ₀) and events(τ), deterministic replay yields identical trace.
+ */
+message ExecutionTrace {
+  // Trace identifier
+  string trace_id = 1;
+
+  // Machine instance this trace belongs to
+  string machine_id = 2;
+
+  // Chart version being executed
+  ChartVersion chart_version = 3;
+
+  // Initial configuration: σ₀
+  Configuration initial_config = 4;
+
+  // Initial context: Γ₀
+  google.protobuf.Struct initial_context = 5;
+
+  // Log entries: L* = L₁ · L₂ · ... · Lₙ
+  repeated TransitionLogEntry entries = 6;
+
+  // Final configuration: σₙ
+  Configuration final_config = 7;
+
+  // Final context: Γₙ
+  google.protobuf.Struct final_context = 8;
+
+  // Trace metadata
+  TraceMetadata metadata = 9;
+}
+
+/**
+ * ChartVersion identifies a specific version of a statechart definition.
+ *
+ * FORMAL DEFINITION:
+ * Version V = (semver, hash, parent) where:
+ *   - semver: human-readable version string
+ *   - hash: content-addressable hash of chart definition
+ *   - parent: previous version for lineage
+ *
+ * IDENTITY SEMANTICS:
+ * Two charts are identical iff their content hashes match:
+ *   SC₁ ≡ SC₂ ⟺ hash(SC₁) = hash(SC₂)
+ */
+message ChartVersion {
+  // Human-readable version (semver recommended)
+  string version = 1;
+
+  // Content-addressable hash: sha256(canonical(SC))
+  string content_hash = 2;
+
+  // Creation timestamp
+  google.protobuf.Timestamp created_at = 3;
+
+  // Previous version for lineage tracking
+  string previous_version = 4;
+
+  // Changelog description
+  string changelog = 5;
+
+  // Compatibility classification
+  CompatibilityLevel compatibility = 6;
+}
+
+/**
+ * CompatibilityLevel classifies changes between chart versions.
+ *
+ * FORMAL DEFINITION:
+ * Compatibility C ∈ {PATCH, MINOR, MAJOR} follows semver semantics:
+ *   - PATCH: bug fixes, no behavioral change
+ *   - MINOR: new features, backward compatible
+ *   - MAJOR: breaking changes, migration required
+ */
+enum CompatibilityLevel {
+  COMPATIBILITY_LEVEL_UNSPECIFIED = 0;
+  COMPATIBILITY_LEVEL_PATCH = 1;
+  COMPATIBILITY_LEVEL_MINOR = 2;
+  COMPATIBILITY_LEVEL_MAJOR = 3;
+}
+
+/**
+ * TraceMetadata provides summary statistics and sampling information.
+ */
+message TraceMetadata {
+  google.protobuf.Timestamp started_at = 1;
+  google.protobuf.Timestamp ended_at = 2;
+  uint64 total_transitions = 3;
+  uint64 total_events_processed = 4;
+  uint64 total_events_ignored = 5;
+  repeated string errors = 6;
+
+  // Number of machines in aggregate trace
+  uint64 machine_count = 7;
+
+  // Sampling information
+  SamplingInfo sampling = 8;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 3: TRACE SAMPLING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * TraceConfig configures trace sampling for high-volume systems.
+ *
+ * FORMAL DEFINITION:
+ * Sampling config S = (rate, filters, strategy) where:
+ *   - rate ∈ [0,1]: probability of sampling a trace
+ *   - filters: conditions that force sampling
+ *   - strategy: when sampling decision is made
+ *
+ * SAMPLING SEMANTICS:
+ * For rate r, approximately r×N traces are sampled from N total.
+ * Filters override rate for important events (errors, specific states).
+ */
+message TraceConfig {
+  // Sample rate: P(sample) ∈ [0,1]
+  double sample_rate = 1;
+
+  // Force sampling for these events
+  repeated string always_trace_events = 2;
+
+  // Force sampling when in these states
+  repeated string always_trace_states = 3;
+
+  // Force sampling on errors
+  bool always_trace_errors = 4;
+
+  // Warmup: trace first N transitions unconditionally
+  uint32 warmup_transitions = 5;
+
+  // Sampling strategy
+  SamplingStrategy strategy = 6;
+}
+
+/**
+ * SamplingStrategy determines when sampling decisions are made.
+ *
+ * FORMAL DEFINITION:
+ *   - HEAD: decide at trace start (efficient, may miss interesting traces)
+ *   - TAIL: decide at trace end (captures all interesting, more overhead)
+ *   - ADAPTIVE: adjust rate based on system load
+ */
+enum SamplingStrategy {
+  SAMPLING_STRATEGY_UNSPECIFIED = 0;
+  SAMPLING_STRATEGY_HEAD = 1;
+  SAMPLING_STRATEGY_TAIL = 2;
+  SAMPLING_STRATEGY_ADAPTIVE = 3;
+}
+
+/**
+ * SamplingInfo records how a trace was sampled.
+ */
+message SamplingInfo {
+  bool was_sampled = 1;
+  double sample_rate_at_capture = 2;
+  string sampling_decision_reason = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 4: HISTORY STATE SNAPSHOTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * HistorySnapshot captures configuration for history pseudostate restoration.
+ *
+ * FORMAL DEFINITION [UML 2.5, Section 14.5.5]:
+ * History snapshot H = (composite, type, σ_saved, t) where:
+ *   - composite: the composite state owning this history
+ *   - type ∈ {SHALLOW, DEEP}: history variant
+ *   - σ_saved: saved configuration
+ *   - t: capture timestamp
+ *
+ * RESTORATION SEMANTICS:
+ * - SHALLOW: restore(H) = {s ∈ σ_saved | parent(s) = composite}
+ * - DEEP: restore(H*) = σ_saved ∩ descendants*(composite)
+ */
+message HistorySnapshot {
+  // Composite state this history belongs to
+  string composite_state = 1;
+
+  // History type: H (shallow) or H* (deep)
+  HistoryType type = 2;
+
+  // Saved configuration: σ_saved ⊆ P(S)
+  Configuration saved_config = 3;
+
+  // When this snapshot was captured
+  google.protobuf.Timestamp captured_at = 4;
+
+  // Transition that caused exit (for debugging)
+  string exit_transition = 5;
+}
+
+/**
+ * MachineHistoryState aggregates all history snapshots for a machine.
+ */
+message MachineHistoryState {
+  // History snapshots keyed by composite state label
+  map<string, HistorySnapshot> snapshots = 1;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 5: CHECKPOINTS AND REPLAY
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Checkpoint captures complete machine state for recovery or replay.
+ *
+ * FORMAL DEFINITION:
+ * Checkpoint C = (id, M, H, seq, t, V, checksum) where:
+ *   - id: unique checkpoint identifier
+ *   - M: complete machine state
+ *   - H: history snapshots
+ *   - seq: sequence number of last applied log entry
+ *   - t: checkpoint creation time
+ *   - V: chart version
+ *   - checksum: integrity verification hash
+ *
+ * RECOVERY SEMANTICS:
+ * To recover to sequence n from checkpoint C with seq(C) < n:
+ *   1. Load machine state M from C
+ *   2. Replay log entries [seq(C)+1, n]
+ *   3. Verify final state matches expected
+ */
+message Checkpoint {
+  string checkpoint_id = 1;
+  Machine machine_state = 2;
+  MachineHistoryState history_state = 3;
+  uint64 last_sequence = 4;
+  google.protobuf.Timestamp created_at = 5;
+  ChartVersion chart_version = 6;
+  string checksum = 7;
+}
+
+/**
+ * ReplayRequest specifies parameters for deterministic replay.
+ */
+message ReplayRequest {
+  // Starting checkpoint
+  Checkpoint checkpoint = 1;
+
+  // Events to replay
+  repeated Event events = 2;
+
+  // Replay options
+  ReplayOptions options = 3;
+}
+
+/**
+ * ReplayOptions controls replay behavior.
+ */
+message ReplayOptions {
+  // Stop conditions
+  uint64 stop_at_sequence = 1;
+  google.protobuf.Timestamp stop_at_time = 2;
+  Configuration stop_at_config = 3;
+
+  // Debugging options
+  bool verbose = 4;
+  bool strict_mode = 5;
+
+  // Replay speed: 0 = max, 1.0 = realtime
+  double speed = 6;
+
+  // Step mode: pause before each transition
+  bool step_mode = 7;
+}
+
+/**
+ * ReplayResult contains the outcome of a replay operation.
+ */
+message ReplayResult {
+  Machine final_state = 1;
+  ExecutionTrace trace = 2;
+  repeated TraceDivergence divergences = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 6: TRACE COMPARISON
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * TraceDiff compares two execution traces to find behavioral differences.
+ *
+ * FORMAL DEFINITION:
+ * Trace diff D(τ₁, τ₂) = (mode, summary, divergences) where:
+ *   - mode: comparison semantics
+ *   - summary: high-level comparison result
+ *   - divergences: detailed list of differences
+ *
+ * COMPARISON MODES:
+ *   - SYNTACTIC: exact entry-by-entry match
+ *   - SEMANTIC: same final state, different paths OK
+ *   - BEHAVIORAL: same observable outputs
+ */
+message TraceDiff {
+  string trace_a_id = 1;
+  string trace_b_id = 2;
+  TraceDiffSummary summary = 3;
+  repeated TraceDivergence divergences = 4;
+  TraceDiffMode mode = 5;
+}
+
+/**
+ * TraceDiffMode specifies comparison semantics.
+ */
+enum TraceDiffMode {
+  TRACE_DIFF_MODE_UNSPECIFIED = 0;
+
+  // SYNTACTIC: Exact match of all entries
+  // τ₁ ≡ τ₂ ⟺ ∀i: L₁ᵢ = L₂ᵢ
+  TRACE_DIFF_MODE_SYNTACTIC = 1;
+
+  // SEMANTIC: Same final state, different paths allowed
+  // τ₁ ≈ τ₂ ⟺ σₙ(τ₁) = σₙ(τ₂) ∧ Γₙ(τ₁) = Γₙ(τ₂)
+  TRACE_DIFF_MODE_SEMANTIC = 2;
+
+  // BEHAVIORAL: Same observable behavior (events, outputs)
+  // τ₁ ∼ τ₂ ⟺ outputs(τ₁) = outputs(τ₂)
+  TRACE_DIFF_MODE_BEHAVIORAL = 3;
+}
+
+/**
+ * TraceDiffSummary provides high-level comparison results.
+ */
+message TraceDiffSummary {
+  bool identical = 1;
+  uint64 common_prefix_length = 2;
+  uint64 divergence_count = 3;
+  string first_divergence_event = 4;
+
+  // Semantic equivalence fields
+  bool semantically_equivalent = 5;
+  bool same_final_state = 6;
+  bool same_observable_outputs = 7;
+}
+
+/**
+ * TraceDivergence describes a specific difference between traces.
+ */
+message TraceDivergence {
+  uint64 sequence = 1;
+  DivergenceType type = 2;
+  string description = 3;
+  google.protobuf.Any value_a = 4;
+  google.protobuf.Any value_b = 5;
+}
+
+/**
+ * DivergenceType classifies the nature of trace differences.
+ */
+enum DivergenceType {
+  DIVERGENCE_TYPE_UNSPECIFIED = 0;
+  DIVERGENCE_TYPE_DIFFERENT_TARGET = 1;
+  DIVERGENCE_TYPE_DIFFERENT_TRANSITIONS = 2;
+  DIVERGENCE_TYPE_GUARD_DIFFERENCE = 3;
+  DIVERGENCE_TYPE_ACTION_DIFFERENCE = 4;
+  DIVERGENCE_TYPE_MISSING_ENTRY = 5;
+  DIVERGENCE_TYPE_EXTRA_ENTRY = 6;
+  DIVERGENCE_TYPE_CONTEXT_DIFFERENCE = 7;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 7: STORAGE CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * StorageConfig defines persistence and replication settings.
+ *
+ * FORMAL DEFINITION:
+ * Storage config S = (backend, checkpoint, log, compaction, replication)
+ * specifies the durable storage strategy for execution history.
+ *
+ * DURABILITY GUARANTEES:
+ * The combination of checkpoints and logs provides:
+ *   - Atomicity: each entry is fully written or not at all
+ *   - Consistency: log entries maintain causal ordering
+ *   - Durability: sync mode determines persistence guarantees
+ */
+message StorageConfig {
+  StorageBackend backend = 1;
+  CheckpointConfig checkpoint = 2;
+  LogConfig log = 3;
+  CompactionConfig compaction = 4;
+  ReplicationConfig replication = 5;
+}
+
+/**
+ * StorageBackend enumerates supported storage implementations.
+ */
+enum StorageBackend {
+  STORAGE_BACKEND_UNSPECIFIED = 0;
+  STORAGE_BACKEND_MEMORY = 1;
+  STORAGE_BACKEND_FILE = 2;
+  STORAGE_BACKEND_SQLITE = 3;
+  STORAGE_BACKEND_POSTGRES = 4;
+  STORAGE_BACKEND_S3 = 5;
+  STORAGE_BACKEND_CUSTOM = 6;
+}
+
+/**
+ * CheckpointConfig controls when checkpoints are created.
+ */
+message CheckpointConfig {
+  CheckpointTrigger trigger = 1;
+  uint32 max_checkpoints = 2;
+  CompressionType compression = 3;
+}
+
+/**
+ * CheckpointTrigger specifies conditions for checkpoint creation.
+ */
+message CheckpointTrigger {
+  uint64 every_n_entries = 1;
+  google.protobuf.Duration every_duration = 2;
+  uint64 log_size_threshold_bytes = 3;
+  AdaptiveCheckpointConfig adaptive = 4;
+}
+
+/**
+ * AdaptiveCheckpointConfig enables SLO-driven checkpoint frequency.
+ *
+ * FORMAL DEFINITION:
+ * Adaptive checkpointing targets recovery time objective (RTO):
+ *   checkpoint_interval = RTO / avg_replay_rate
+ *
+ * Under high load, checkpoints become more frequent to maintain RTO.
+ */
+message AdaptiveCheckpointConfig {
+  bool enabled = 1;
+  google.protobuf.Duration target_recovery_time = 2;
+  google.protobuf.Duration min_interval = 3;
+  google.protobuf.Duration max_interval = 4;
+  double high_activity_threshold = 5;
+}
+
+/**
+ * LogConfig controls write-ahead log behavior.
+ */
+message LogConfig {
+  uint64 max_entries = 1;
+  uint64 max_size_bytes = 2;
+  SyncMode sync_mode = 3;
+  CompressionType compression = 4;
+}
+
+/**
+ * SyncMode determines durability vs performance tradeoff.
+ */
+enum SyncMode {
+  SYNC_MODE_UNSPECIFIED = 0;
+  SYNC_MODE_NONE = 1;
+  SYNC_MODE_BATCH = 2;
+  SYNC_MODE_EVERY_ENTRY = 3;
+}
+
+/**
+ * CompressionType for log and checkpoint data.
+ */
+enum CompressionType {
+  COMPRESSION_TYPE_UNSPECIFIED = 0;
+  COMPRESSION_TYPE_NONE = 1;
+  COMPRESSION_TYPE_GZIP = 2;
+  COMPRESSION_TYPE_ZSTD = 3;
+  COMPRESSION_TYPE_LZ4 = 4;
+}
+
+/**
+ * CompactionConfig controls log compaction and retention.
+ */
+message CompactionConfig {
+  CompactionStrategy strategy = 1;
+  RetentionPolicy retention = 2;
+  CompactionSchedule schedule = 3;
+}
+
+/**
+ * CompactionStrategy determines how old entries are consolidated.
+ */
+enum CompactionStrategy {
+  COMPACTION_STRATEGY_UNSPECIFIED = 0;
+  COMPACTION_STRATEGY_SNAPSHOT = 1;
+  COMPACTION_STRATEGY_TIERED = 2;
+  COMPACTION_STRATEGY_WINDOW = 3;
+}
+
+/**
+ * RetentionPolicy defines what data to keep and for how long.
+ */
+message RetentionPolicy {
+  uint64 min_entries = 1;
+  uint32 min_checkpoints = 2;
+  google.protobuf.Duration max_age = 3;
+  repeated RetentionRule keep_rules = 4;
+  ComplianceConfig compliance = 5;
+}
+
+/**
+ * RetentionRule keeps specific entries beyond normal retention.
+ */
+message RetentionRule {
+  string name = 1;
+  string event_filter = 2;
+  google.protobuf.Duration retention = 3;
+}
+
+/**
+ * ComplianceConfig addresses regulatory requirements (GDPR, etc.).
+ */
+message ComplianceConfig {
+  google.protobuf.Duration min_retention = 1;
+  google.protobuf.Duration max_retention = 2;
+  repeated string pii_fields = 3;
+  AnonymizationStrategy anonymization = 4;
+  bool require_deletion_audit = 5;
+}
+
+/**
+ * AnonymizationStrategy for PII data handling.
+ */
+enum AnonymizationStrategy {
+  ANONYMIZATION_STRATEGY_UNSPECIFIED = 0;
+  ANONYMIZATION_STRATEGY_DELETE = 1;
+  ANONYMIZATION_STRATEGY_HASH = 2;
+  ANONYMIZATION_STRATEGY_PSEUDONYMIZE = 3;
+  ANONYMIZATION_STRATEGY_GENERALIZE = 4;
+}
+
+/**
+ * CompactionSchedule controls when compaction runs.
+ */
+message CompactionSchedule {
+  google.protobuf.Duration interval = 1;
+  string cron = 2;
+}
+
+/**
+ * ReplicationConfig for distributed deployments.
+ */
+message ReplicationConfig {
+  ReplicationMode mode = 1;
+  uint32 replica_count = 2;
+  ConsistencyLevel read_consistency = 3;
+  ConsistencyLevel write_consistency = 4;
+  repeated string replicas = 5;
+}
+
+/**
+ * ReplicationMode determines replication topology.
+ */
+enum ReplicationMode {
+  REPLICATION_MODE_UNSPECIFIED = 0;
+  REPLICATION_MODE_NONE = 1;
+  REPLICATION_MODE_PRIMARY_BACKUP = 2;
+  REPLICATION_MODE_MULTI_PRIMARY = 3;
+  REPLICATION_MODE_RAFT = 4;
+}
+
+/**
+ * ConsistencyLevel for distributed reads/writes.
+ */
+enum ConsistencyLevel {
+  CONSISTENCY_LEVEL_UNSPECIFIED = 0;
+  CONSISTENCY_LEVEL_ONE = 1;
+  CONSISTENCY_LEVEL_QUORUM = 2;
+  CONSISTENCY_LEVEL_ALL = 3;
+  CONSISTENCY_LEVEL_LOCAL = 4;
+}
