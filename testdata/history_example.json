@@ -1,0 +1,95 @@
+{
+  "rootState": {
+    "label": "device",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "off",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "on",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "H",
+            "type": "STATE_TYPE_BASIC",
+            "isHistory": true,
+            "historyType": "HISTORY_TYPE_SHALLOW"
+          },
+          {
+            "label": "idle",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "working",
+            "type": "STATE_TYPE_BASIC"
+          },
+          {
+            "label": "paused",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "off"
+      ],
+      "to": [
+        "H"
+      ],
+      "event": "POWER_ON"
+    },
+    {
+      "from": [
+        "on"
+      ],
+      "to": [
+        "off"
+      ],
+      "event": "POWER_OFF"
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "working"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "working"
+      ],
+      "to": [
+        "paused"
+      ],
+      "event": "PAUSE"
+    },
+    {
+      "from": [
+        "paused"
+      ],
+      "to": [
+        "working"
+      ],
+      "event": "RESUME"
+    },
+    {
+      "from": [
+        "working"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "STOP"
+    }
+  ],
+  "name": "history_example"
+}

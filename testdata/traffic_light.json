@@ -1,0 +1,51 @@
+{
+  "rootState": {
+    "label": "root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "green",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "yellow",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "red",
+        "type": "STATE_TYPE_BASIC"
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "green"
+      ],
+      "to": [
+        "yellow"
+      ],
+      "event": "TIMER"
+    },
+    {
+      "from": [
+        "yellow"
+      ],
+      "to": [
+        "red"
+      ],
+      "event": "TIMER"
+    },
+    {
+      "from": [
+        "red"
+      ],
+      "to": [
+        "green"
+      ],
+      "event": "TIMER"
+    }
+  ],
+  "name": "traffic_light"
+}

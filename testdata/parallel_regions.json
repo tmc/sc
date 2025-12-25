@@ -1,0 +1,99 @@
+{
+  "rootState": {
+    "label": "system",
+    "type": "STATE_TYPE_AND",
+    "children": [
+      {
+        "label": "mode",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "manual",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "auto",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "status",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "idle",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "running",
+            "type": "STATE_TYPE_BASIC"
+          },
+          {
+            "label": "error",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "manual"
+      ],
+      "to": [
+        "auto"
+      ],
+      "event": "TOGGLE_MODE"
+    },
+    {
+      "from": [
+        "auto"
+      ],
+      "to": [
+        "manual"
+      ],
+      "event": "TOGGLE_MODE"
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "running"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "running"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "STOP"
+    },
+    {
+      "from": [
+        "running"
+      ],
+      "to": [
+        "error"
+      ],
+      "event": "FAULT"
+    },
+    {
+      "from": [
+        "error"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "RESET"
+    }
+  ],
+  "name": "parallel_regions"
+}
