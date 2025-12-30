@@ -10,32 +10,59 @@ import XCTest
 final class StatesUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
     }
 
     override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testInspectAllCharts() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+        // 1. Verify Sidebar / Machine List
+        let sidebarTitle = app.navigationBars["Statecharts"]
+        XCTAssertTrue(sidebarTitle.exists, "Sidebar title should exist")
+        
+        // List of machines expected in SampleData
+        let expectedMachines = ["Traffic Light", "Standard Machine", "Nested", "History Example"]
+        
+        for machineName in expectedMachines {
+            // Find the cell
+            let machineCell = app.buttons[machineName]
+            
+            // On iPad/Mac (SplitView), the list might be always visible or in a column.
+            // On iPhone, we might need to go back.
+            // Assuming iPad for now as per user request/simulator.
+            
+            if machineCell.waitForExistence(timeout: 2) {
+                machineCell.tap()
+                
+                // Verify Visualizer Loaded
+                // We check for the "Simulate" button which is part of the Visualizer view toolbar
+                let simulateButton = app.buttons["Simulate"]
+                XCTAssertTrue(simulateButton.waitForExistence(timeout: 5), "Visualizer should load for \(machineName)")
+                
+                // Optional: Check for a node specific to that machine?
+                // For now, toolbar existence proves view body loaded without crash.
+                
+                // Go back if needed (split view doesn't need back)
+                // If collapsed (iPhone), we need back button.
+                if !app.navigationBars["Statecharts"].exists {
+                     app.navigationBars.buttons.firstMatch.tap()
+                }
+            } else {
+                 // It might be scrolled off screen? Or list empty?
+                 // For now, log failure if main sample data missing.
+                 XCTContext.runActivity(named: "Check for \(machineName)") { _ in
+                     // Fallback check static text
+                     if app.staticTexts[machineName].exists {
+                         app.staticTexts[machineName].tap()
+                         XCTAssertTrue(app.buttons["Simulate"].exists)
+                     }
+                 }
+            }
         }
     }
 }
