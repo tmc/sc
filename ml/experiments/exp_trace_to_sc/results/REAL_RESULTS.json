@@ -1,0 +1,8 @@
+{
+  "session": "DDB5",
+  "mode": "REAL",
+  "model": "Qwen2.5-Coder-0.5B",
+  "states_accuracy": 20.0,
+  "transitions_accuracy": 20.0,
+  "overall_accuracy": 20.0
+}
