@@ -148,7 +148,90 @@ TEST_STATECHARTS = [
         },
         "description": "Game character states"
     },
+
+    # === ADVANCED: Hierarchical and Parallel SCs ===
+    # These test Harel semantics - may fail with naive flat model
+
+    # 6. Hierarchical SC (composite states with default substates)
+    {
+        "name": "HierarchicalPower",
+        "class_name": "HierarchicalPower",
+        "sc": {
+            "root_state": {
+                "label": "__root__",
+                "type": 2,
+                "children": [
+                    {"label": "Off", "type": 1, "is_initial": True},
+                    {
+                        "label": "On",
+                        "type": 2,  # OR-state (composite)
+                        "children": [
+                            {"label": "Low", "type": 1, "is_initial": True},
+                            {"label": "High", "type": 1}
+                        ]
+                    }
+                ]
+            },
+            "transitions": [
+                {"from": ["Off"], "to": ["On"], "event": "POWER"},
+                {"from": ["On"], "to": ["Off"], "event": "POWER"},
+                {"from": ["Low"], "to": ["High"], "event": "BOOST"},
+                {"from": ["High"], "to": ["Low"], "event": "REDUCE"}
+            ]
+        },
+        "description": "Hierarchical: On has Low/High substates",
+        "advanced": True,
+    },
+
+    # 7. Parallel SC (AND-state with orthogonal regions)
+    {
+        "name": "ParallelPlayer",
+        "class_name": "ParallelPlayer",
+        "sc": {
+            "root_state": {
+                "label": "__root__",
+                "type": 2,
+                "children": [
+                    {
+                        "label": "Active",
+                        "type": 3,  # AND-state (parallel)
+                        "is_initial": True,
+                        "children": [
+                            {
+                                "label": "Movement",
+                                "type": 2,
+                                "children": [
+                                    {"label": "Standing", "type": 1, "is_initial": True},
+                                    {"label": "Walking", "type": 1}
+                                ]
+                            },
+                            {
+                                "label": "Combat",
+                                "type": 2,
+                                "children": [
+                                    {"label": "Idle", "type": 1, "is_initial": True},
+                                    {"label": "Attacking", "type": 1}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "transitions": [
+                {"from": ["Standing"], "to": ["Walking"], "event": "WALK"},
+                {"from": ["Walking"], "to": ["Standing"], "event": "STOP"},
+                {"from": ["Idle"], "to": ["Attacking"], "event": "ATTACK"},
+                {"from": ["Attacking"], "to": ["Idle"], "event": "DONE"}
+            ]
+        },
+        "description": "Parallel: Movement + Combat regions",
+        "advanced": True,
+    },
 ]
+
+# Separate flat and advanced tests
+FLAT_STATECHARTS = [sc for sc in TEST_STATECHARTS if not sc.get("advanced")]
+ADVANCED_STATECHARTS = [sc for sc in TEST_STATECHARTS if sc.get("advanced")]
 
 
 @dataclass
@@ -184,14 +267,33 @@ class SCCodeBenchmark:
         self.generator = None
         self.validator = CodeValidator()
 
-    def run(self, verbose: bool = True) -> BenchmarkSummary:
-        """Run the benchmark on all test statecharts."""
+    def run(
+        self,
+        verbose: bool = True,
+        include_advanced: bool = False,
+    ) -> BenchmarkSummary:
+        """
+        Run the benchmark on test statecharts.
+
+        Args:
+            verbose: Print progress
+            include_advanced: Include hierarchical/parallel SCs (may fail with flat model)
+        """
+        # Select test set
+        if include_advanced:
+            test_set = TEST_STATECHARTS
+            mode = "ALL (flat + advanced)"
+        else:
+            test_set = FLAT_STATECHARTS
+            mode = "FLAT only"
+
         if verbose:
             print("=" * 70)
             print("SC TO CODE BENCHMARK")
             print("=" * 70)
             print(f"Model: {self.model_id}")
-            print(f"Test cases: {len(TEST_STATECHARTS)}")
+            print(f"Mode: {mode}")
+            print(f"Test cases: {len(test_set)}")
             print("-" * 70)
 
         # Load model once
@@ -200,7 +302,7 @@ class SCCodeBenchmark:
 
         results = []
 
-        for i, test in enumerate(TEST_STATECHARTS, 1):
+        for i, test in enumerate(test_set, 1):
             name = test["name"]
             class_name = test["class_name"]
             sc = test["sc"]
@@ -287,11 +389,19 @@ class SCCodeBenchmark:
 
 def run_benchmark(
     model_id: str = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
-    verbose: bool = True
+    verbose: bool = True,
+    include_advanced: bool = False,
 ) -> BenchmarkSummary:
-    """Convenience function to run the benchmark."""
+    """
+    Convenience function to run the benchmark.
+
+    Args:
+        model_id: MLX model to use
+        verbose: Print progress
+        include_advanced: Include hierarchical/parallel SCs
+    """
     benchmark = SCCodeBenchmark(model_id=model_id)
-    return benchmark.run(verbose=verbose)
+    return benchmark.run(verbose=verbose, include_advanced=include_advanced)
 
 
 def demo_single(test_index: int = 0) -> None:
