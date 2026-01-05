@@ -145,39 +145,47 @@ class TopKSAE(nn.Module if HAS_MLX else object):
     def encode(self, x: 'mx.array') -> Tuple['mx.array', 'mx.array']:
         """
         Encode input to sparse TopK representation.
-        
+
         Args:
             x: Input tensor (batch, input_dim)
-        
+
         Returns:
             acts: Sparse activations (batch, latent_dim)
             indices: Active feature indices (batch, k)
         """
         if not HAS_MLX:
             raise RuntimeError("MLX not available")
-        
+
         # Project to latent space
         pre_acts = self.encoder(x)  # (batch, latent_dim)
-        
-        # TopK selection
+
+        # TopK selection - vectorized implementation
         k = self.config.k_active
-        batch_size = x.shape[0]
-        
-        # Get top-k indices
+
+        # Get top-k values and indices
         sorted_indices = mx.argsort(-pre_acts, axis=-1)
         top_indices = sorted_indices[:, :k]
-        
-        # Build sparse activation tensor
-        acts_list = []
+
+        # Create mask for top-k positions
+        # We use scatter to place 1s at top_k positions, then multiply by pre_acts
+        import numpy as np
+        batch_size = x.shape[0]
+
+        # Efficient: gather top-k values, apply ReLU, then scatter back
+        # Gather the values at top_indices
+        top_values = mx.take_along_axis(pre_acts, top_indices, axis=-1)
+        top_values = mx.maximum(top_values, 0.0)  # ReLU
+
+        # Create sparse output using numpy (fast) then convert
+        acts_np = np.zeros((batch_size, self.latent_dim), dtype=np.float32)
+        top_indices_np = np.array(top_indices.tolist())
+        top_values_np = np.array(top_values.tolist())
+
         for b in range(batch_size):
-            row = [0.0] * self.latent_dim
-            for i in range(k):
-                idx = int(top_indices[b, i].item())
-                val = float(pre_acts[b, idx].item())
-                row[idx] = max(0.0, val)  # ReLU
-            acts_list.append(row)
-        acts = mx.array(acts_list)
-        
+            acts_np[b, top_indices_np[b]] = top_values_np[b]
+
+        acts = mx.array(acts_np)
+
         return acts, top_indices
     
     def decode(self, acts: 'mx.array') -> 'mx.array':

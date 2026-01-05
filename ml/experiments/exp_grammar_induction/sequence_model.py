@@ -44,33 +44,27 @@ class TransformerConfig:
 
 class PositionalEncoding(nn.Module if HAS_MLX else object):
     """Sinusoidal positional encoding."""
-    
+
     def __init__(self, dim: int, max_len: int = 5000):
         if HAS_MLX:
             super().__init__()
             self.dim = dim
-            
-            # Create position encoding table
-            position = mx.arange(max_len)[:, None]
-            div_term = mx.exp(
-                mx.arange(0, dim, 2) * (-math.log(10000.0) / dim)
+
+            # Create position encoding table efficiently using numpy then convert
+            import numpy as np
+            position = np.arange(max_len)[:, np.newaxis]
+            div_term = np.exp(
+                np.arange(0, dim, 2) * (-math.log(10000.0) / dim)
             )
-            
-            pe = mx.zeros((max_len, dim))
-            # Manually set sin/cos values since MLX doesn't support advanced indexing
-            for i in range(max_len):
-                for j in range(0, dim, 2):
-                    angle = float(position[i]) * float(div_term[j // 2])
-                    pe_list = pe.tolist()
-                    pe_list[i][j] = math.sin(angle)
-                    if j + 1 < dim:
-                        pe_list[i][j + 1] = math.cos(angle)
-                    pe = mx.array(pe_list)
-            
-            self.pe = pe
+
+            pe = np.zeros((max_len, dim))
+            pe[:, 0::2] = np.sin(position * div_term)
+            pe[:, 1::2] = np.cos(position * div_term)
+
+            self.pe = mx.array(pe)
         else:
             self.dim = dim
-    
+
     def __call__(self, x: 'mx.array') -> 'mx.array':
         """Add positional encoding to input."""
         if not HAS_MLX:
@@ -332,20 +326,79 @@ class GoSyntaxTransformer(nn.Module if HAS_MLX else object):
     ) -> 'mx.array':
         """
         Get hidden states from a specific layer.
-        
+
         Args:
             token_ids: Token sequence
             layer: Which layer (-1 for last)
-        
+
         Returns:
             Hidden states (batch, seq_len, hidden_dim)
         """
         if not HAS_MLX:
             raise RuntimeError("MLX not available")
-        
+
         _, hidden_states = self(token_ids, return_hidden_states=True)
         return hidden_states[layer]
-    
+
+    def get_attention_weights(
+        self,
+        token_ids: 'mx.array',
+    ) -> List['mx.array']:
+        """
+        Get attention weights from all layers.
+
+        Args:
+            token_ids: Token sequence (batch, seq_len)
+
+        Returns:
+            List of attention weights per layer (batch, heads, seq, seq)
+        """
+        if not HAS_MLX:
+            raise RuntimeError("MLX not available")
+
+        batch_size, seq_len = token_ids.shape
+
+        # Embed tokens
+        x = self.token_embedding(token_ids)
+        x = self.pos_encoding(x)
+
+        # Create causal mask
+        mask = self._create_causal_mask(seq_len)
+
+        # Collect attention weights from each block
+        attention_weights = []
+        for block in self.blocks:
+            # Get attention weights from the attention layer
+            attn = block.attn
+
+            # Compute Q, K, V
+            q = attn.q_proj(x)
+            k = attn.k_proj(x)
+
+            # Reshape for multi-head attention
+            q = q.reshape(batch_size, seq_len, attn.num_heads, attn.head_dim)
+            k = k.reshape(batch_size, seq_len, attn.num_heads, attn.head_dim)
+
+            # Transpose: (batch, heads, seq, head_dim)
+            q = mx.transpose(q, (0, 2, 1, 3))
+            k = mx.transpose(k, (0, 2, 1, 3))
+
+            # Compute attention scores
+            scores = mx.matmul(q, mx.transpose(k, (0, 1, 3, 2))) * attn.scale
+
+            # Apply mask
+            if mask is not None:
+                scores = scores + mask
+
+            # Softmax to get attention weights
+            weights = mx.softmax(scores, axis=-1)
+            attention_weights.append(weights)
+
+            # Continue forward pass for next layer
+            x = block(x, mask)
+
+        return attention_weights
+
     def compute_loss(
         self,
         token_ids: 'mx.array',
