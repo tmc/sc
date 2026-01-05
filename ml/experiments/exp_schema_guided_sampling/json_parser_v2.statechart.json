@@ -1,0 +1,238 @@
+{
+  "name": "JSONParserWithStack",
+  "description": "JSON parser statechart with extended state for tracking nesting depth",
+
+  "variables": {
+    "depth": 0,
+    "stack": [],
+    "element_count": 0,
+    "max_depth": 8,
+    "max_elements": 10
+  },
+
+  "root_state": {
+    "label": "Parser",
+    "type": 2,
+    "children": [
+      {"label": "Ready", "type": 1, "is_initial": true},
+      {"label": "InObject", "type": 1},
+      {"label": "InKey", "type": 1},
+      {"label": "ExpectColon", "type": 1},
+      {"label": "ExpectValue", "type": 1},
+      {"label": "InString", "type": 1},
+      {"label": "AfterValue", "type": 1},
+      {"label": "InArray", "type": 1},
+      {"label": "AfterElement", "type": 1},
+      {"label": "Complete", "type": 1},
+      {"label": "ForceClose", "type": 1},
+      {"label": "Error", "type": 1}
+    ]
+  },
+
+  "transitions": [
+    {
+      "from": ["Ready"],
+      "to": ["InObject"],
+      "event": "LBRACE",
+      "actions": [{"expression": "depth = 1; stack.push('object')"}]
+    },
+    {
+      "from": ["Ready"],
+      "to": ["InArray"],
+      "event": "LBRACKET",
+      "actions": [{"expression": "depth = 1; stack.push('array')"}]
+    },
+
+    {
+      "from": ["InObject"],
+      "to": ["InKey"],
+      "event": "QUOTE"
+    },
+    {
+      "from": ["InObject"],
+      "to": ["AfterValue"],
+      "event": "RBRACE",
+      "guard": {"expression": "depth > 1"},
+      "actions": [{"expression": "depth--; stack.pop()"}]
+    },
+    {
+      "from": ["InObject"],
+      "to": ["Complete"],
+      "event": "RBRACE",
+      "guard": {"expression": "depth == 1"}
+    },
+
+    {
+      "from": ["InKey"],
+      "to": ["InKey"],
+      "event": "STRING"
+    },
+    {
+      "from": ["InKey"],
+      "to": ["ExpectColon"],
+      "event": "QUOTE"
+    },
+
+    {
+      "from": ["ExpectColon"],
+      "to": ["ExpectValue"],
+      "event": "COLON"
+    },
+
+    {
+      "from": ["ExpectValue"],
+      "to": ["InString"],
+      "event": "QUOTE"
+    },
+    {
+      "from": ["ExpectValue"],
+      "to": ["AfterValue"],
+      "event": "NUMBER"
+    },
+    {
+      "from": ["ExpectValue"],
+      "to": ["AfterValue"],
+      "event": "BOOL"
+    },
+    {
+      "from": ["ExpectValue"],
+      "to": ["AfterValue"],
+      "event": "NULL"
+    },
+    {
+      "from": ["ExpectValue"],
+      "to": ["InObject"],
+      "event": "LBRACE",
+      "guard": {"expression": "depth < max_depth"},
+      "actions": [{"expression": "depth++; stack.push('object')"}]
+    },
+    {
+      "from": ["ExpectValue"],
+      "to": ["ForceClose"],
+      "event": "LBRACE",
+      "guard": {"expression": "depth >= max_depth"}
+    },
+    {
+      "from": ["ExpectValue"],
+      "to": ["InArray"],
+      "event": "LBRACKET",
+      "guard": {"expression": "depth < max_depth"},
+      "actions": [{"expression": "depth++; stack.push('array'); element_count = 0"}]
+    },
+
+    {
+      "from": ["InString"],
+      "to": ["InString"],
+      "event": "STRING"
+    },
+    {
+      "from": ["InString"],
+      "to": ["AfterValue"],
+      "event": "QUOTE"
+    },
+
+    {
+      "from": ["AfterValue"],
+      "to": ["InObject"],
+      "event": "COMMA",
+      "guard": {"expression": "stack.top() == 'object'"}
+    },
+    {
+      "from": ["AfterValue"],
+      "to": ["InArray"],
+      "event": "COMMA",
+      "guard": {"expression": "stack.top() == 'array' && element_count < max_elements"},
+      "actions": [{"expression": "element_count++"}]
+    },
+    {
+      "from": ["AfterValue"],
+      "to": ["ForceClose"],
+      "event": "COMMA",
+      "guard": {"expression": "stack.top() == 'array' && element_count >= max_elements"}
+    },
+    {
+      "from": ["AfterValue"],
+      "to": ["AfterValue"],
+      "event": "RBRACE",
+      "guard": {"expression": "depth > 1 && stack.top() == 'object'"},
+      "actions": [{"expression": "depth--; stack.pop()"}]
+    },
+    {
+      "from": ["AfterValue"],
+      "to": ["Complete"],
+      "event": "RBRACE",
+      "guard": {"expression": "depth == 1 && stack.top() == 'object'"}
+    },
+    {
+      "from": ["AfterValue"],
+      "to": ["AfterValue"],
+      "event": "RBRACKET",
+      "guard": {"expression": "depth > 1 && stack.top() == 'array'"},
+      "actions": [{"expression": "depth--; stack.pop()"}]
+    },
+    {
+      "from": ["AfterValue"],
+      "to": ["Complete"],
+      "event": "RBRACKET",
+      "guard": {"expression": "depth == 1 && stack.top() == 'array'"}
+    },
+
+    {
+      "from": ["InArray"],
+      "to": ["InObject"],
+      "event": "LBRACE",
+      "guard": {"expression": "depth < max_depth"},
+      "actions": [{"expression": "depth++; stack.push('object')"}]
+    },
+    {
+      "from": ["InArray"],
+      "to": ["InString"],
+      "event": "QUOTE"
+    },
+    {
+      "from": ["InArray"],
+      "to": ["AfterElement"],
+      "event": "NUMBER"
+    },
+    {
+      "from": ["InArray"],
+      "to": ["AfterValue"],
+      "event": "RBRACKET",
+      "guard": {"expression": "depth > 1"},
+      "actions": [{"expression": "depth--; stack.pop()"}]
+    },
+    {
+      "from": ["InArray"],
+      "to": ["Complete"],
+      "event": "RBRACKET",
+      "guard": {"expression": "depth == 1"}
+    },
+
+    {
+      "from": ["AfterElement"],
+      "to": ["InArray"],
+      "event": "COMMA",
+      "guard": {"expression": "element_count < max_elements"},
+      "actions": [{"expression": "element_count++"}]
+    },
+    {
+      "from": ["AfterElement"],
+      "to": ["ForceClose"],
+      "event": "COMMA",
+      "guard": {"expression": "element_count >= max_elements"}
+    },
+    {
+      "from": ["AfterElement"],
+      "to": ["AfterValue"],
+      "event": "RBRACKET",
+      "guard": {"expression": "depth > 1"},
+      "actions": [{"expression": "depth--; stack.pop()"}]
+    },
+    {
+      "from": ["AfterElement"],
+      "to": ["Complete"],
+      "event": "RBRACKET",
+      "guard": {"expression": "depth == 1"}
+    }
+  ]
+}
