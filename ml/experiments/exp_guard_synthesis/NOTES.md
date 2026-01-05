@@ -124,19 +124,55 @@ Together: fully automatic statechart extraction!
 ## Running the Experiments
 
 ```bash
-cd /Users/tmc/go/src/github.com/tmc/sc/ml
+cd /Volumes/tmc/go/src/github.com/tmc/sc/ml
 
 # Guard synthesis demo
 .venv/bin/python3 experiments/exp_guard_synthesis/guard_synthesizer.py
 
 # LLM-guided synthesis
 .venv/bin/python3 experiments/exp_guard_synthesis/llm_guard_gen.py
+
+# Complexity level benchmark (L1-L4)
+.venv/bin/python3 -m experiments.exp_guard_synthesis.benchmark
 ```
+
+## Benchmark Results (2026-01-05)
+
+Guard synthesis benchmark with 4 complexity levels using Qwen2.5-Coder-0.5B:
+
+| Level | Description | Accuracy |
+|-------|-------------|----------|
+| L1 | Single variable (`is_ready`, `!is_locked`) | 100% (5/5) |
+| L2 | Boolean operators (`a && b`, `a \|\| b`) | 100% (5/5) |
+| L3 | Comparisons (`count < 5`, `x >= max`) | 20% (1/5) |
+| L4 | Nested expressions (`(a \|\| b) && c`) | 100% (5/5) |
+| **Overall** | All levels | **80% (16/20)** |
+
+**Key Findings:**
+- JSON validity: 100% across all levels
+- Guard syntax validity: 100% when guards are generated
+- L1, L2, L4 work perfectly - model follows examples well
+- L3 (comparisons) is challenging - model prefers boolean patterns
+- Few-shot prompts are critical for guiding guard format
+
+**Why L3 is Hard:**
+The model strongly prefers boolean guards over comparison operators, even with
+explicit instructions. This is because:
+1. Boolean patterns appear more frequently in examples
+2. The 0.5B model has limited instruction following
+3. Comparison operators require numeric context understanding
+
+**Recommendations for Improvement:**
+- Use larger models (1.5B+) for better instruction following
+- Provide comparison-only examples for L3
+- Consider GRPO training specifically for comparison guards
 
 ## TODO
 
-- [ ] Integrate with actual LLM (Claude API)
+- [x] Integrate with actual LLM (Qwen2.5-Coder)
+- [x] Benchmark guard complexity levels
 - [ ] Add symbolic regression for numeric guards
 - [ ] Support temporal operators (always, eventually)
 - [ ] Learn guards from game replays (imitation)
 - [ ] Combine with SAE states for full extraction
+- [ ] Train GRPO specifically for L3 comparison guards

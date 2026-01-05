@@ -1,0 +1,79 @@
+{
+  "benchmark_date": "2026-01-05",
+  "results": [
+    {
+      "model_size": "3B",
+      "model_id": "mlx-community/Qwen2.5-Coder-3B-Instruct-4bit",
+      "task": "repair",
+      "accuracy": 100.0,
+      "total_cases": 10,
+      "successful": 10,
+      "inference_time_s": 4.75,
+      "avg_time_per_sample": 0.47,
+      "details": {
+        "per_category": {
+          "duplicate_element": {"total": 2, "success": 2, "partial": 0, "failed": 0},
+          "unreachable_state": {"total": 2, "success": 2, "partial": 0, "failed": 0},
+          "hierarchy_violation": {"total": 4, "success": 4, "partial": 0, "failed": 0},
+          "dangling_reference": {"total": 2, "success": 2, "partial": 0, "failed": 0}
+        }
+      }
+    },
+    {
+      "model_size": "3B",
+      "model_id": "mlx-community/Qwen2.5-Coder-3B-Instruct-4bit",
+      "task": "debug",
+      "accuracy": 0.0,
+      "total_cases": 8,
+      "successful": 0,
+      "inference_time_s": 153.0,
+      "avg_time_per_sample": 19.1,
+      "details": {
+        "type_accuracy": 25.0,
+        "location_accuracy": 37.5,
+        "note": "Fix accuracy requires BOTH type AND location correct. Model defaults to 'missing_transition' too often."
+      }
+    },
+    {
+      "model_size": "3B",
+      "model_id": "mlx-community/Qwen2.5-Coder-3B-Instruct-4bit",
+      "task": "complete",
+      "accuracy": 100.0,
+      "total_cases": 5,
+      "successful": 5,
+      "inference_time_s": 41.1,
+      "avg_time_per_sample": 8.2,
+      "details": null
+    }
+  ],
+  "comparison_with_historical": {
+    "repair": {
+      "0.5B": 20,
+      "1.5B": 80,
+      "3B": 100
+    },
+    "debug": {
+      "0.5B": 12,
+      "1.5B": 30,
+      "3B": 0,
+      "3B_type_only": 25
+    },
+    "complete": {
+      "0.5B": 100,
+      "1.5B": 100,
+      "3B": 100
+    }
+  },
+  "avg_inference_time_per_sample": {
+    "1.5B_estimated": 6.7,
+    "3B": 9.3
+  },
+  "analysis": {
+    "repair_hypothesis": "CONFIRMED - 3B achieves 100% (target was 90%+)",
+    "debug_hypothesis": "FAILED - 3B achieves 0% fix accuracy (target was 50%+)",
+    "debug_issue": "Model over-predicts 'missing_transition' (75% of predictions). Need better prompt engineering or fine-tuning.",
+    "completion": "Stable at 100% across all model sizes - constrained decoding dominates",
+    "scaling_trend_repair": "Clear improvement: 20% -> 80% -> 100%",
+    "scaling_trend_debug": "Non-monotonic: 12% -> 30% -> 0% (measurement issue likely)"
+  }
+}
