@@ -1550,6 +1550,8 @@ Final: validity=20.0%, reward=0.200, baseline=20.0%
 | **exp_parallel_regions** | **100%** (5/5) | AND-decomposition works, independent region advancement |
 | **exp_error_recovery** | **80%** recovery | Skip > Backtrack > Force_close strategy |
 | **exp_diversity** | **2x** with few-shot | 40 unique vs 20 baseline, 26 states vs 18 |
+| **exp_history_states** | **100%** (8/8) | Shallow and deep history both work correctly |
+| **exp_trace_induction** | **20%** (0.5B) | Toggle 100%, others 0% - model copies vs generalizes |
 
 ### Key Insights
 
@@ -1738,3 +1740,117 @@ This ensures the constraint FSM is in the correct state to continue generation.
 
 ### Files
 - `experiments/exp_sc_lora_grpo/grpo_constrained.py`
+
+---
+
+## TRM vs SC-TRM: Statechart Inference Guards Improve TinyRecursiveModels (9E50)
+
+**Status**: ✅ VALIDATED - Consistent improvement across scales
+
+### Background
+
+TinyRecursiveModels (TRM) achieve 87% exact accuracy on Sudoku-Extreme through iterative refinement:
+- Non-autoregressive: predicts all 81 cells in parallel
+- Two-level recursion: H_cycles=3 × L_cycles=6 = 18 total iterations
+- 7-8M parameters, trained on 1M samples for 50K epochs
+
+**Question**: Can statechart-based constraint guards improve TRM performance?
+
+### Experimental Setup
+
+Tested three model variants:
+1. **Vanilla TRM**: Base TRM implementation with H×L iterative refinement
+2. **SC-TRM (no guards)**: Same architecture, no constraint integration
+3. **SC-TRM (with guards)**: Inference-time constraint guards (train without guards)
+
+Key design decision: **Constraints only at inference time, not during training**.
+- Constraint loss during training hurts performance (blocks gradient flow)
+- Inference guards mask invalid predictions without affecting learning
+
+### Scale Comparison Results
+
+#### Small Scale (1K train, 30 epochs, 128 hidden)
+
+| Model | Cell Acc | Exact Acc | Time |
+|-------|----------|-----------|------|
+| Vanilla TRM | 47.2% | 0% | 100s |
+| SC-TRM (no guards) | 47.5% | 0% | 111s |
+| **SC-TRM (with guards)** | **55.9%** | 0% | 80s |
+
+**Improvement: +8.7% cell accuracy**
+
+#### Medium Scale (5K train, 50 epochs, 256 hidden)
+
+| Model | Cell Acc | Exact Acc | Time |
+|-------|----------|-----------|------|
+| Vanilla TRM | 47.4% | 0% | 2797s |
+| SC-TRM (no guards) | 47.4% | 0% | 2790s |
+| **SC-TRM (with guards)** | **54.2%** | 0% | 1801s |
+
+**Improvement: +6.8% cell accuracy**
+
+### Error Analysis
+
+#### Constraint Violations
+
+| Model | Row Violations | Col Violations | Box Violations | Total | Per Puzzle |
+|-------|----------------|----------------|----------------|-------|------------|
+| Vanilla TRM | 7254 | 7235 | 7261 | 21750 | 108.75 |
+| SC-TRM (guards) | 6075 | 6082 | 6242 | 18399 | 92.00 |
+
+**Violation reduction: 15.4%**
+
+#### Error Location
+
+| Model | Errors on Given Cells | Errors on Empty Cells |
+|-------|----------------------|----------------------|
+| Vanilla TRM | 0 | 8491 |
+| SC-TRM | 4 | 7297 |
+
+### Key Insights
+
+1. **Inference-time guards consistently improve accuracy by 6-9%** across scales
+2. **Training should remain unconstrained** - constraint loss hurts learning
+3. **Guards reduce constraint violations by ~15%** - filtering impossible predictions
+4. **Separation of concerns**: Let neural network learn patterns freely, then apply domain knowledge at test time
+
+### Gap to TRM Paper Results
+
+Our setup:
+- 500K-2M parameters (vs 7-8M in paper)
+- 1K-5K training samples (vs 1M in paper)
+- 30-50 epochs (vs 50K in paper)
+- 47-54% cell accuracy (vs 87% exact accuracy in paper)
+
+**Next steps to close the gap**:
+1. Scale up model parameters (512 hidden dim)
+2. Use real Sudoku-Extreme dataset (1M samples)
+3. Train for more epochs
+4. Add learned halting mechanism
+
+### Configuration
+
+```python
+# Working configuration
+VanillaTRMConfig(
+    hidden_dim=128,  # or 256 for medium scale
+    num_heads=4,     # IMPORTANT: 4 works better than 8
+    num_layers=3,    # or 4 for medium scale
+    ff_dim=hidden_dim * 2,
+    H_cycles=3,
+    L_cycles=4,      # IMPORTANT: 4 works better than 6 at this scale
+)
+
+SimpleSCConfig(
+    ...  # same base config
+    constraint_loss_weight=0.0,   # IMPORTANT: no constraint loss during training
+    use_inference_guards=True,    # IMPORTANT: guards only at inference time
+)
+```
+
+### Files
+
+- `experiments/exp_trm_vs_sc_sudoku/vanilla_trm.py` - Base TRM implementation
+- `experiments/exp_trm_vs_sc_sudoku/sc_trm_simple.py` - SC-TRM with inference guards
+- `experiments/exp_trm_vs_sc_sudoku/scale_comparison.py` - Scale comparison experiment
+- `experiments/exp_trm_vs_sc_sudoku/error_analysis.py` - Error pattern analysis
