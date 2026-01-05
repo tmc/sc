@@ -1,0 +1,12 @@
+{
+  "NO_CONSTRAINT": {
+    "valid_json_rate": 0.0,
+    "valid_sc_rate": 0.0,
+    "avg_generation_time": 1.2609778881072997
+  },
+  "FULL_SC_GRAMMAR": {
+    "valid_json_rate": 1.0,
+    "valid_sc_rate": 1.0,
+    "avg_generation_time": 1.2169403076171874
+  }
+}

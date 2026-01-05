@@ -1,0 +1,4 @@
+
+# Grammar Coverage Stats
+TOTAL_DEFINITIONS = 12
+TOTAL_REFERENCES = 20
