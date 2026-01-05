@@ -5,10 +5,13 @@ Goal: Achieve 99%+ syntactic validity by masking LLM logits
 with statechart-derived syntax constraints.
 
 Key Components:
-1. SyntaxStatechart - States for Python grammar (STATEMENT, EXPRESSION, etc.)
-2. SAE State Discovery - Find monosemantic features for syntax contexts
-3. LogitMasker - Block tokens invalid in current syntax state
-4. Evaluation - Measure syntax error rate vs unconstrained LLM
+1. SyntaxStatechart - States for Python/Go grammar (STATEMENT, EXPRESSION, etc.)
+2. TokenMasker - Maps syntax states to token validity masks
+3. GuidedGeneration - Constrained LLM generation with statechart tracking
+4. Benchmark - Measure syntax error rate vs unconstrained LLM (target: 99%+)
+
+Key insight: Programming language grammars ARE statecharts!
+States = parser contexts, Events = tokens, Guards = lookahead conditions.
 
 This bridges the SAE statechart work with practical LLM code generation.
 """
@@ -22,4 +25,23 @@ from .syntax_statechart import (
 from .constrained_generator import (
     LogitMasker,
     ConstrainedCodeGenerator,
+)
+
+from .token_masker import (
+    TokenMasker,
+    TokenCategory,
+    MaskContext,
+    SAEGuidedMasker,
+)
+
+from .guided_generation import (
+    GuidedCodeGenerator,
+    GenerationConfig,
+    SyntaxStateTracker,
+)
+
+from .benchmark import (
+    CodeValidator,
+    CodeCompletionBenchmark,
+    BenchmarkResult,
 )
