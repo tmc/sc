@@ -1,0 +1,102 @@
+{
+  "name": "GRPORewardStatechart",
+  "description": "Statechart that computes GRPO reward for SC validation. Self-referential: SC validates SC using SC!",
+
+  "variables": {
+    "score": 0.0,
+    "max_score": 1.0,
+    "json_valid": false,
+    "has_root": false,
+    "has_transitions": false,
+    "hierarchy_valid": false,
+    "transitions_valid": false
+  },
+
+  "root_state": {
+    "label": "RewardEval",
+    "type": 2,
+    "children": [
+      {"label": "Start", "type": 1, "is_initial": true},
+      {"label": "Parsing", "type": 1},
+      {"label": "CheckRoot", "type": 1},
+      {"label": "CheckHierarchy", "type": 1},
+      {"label": "CheckTransitions", "type": 1},
+      {"label": "Complete", "type": 1},
+      {"label": "Failed", "type": 1}
+    ]
+  },
+
+  "transitions": [
+    {
+      "from": ["Start"],
+      "to": ["Parsing"],
+      "event": "EVAL_START",
+      "actions": [{"expression": "score = 0.0"}]
+    },
+
+    {
+      "from": ["Parsing"],
+      "to": ["CheckRoot"],
+      "event": "JSON_VALID",
+      "actions": [{"expression": "score += 0.2; json_valid = true"}]
+    },
+    {
+      "from": ["Parsing"],
+      "to": ["Failed"],
+      "event": "JSON_INVALID",
+      "actions": [{"expression": "json_valid = false"}]
+    },
+
+    {
+      "from": ["CheckRoot"],
+      "to": ["CheckHierarchy"],
+      "event": "HAS_ROOT_STATE",
+      "actions": [{"expression": "score += 0.2; has_root = true"}]
+    },
+    {
+      "from": ["CheckRoot"],
+      "to": ["CheckTransitions"],
+      "event": "NO_ROOT_STATE",
+      "actions": [{"expression": "has_root = false"}]
+    },
+
+    {
+      "from": ["CheckHierarchy"],
+      "to": ["CheckTransitions"],
+      "event": "HIERARCHY_VALID",
+      "actions": [{"expression": "score += 0.2; hierarchy_valid = true"}]
+    },
+    {
+      "from": ["CheckHierarchy"],
+      "to": ["CheckTransitions"],
+      "event": "HIERARCHY_INVALID",
+      "actions": [{"expression": "hierarchy_valid = false"}]
+    },
+
+    {
+      "from": ["CheckTransitions"],
+      "to": ["Complete"],
+      "event": "HAS_TRANSITIONS",
+      "guard": {"expression": "transitions_valid == true"},
+      "actions": [{"expression": "score += 0.2"}]
+    },
+    {
+      "from": ["CheckTransitions"],
+      "to": ["Complete"],
+      "event": "TRANSITIONS_VALID",
+      "actions": [{"expression": "score += 0.2; transitions_valid = true"}]
+    },
+    {
+      "from": ["CheckTransitions"],
+      "to": ["Complete"],
+      "event": "NO_TRANSITIONS",
+      "actions": [{"expression": "score += 0.1"}]
+    },
+    {
+      "from": ["CheckTransitions"],
+      "to": ["Complete"],
+      "event": "TRANSITIONS_INVALID",
+      "actions": [{"expression": "transitions_valid = false"}]
+    }
+  ]
+}
