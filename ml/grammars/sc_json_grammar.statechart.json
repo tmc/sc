@@ -1,0 +1,215 @@
+{
+  "name": "SC_JSON_Grammar",
+  "description": "Statechart defining valid SC JSON syntax",
+  "variables": {
+    "depth": 0,
+    "in_array": false,
+    "current_field": "",
+    "max_depth": 10
+  },
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {"label": "Start", "type": 1, "is_initial": true},
+      {"label": "ExpectRootObject", "type": 1},
+      {"label": "InRootObject", "type": 1},
+      {"label": "ExpectRootStateKey", "type": 1},
+      {"label": "ExpectRootStateColon", "type": 1},
+      {"label": "ExpectRootStateValue", "type": 1},
+      {"label": "InRootState", "type": 1},
+      {"label": "ExpectStateField", "type": 1},
+      {"label": "InLabelValue", "type": 1},
+      {"label": "InTypeValue", "type": 1},
+      {"label": "InChildrenArray", "type": 1},
+      {"label": "InChildObject", "type": 1},
+      {"label": "ExpectTransitionsKey", "type": 1},
+      {"label": "InTransitionsArray", "type": 1},
+      {"label": "InTransitionObject", "type": 1},
+      {"label": "InFromArray", "type": 1},
+      {"label": "InToArray", "type": 1},
+      {"label": "InEventValue", "type": 1},
+      {"label": "Complete", "type": 1},
+      {"label": "Error", "type": 1}
+    ]
+  },
+  "transitions": [
+    {
+      "from": ["Start"],
+      "to": ["ExpectRootObject"],
+      "event": "BEGIN",
+      "actions": [{"expression": "depth = 0"}]
+    },
+    {
+      "from": ["ExpectRootObject"],
+      "to": ["InRootObject"],
+      "event": "LBRACE",
+      "actions": [{"expression": "depth++"}]
+    },
+    {
+      "from": ["InRootObject"],
+      "to": ["ExpectRootStateColon"],
+      "event": "ROOT_STATE_KEY"
+    },
+    {
+      "from": ["ExpectRootStateColon"],
+      "to": ["ExpectRootStateValue"],
+      "event": "COLON"
+    },
+    {
+      "from": ["ExpectRootStateValue"],
+      "to": ["InRootState"],
+      "event": "LBRACE",
+      "actions": [{"expression": "depth++"}]
+    },
+    {
+      "from": ["InRootState"],
+      "to": ["ExpectStateField"],
+      "event": "LABEL_KEY",
+      "actions": [{"expression": "current_field = 'label'"}]
+    },
+    {
+      "from": ["ExpectStateField"],
+      "to": ["InLabelValue"],
+      "event": "COLON"
+    },
+    {
+      "from": ["InLabelValue"],
+      "to": ["InRootState"],
+      "event": "STRING",
+      "actions": [{"expression": "current_field = ''"}]
+    },
+    {
+      "from": ["InRootState"],
+      "to": ["ExpectStateField"],
+      "event": "TYPE_KEY",
+      "actions": [{"expression": "current_field = 'type'"}]
+    },
+    {
+      "from": ["ExpectStateField"],
+      "to": ["InTypeValue"],
+      "event": "COLON",
+      "guard": {"expression": "current_field == 'type'"}
+    },
+    {
+      "from": ["InTypeValue"],
+      "to": ["InRootState"],
+      "event": "NUMBER"
+    },
+    {
+      "from": ["InRootState"],
+      "to": ["ExpectStateField"],
+      "event": "CHILDREN_KEY",
+      "actions": [{"expression": "current_field = 'children'"}]
+    },
+    {
+      "from": ["ExpectStateField"],
+      "to": ["InChildrenArray"],
+      "event": "LBRACKET",
+      "guard": {"expression": "current_field == 'children'"},
+      "actions": [{"expression": "in_array = true"}]
+    },
+    {
+      "from": ["InChildrenArray"],
+      "to": ["InChildObject"],
+      "event": "LBRACE",
+      "guard": {"expression": "depth < max_depth"},
+      "actions": [{"expression": "depth++"}]
+    },
+    {
+      "from": ["InChildObject"],
+      "to": ["InChildObject"],
+      "event": "STATE_CONTENT",
+      "comment": "Recursive state definition"
+    },
+    {
+      "from": ["InChildObject"],
+      "to": ["InChildrenArray"],
+      "event": "RBRACE",
+      "actions": [{"expression": "depth--"}]
+    },
+    {
+      "from": ["InChildrenArray"],
+      "to": ["InChildrenArray"],
+      "event": "COMMA"
+    },
+    {
+      "from": ["InChildrenArray"],
+      "to": ["InRootState"],
+      "event": "RBRACKET",
+      "actions": [{"expression": "in_array = false"}]
+    },
+    {
+      "from": ["InRootState"],
+      "to": ["InRootObject"],
+      "event": "RBRACE",
+      "actions": [{"expression": "depth--"}]
+    },
+    {
+      "from": ["InRootObject"],
+      "to": ["ExpectTransitionsKey"],
+      "event": "COMMA"
+    },
+    {
+      "from": ["ExpectTransitionsKey"],
+      "to": ["InTransitionsArray"],
+      "event": "TRANSITIONS_KEY"
+    },
+    {
+      "from": ["InTransitionsArray"],
+      "to": ["InTransitionObject"],
+      "event": "LBRACE"
+    },
+    {
+      "from": ["InTransitionObject"],
+      "to": ["InFromArray"],
+      "event": "FROM_KEY"
+    },
+    {
+      "from": ["InFromArray"],
+      "to": ["InTransitionObject"],
+      "event": "STRING_ARRAY"
+    },
+    {
+      "from": ["InTransitionObject"],
+      "to": ["InToArray"],
+      "event": "TO_KEY"
+    },
+    {
+      "from": ["InToArray"],
+      "to": ["InTransitionObject"],
+      "event": "STRING_ARRAY"
+    },
+    {
+      "from": ["InTransitionObject"],
+      "to": ["InEventValue"],
+      "event": "EVENT_KEY"
+    },
+    {
+      "from": ["InEventValue"],
+      "to": ["InTransitionObject"],
+      "event": "STRING"
+    },
+    {
+      "from": ["InTransitionObject"],
+      "to": ["InTransitionsArray"],
+      "event": "RBRACE"
+    },
+    {
+      "from": ["InTransitionsArray"],
+      "to": ["InTransitionsArray"],
+      "event": "COMMA"
+    },
+    {
+      "from": ["InTransitionsArray"],
+      "to": ["InRootObject"],
+      "event": "RBRACKET"
+    },
+    {
+      "from": ["InRootObject"],
+      "to": ["Complete"],
+      "event": "RBRACE",
+      "guard": {"expression": "depth == 1"}
+    }
+  ]
+}

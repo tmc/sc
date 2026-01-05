@@ -1,0 +1,145 @@
+{
+  "name": "SC_Validity_Grammar",
+  "description": "Statechart for validating SC semantic constraints (well-formedness)",
+  "variables": {
+    "defined_states": [],
+    "referenced_states": [],
+    "has_root_state": false,
+    "has_initial": false,
+    "current_parent": null,
+    "hierarchy_stack": [],
+    "state_types": {},
+    "errors": []
+  },
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {"label": "Init", "type": 1, "is_initial": true},
+      {"label": "ValidatingRoot", "type": 1},
+      {"label": "CollectingStates", "type": 1},
+      {"label": "ValidatingTransitions", "type": 1},
+      {"label": "CheckingReachability", "type": 1},
+      {"label": "CheckingInitials", "type": 1},
+      {"label": "Valid", "type": 1},
+      {"label": "Invalid", "type": 1}
+    ]
+  },
+  "transitions": [
+    {
+      "from": ["Init"],
+      "to": ["ValidatingRoot"],
+      "event": "START_VALIDATION",
+      "actions": [{"expression": "defined_states = []; referenced_states = []; errors = []"}]
+    },
+    {
+      "from": ["ValidatingRoot"],
+      "to": ["CollectingStates"],
+      "event": "ROOT_STATE_FOUND",
+      "guard": {"expression": "root_state.label != null"},
+      "actions": [{"expression": "has_root_state = true; defined_states.push(root_state.label)"}]
+    },
+    {
+      "from": ["ValidatingRoot"],
+      "to": ["Invalid"],
+      "event": "ROOT_STATE_MISSING",
+      "actions": [{"expression": "errors.push('Missing root_state')"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["CollectingStates"],
+      "event": "STATE_DEFINED",
+      "guard": {"expression": "!defined_states.includes(state.label)"},
+      "actions": [{"expression": "defined_states.push(state.label); state_types[state.label] = state.type"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["Invalid"],
+      "event": "STATE_DEFINED",
+      "guard": {"expression": "defined_states.includes(state.label)"},
+      "actions": [{"expression": "errors.push('Duplicate state: ' + state.label)"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["CollectingStates"],
+      "event": "INITIAL_MARKED",
+      "actions": [{"expression": "has_initial = true"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["CollectingStates"],
+      "event": "ENTER_CHILDREN",
+      "guard": {"expression": "state_types[current_state] == 2 || state_types[current_state] == 3"},
+      "actions": [{"expression": "hierarchy_stack.push(current_state)"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["Invalid"],
+      "event": "ENTER_CHILDREN",
+      "guard": {"expression": "state_types[current_state] == 1"},
+      "actions": [{"expression": "errors.push('Basic state cannot have children: ' + current_state)"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["CollectingStates"],
+      "event": "EXIT_CHILDREN",
+      "actions": [{"expression": "hierarchy_stack.pop()"}]
+    },
+    {
+      "from": ["CollectingStates"],
+      "to": ["ValidatingTransitions"],
+      "event": "STATES_COMPLETE"
+    },
+    {
+      "from": ["ValidatingTransitions"],
+      "to": ["ValidatingTransitions"],
+      "event": "TRANSITION_FOUND",
+      "guard": {"expression": "defined_states.includes(transition.from) && defined_states.includes(transition.to)"},
+      "actions": [{"expression": "referenced_states.push(transition.from); referenced_states.push(transition.to)"}]
+    },
+    {
+      "from": ["ValidatingTransitions"],
+      "to": ["Invalid"],
+      "event": "TRANSITION_FOUND",
+      "guard": {"expression": "!defined_states.includes(transition.from)"},
+      "actions": [{"expression": "errors.push('Transition references undefined state: ' + transition.from)"}]
+    },
+    {
+      "from": ["ValidatingTransitions"],
+      "to": ["Invalid"],
+      "event": "TRANSITION_FOUND",
+      "guard": {"expression": "!defined_states.includes(transition.to)"},
+      "actions": [{"expression": "errors.push('Transition references undefined state: ' + transition.to)"}]
+    },
+    {
+      "from": ["ValidatingTransitions"],
+      "to": ["CheckingReachability"],
+      "event": "TRANSITIONS_COMPLETE"
+    },
+    {
+      "from": ["CheckingReachability"],
+      "to": ["CheckingInitials"],
+      "event": "REACHABILITY_OK",
+      "comment": "All non-initial states are reachable"
+    },
+    {
+      "from": ["CheckingReachability"],
+      "to": ["Invalid"],
+      "event": "UNREACHABLE_STATE",
+      "actions": [{"expression": "errors.push('Unreachable state: ' + unreachable_state)"}]
+    },
+    {
+      "from": ["CheckingInitials"],
+      "to": ["Valid"],
+      "event": "INITIALS_OK",
+      "guard": {"expression": "has_initial"}
+    },
+    {
+      "from": ["CheckingInitials"],
+      "to": ["Invalid"],
+      "event": "NO_INITIAL",
+      "guard": {"expression": "!has_initial"},
+      "actions": [{"expression": "errors.push('No initial state marked')"}]
+    }
+  ]
+}

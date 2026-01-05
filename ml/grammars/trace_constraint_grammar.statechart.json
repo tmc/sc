@@ -1,0 +1,77 @@
+{
+  "name": "Trace_Constraint_Grammar",
+  "description": "Meta-statechart that constrains generation to valid traces of a given SC definition",
+  "comment": "This statechart is PARAMETERIZED by target_sc - it mirrors the target's structure",
+  "variables": {
+    "target_sc": null,
+    "current_config": [],
+    "enabled_events": [],
+    "trace": [],
+    "max_trace_length": 100
+  },
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {"label": "Uninitialized", "type": 1, "is_initial": true},
+      {"label": "Ready", "type": 1},
+      {"label": "Generating", "type": 1},
+      {"label": "TraceComplete", "type": 1},
+      {"label": "Error", "type": 1}
+    ]
+  },
+  "transitions": [
+    {
+      "from": ["Uninitialized"],
+      "to": ["Ready"],
+      "event": "LOAD_SC",
+      "actions": [
+        {"expression": "target_sc = payload.sc"},
+        {"expression": "current_config = compute_initial_config(target_sc)"},
+        {"expression": "enabled_events = compute_enabled_events(target_sc, current_config)"},
+        {"expression": "trace = []"}
+      ]
+    },
+    {
+      "from": ["Ready"],
+      "to": ["Generating"],
+      "event": "START_GENERATION"
+    },
+    {
+      "from": ["Generating"],
+      "to": ["Generating"],
+      "event": "TOKEN_GENERATED",
+      "guard": {"expression": "is_valid_event(token, enabled_events) && trace.length < max_trace_length"},
+      "actions": [
+        {"expression": "trace.push(token)"},
+        {"expression": "current_config = step(target_sc, current_config, token)"},
+        {"expression": "enabled_events = compute_enabled_events(target_sc, current_config)"}
+      ]
+    },
+    {
+      "from": ["Generating"],
+      "to": ["Error"],
+      "event": "TOKEN_GENERATED",
+      "guard": {"expression": "!is_valid_event(token, enabled_events)"},
+      "actions": [{"expression": "error = 'Invalid event: ' + token + ' not in ' + enabled_events"}]
+    },
+    {
+      "from": ["Generating"],
+      "to": ["TraceComplete"],
+      "event": "END_GENERATION",
+      "guard": {"expression": "trace.length > 0"}
+    },
+    {
+      "from": ["Generating"],
+      "to": ["TraceComplete"],
+      "event": "TOKEN_GENERATED",
+      "guard": {"expression": "trace.length >= max_trace_length"}
+    }
+  ],
+  "helper_functions": {
+    "compute_initial_config": "Returns set of initial states from SC definition",
+    "compute_enabled_events": "Returns events that have enabled transitions from current config",
+    "step": "Executes SC semantics: config × event → config'",
+    "is_valid_event": "Checks if token matches any enabled event"
+  }
+}
