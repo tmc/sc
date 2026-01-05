@@ -1,0 +1,218 @@
+{
+  "config": {
+    "exploration_games": 150,
+    "abstract_states": 4,
+    "refinement_iterations": 3
+  },
+  "stages_completed": [
+    "collect_traces",
+    "discover_states",
+    "synthesize_guards",
+    "build_statechart",
+    "refine_rules"
+  ],
+  "timestamps": {
+    "pipeline_start": "2026-01-04T14:11:40.429829",
+    "collect_start": "2026-01-04T14:11:40.429852",
+    "collect_end": "2026-01-04T14:11:40.441330",
+    "discover_start": "2026-01-04T14:11:40.441662",
+    "discover_end": "2026-01-04T14:11:40.763123",
+    "synthesize_start": "2026-01-04T14:11:40.763143",
+    "synthesize_end": "2026-01-04T14:11:40.941159",
+    "build_start": "2026-01-04T14:11:40.941170",
+    "build_end": "2026-01-04T14:11:40.941177",
+    "refine_start": "2026-01-04T14:11:40.941181",
+    "refine_end": "2026-01-04T14:11:40.974990",
+    "pipeline_end": "2026-01-04T14:11:40.974994"
+  },
+  "statistics": {
+    "total_transitions": 2661,
+    "states_discovered": 4,
+    "rules_synthesized": 2,
+    "guard_stats": {
+      "legality": {
+        "guard": "target_is_empty > 0.5",
+        "precision": 1.0,
+        "coverage": 1.0
+      },
+      "transitions": 1
+    }
+  },
+  "statechart": {
+    "name": "DiscoveredGame",
+    "states": [
+      {
+        "id": 0,
+        "name": "Mid_Phase0",
+        "centroid": {
+          "empty_count": 4.584466019417476,
+          "p1_count": 2.4310679611650485,
+          "p2_count": 1.9844660194174757,
+          "total_pieces": 4.415533980582524,
+          "fill_ratio": 0.49061488673139186,
+          "center_control": 0.4640776699029126,
+          "corner_count": 1.8757281553398057,
+          "target_is_empty": 0.487378640776699,
+          "target_value": 0.7262135922330097,
+          "action_pos": 1.4038834951456312,
+          "is_center": 0.05825242718446602,
+          "is_corner": 0.49320388349514566,
+          "is_p1_turn": 0.5533980582524272
+        },
+        "win_rate": 0.04854368932038835,
+        "is_terminal": false
+      },
+      {
+        "id": 1,
+        "name": "Early_Phase1",
+        "centroid": {
+          "empty_count": 7.76043557168784,
+          "p1_count": 0.8166969147005445,
+          "p2_count": 0.42286751361161523,
+          "total_pieces": 1.2395644283121596,
+          "fill_ratio": 0.13772938092357406,
+          "center_control": 0.13793103448275862,
+          "corner_count": 0.515426497277677,
+          "target_is_empty": 0.8656987295825771,
+          "target_value": 0.18148820326678766,
+          "action_pos": 4.206896551724138,
+          "is_center": 0.13611615245009073,
+          "is_corner": 0.39201451905626133,
+          "is_p1_turn": 0.6061705989110708
+        },
+        "win_rate": 0.0,
+        "is_terminal": false
+      },
+      {
+        "id": 2,
+        "name": "Late_CornerPlay",
+        "centroid": {
+          "empty_count": 4.125214408233276,
+          "p1_count": 2.6963979416809605,
+          "p2_count": 2.1783876500857633,
+          "total_pieces": 4.874785591766724,
+          "fill_ratio": 0.5416428435296355,
+          "center_control": 0.4716981132075472,
+          "corner_count": 2.171526586620926,
+          "target_is_empty": 0.4562607204116638,
+          "target_value": 0.7975986277873071,
+          "action_pos": 6.595197255574614,
+          "is_center": 0.0686106346483705,
+          "is_corner": 0.548885077186964,
+          "is_p1_turn": 0.48198970840480276
+        },
+        "win_rate": 0.05660377358490566,
+        "is_terminal": false
+      },
+      {
+        "id": 3,
+        "name": "End_CenterCtrl_CornerPlay",
+        "centroid": {
+          "empty_count": 1.6106719367588933,
+          "p1_count": 3.880434782608696,
+          "p2_count": 3.508893280632411,
+          "total_pieces": 7.3893280632411065,
+          "fill_ratio": 0.8210364514712485,
+          "center_control": 0.7618577075098815,
+          "corner_count": 3.317193675889328,
+          "target_is_empty": 0.16798418972332016,
+          "target_value": 1.2075098814229248,
+          "action_pos": 3.763833992094862,
+          "is_center": 0.14031620553359683,
+          "is_corner": 0.4041501976284585,
+          "is_p1_turn": 0.6284584980237155
+        },
+        "win_rate": 0.0691699604743083,
+        "is_terminal": false
+      }
+    ],
+    "rules": [
+      {
+        "name": "Legality",
+        "type": "legality",
+        "guard": {
+          "expression": "target_is_empty > 0.5",
+          "predicates": [
+            {
+              "feature": "target_is_empty",
+              "op": ">",
+              "threshold": 0.5
+            }
+          ],
+          "coverage": 1.0,
+          "precision": 1.0
+        },
+        "action": null,
+        "from_state": null,
+        "to_state": null,
+        "confidence": 1.0,
+        "examples": 2661
+      },
+      {
+        "name": "Trans_Mid_Phase0_to_Mid_Phase0",
+        "type": "transition",
+        "guard": {
+          "expression": "TRUE",
+          "predicates": [],
+          "coverage": 0.0,
+          "precision": 0.0
+        },
+        "action": null,
+        "from_state": "Mid_Phase0",
+        "to_state": "Mid_Phase0",
+        "confidence": 0.0,
+        "examples": 0
+      },
+      {
+        "name": "RefinedWin",
+        "type": "win",
+        "guard": {
+          "expression": "TRUE",
+          "predicates": [],
+          "coverage": 1.0,
+          "precision": 1.0
+        },
+        "action": null,
+        "from_state": null,
+        "to_state": null,
+        "confidence": 1.0,
+        "examples": 36
+      },
+      {
+        "name": "RefinedWin",
+        "type": "win",
+        "guard": {
+          "expression": "TRUE",
+          "predicates": [],
+          "coverage": 1.0,
+          "precision": 0.11842105263157894
+        },
+        "action": null,
+        "from_state": null,
+        "to_state": null,
+        "confidence": 0.11842105263157894,
+        "examples": 304
+      },
+      {
+        "name": "RefinedWin",
+        "type": "win",
+        "guard": {
+          "expression": "TRUE",
+          "predicates": [],
+          "coverage": 1.0,
+          "precision": 0.06338028169014084
+        },
+        "action": null,
+        "from_state": null,
+        "to_state": null,
+        "confidence": 0.06338028169014084,
+        "examples": 568
+      }
+    ],
+    "initial_state": "Mid_Phase0"
+  },
+  "validation": {
+    "legality_accuracy": 0.5006,
+    "total_tested": 10000
+  }
+}
