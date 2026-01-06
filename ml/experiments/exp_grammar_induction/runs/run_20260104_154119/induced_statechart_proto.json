@@ -1,0 +1,372 @@
+{
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "PackageDecl",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "FuncDecl",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "TypeDecl",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "VarDecl",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "ControlFlow",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Expression",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Block",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Statement",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Literal",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Operator",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Expression"
+      ],
+      "to": [
+        "Statement"
+      ],
+      "event": "TOKEN_STATEMENT"
+    },
+    {
+      "from": [
+        "Literal"
+      ],
+      "to": [
+        "Statement"
+      ],
+      "event": "TOKEN_STATEMENT"
+    },
+    {
+      "from": [
+        "Expression"
+      ],
+      "to": [
+        "Operator"
+      ],
+      "event": "TOKEN_OPERATOR"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Operator"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "FuncDecl"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "Literal"
+      ],
+      "event": "TOKEN_LITERAL"
+    },
+    {
+      "from": [
+        "Expression"
+      ],
+      "to": [
+        "Block"
+      ],
+      "event": "TOKEN_BLOCK"
+    },
+    {
+      "from": [
+        "PackageDecl"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Operator"
+      ],
+      "to": [
+        "Literal"
+      ],
+      "event": "TOKEN_LITERAL"
+    },
+    {
+      "from": [
+        "Literal"
+      ],
+      "to": [
+        "Operator"
+      ],
+      "event": "TOKEN_OPERATOR"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "FuncDecl"
+      ],
+      "event": "TOKEN_FUNCDECL"
+    },
+    {
+      "from": [
+        "Block"
+      ],
+      "to": [
+        "Statement"
+      ],
+      "event": "TOKEN_STATEMENT"
+    },
+    {
+      "from": [
+        "Expression"
+      ],
+      "to": [
+        "Literal"
+      ],
+      "event": "TOKEN_LITERAL"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "Block"
+      ],
+      "event": "TOKEN_BLOCK"
+    },
+    {
+      "from": [
+        "VarDecl"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Block"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "ControlFlow"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Block"
+      ],
+      "to": [
+        "FuncDecl"
+      ],
+      "event": "TOKEN_FUNCDECL"
+    },
+    {
+      "from": [
+        "Literal"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "PackageDecl"
+      ],
+      "event": "TOKEN_PACKAGEDECL"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "VarDecl"
+      ],
+      "event": "TOKEN_VARDECL"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "ControlFlow"
+      ],
+      "event": "TOKEN_CONTROLFLOW"
+    },
+    {
+      "from": [
+        "Block"
+      ],
+      "to": [
+        "ControlFlow"
+      ],
+      "event": "TOKEN_CONTROLFLOW"
+    },
+    {
+      "from": [
+        "Literal"
+      ],
+      "to": [
+        "Block"
+      ],
+      "event": "TOKEN_BLOCK"
+    },
+    {
+      "from": [
+        "Statement"
+      ],
+      "to": [
+        "TypeDecl"
+      ],
+      "event": "TOKEN_TYPEDECL"
+    },
+    {
+      "from": [
+        "TypeDecl"
+      ],
+      "to": [
+        "Expression"
+      ],
+      "event": "TOKEN_EXPRESSION"
+    },
+    {
+      "from": [
+        "Expression"
+      ],
+      "to": [
+        "TypeDecl"
+      ],
+      "event": "TOKEN_TYPEDECL"
+    },
+    {
+      "from": [
+        "TypeDecl"
+      ],
+      "to": [
+        "Block"
+      ],
+      "event": "TOKEN_BLOCK"
+    },
+    {
+      "from": [
+        "Expression"
+      ],
+      "to": [
+        "FuncDecl"
+      ],
+      "event": "TOKEN_FUNCDECL"
+    }
+  ],
+  "events": [
+    {
+      "name": "TOKEN_BLOCK",
+      "description": "Token event for block state"
+    },
+    {
+      "name": "TOKEN_CONTROLFLOW",
+      "description": "Token event for controlflow state"
+    },
+    {
+      "name": "TOKEN_EXPRESSION",
+      "description": "Token event for expression state"
+    },
+    {
+      "name": "TOKEN_FUNCDECL",
+      "description": "Token event for funcdecl state"
+    },
+    {
+      "name": "TOKEN_LITERAL",
+      "description": "Token event for literal state"
+    },
+    {
+      "name": "TOKEN_OPERATOR",
+      "description": "Token event for operator state"
+    },
+    {
+      "name": "TOKEN_PACKAGEDECL",
+      "description": "Token event for packagedecl state"
+    },
+    {
+      "name": "TOKEN_STATEMENT",
+      "description": "Token event for statement state"
+    },
+    {
+      "name": "TOKEN_TYPEDECL",
+      "description": "Token event for typedecl state"
+    },
+    {
+      "name": "TOKEN_VARDECL",
+      "description": "Token event for vardecl state"
+    }
+  ]
+}

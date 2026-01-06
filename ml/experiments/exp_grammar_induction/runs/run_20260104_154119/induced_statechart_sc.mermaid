@@ -1,0 +1,14 @@
+stateDiagram-v2
+  direction TB
+
+  [*] --> PackageDecl
+  Expression --> Statement : TOKEN_STATEMENT
+  Literal --> Statement : TOKEN_STATEMENT
+  Expression --> Operator : TOKEN_OPERATOR
+  Statement --> Expression : TOKEN_EXPRESSION
+  Operator --> Expression : TOKEN_EXPRESSION
+  FuncDecl --> Expression : TOKEN_EXPRESSION
+  Statement --> Literal : TOKEN_LITERAL
+  Expression --> Block : TOKEN_BLOCK
+  PackageDecl --> Expression : TOKEN_EXPRESSION
+  Operator --> Literal : TOKEN_LITERAL
