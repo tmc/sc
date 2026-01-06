@@ -100,3 +100,49 @@ Files created:
 - `__init__.py` - Test machines, TraceExecutor, evaluation metrics
 - `state_predictor.py` - LLM predictor with chain-of-thought prompting
 - `benchmark.py` - Benchmark runner with category breakdown
+- `hierarchy_predictor.py` - Hierarchy-aware prediction with cascade/viz/stepwise prompts
+- `benchmark_hierarchy.py` - Focused hierarchy test cases
+
+## Hierarchy Improvement Experiment
+
+### Approach
+
+Taught cascade semantics through three methods:
+1. **Cascade**: Explicit rules about entering composite states (enter initial child)
+2. **Viz**: ASCII tree showing parent-child structure + leaf/composite marking
+3. **Stepwise**: Entry cascade map showing composite -> leaf paths
+
+### Results
+
+| Method | Accuracy |
+|--------|----------|
+| Baseline | 8% |
+| Cascade | 20% |
+| Viz | 27% (best) |
+| Stepwise | 7% |
+
+By SC type (viz method):
+- SimpleHierarchy: 25%
+- DeepHierarchy: 50%
+- BranchingHierarchy: 0%
+- FlatTerminal: 33%
+
+### Analysis
+
+**What Worked:**
+- Viz method best (+19pp over baseline)
+- Deep hierarchy improved to 50% - visual structure helps
+- Single cascade transitions predicted correctly
+
+**What Didn't Work:**
+- Multi-step traces within hierarchy fail
+- Branching hierarchies (multiple composite states) at 0%
+- Model often "stuck" on initial state, not tracing events
+- Stepwise method confused the model (7% worse than baseline)
+
+### Recommendations
+
+1. **Fine-tuning required**: Prompting alone insufficient for hierarchy semantics
+2. **Simpler test cases**: Model handles single-step better than multi-step
+3. **Constrained output**: Force model to output only leaf states
+4. **Hybrid approach**: Use LLM for event selection, executor for state transitions

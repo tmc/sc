@@ -501,6 +501,20 @@ def generate_all_test_cases(cases_per_machine: int = 15) -> List[TestCase]:
 # Demo
 # =============================================================================
 
+# Hierarchy-aware prediction exports
+from .hierarchy_predictor import (
+    HierarchyPredictor,
+    HierarchyPredictionResult,
+    build_ascii_tree,
+    get_state_info,
+)
+from .benchmark_hierarchy import (
+    run_hierarchy_benchmark,
+    generate_hierarchy_test_cases,
+    HIERARCHY_TEST_MACHINES,
+)
+
+
 def demo():
     """Demonstrate the terminal state prediction infrastructure."""
     print("=" * 60)
