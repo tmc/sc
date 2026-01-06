@@ -15,6 +15,7 @@ import ExtensionKit
 // found by ExtensionManager if that class is not actually available.
 
 struct ExtensionBrowserView: View {
+    @Environment(\.dismiss) var dismiss
     @State private var manager = ExtensionManager.shared
     @State private var selection: ExtensionManager.DisplayableExtension?
     
@@ -50,13 +51,21 @@ struct ExtensionBrowserView: View {
             }
         }
         .navigationTitle("Extensions")
+        .frame(minWidth: 300, minHeight: 400) // Prevent squishing
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
         .task {
             // Ensure monitoring is active
         }
         .onChange(of: selection) { _, newSelection in
             Task {
                 if let sel = newSelection {
-                     try? await manager.setActive(identity: sel)
+                     await manager.setActive(identity: sel)
                 } else {
                     // Handle deselection if needed
                 }
@@ -71,3 +80,4 @@ extension AppExtensionIdentity {
 }
 
 #endif
+

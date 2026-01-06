@@ -14,9 +14,12 @@ struct StatechartWrapper: Identifiable, Hashable {
         guard let jsonContent = jsonContent else { return nil }
         // Attempt to decode as Protobuf JSON
         do {
-            return try Statecharts_V1_Statechart(jsonString: jsonContent)
+            var options = JSONDecodingOptions()
+            options.ignoreUnknownFields = true
+            return try Statecharts_V1_Statechart(jsonString: jsonContent, options: options)
         } catch {
-            print("Proto decode failed: \(error)")
+            // Only print if it's not a known alternative format
+            // print("Proto decode failed: \(error)")
             return nil
         }
     }

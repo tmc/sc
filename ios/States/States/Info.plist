@@ -6,5 +6,9 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.tmc.States.viewMachine</string>
+	</array>
 </dict>
 </plist>

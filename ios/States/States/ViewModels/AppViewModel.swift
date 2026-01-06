@@ -1,9 +1,11 @@
 import SwiftUI
 import Observation
+import Foundation
 
 @Observable
 class AppViewModel {
     var machines: [StatechartWrapper] = []
+    var selectedMachine: StatechartWrapper?
     
     init() {
         // Mock Data
@@ -80,7 +82,7 @@ class AppViewModel {
     
     func addMachine(name: String) {
         let newMachine = StatechartWrapper(name: name)
-        machines.append(newMachine)
+        machines.insert(newMachine, at: 0)
     }
     
     func deleteMachine(at offsets: IndexSet) {
@@ -88,54 +90,217 @@ class AppViewModel {
     }
     
     // MARK: - AI Generation (Mock)
+    // MARK: - AI Generation (Mock)
     func generateMachine(prompt: String) {
-        let name = "Generated: \(prompt.prefix(10))..."
+        let name = "Generated: \(prompt.prefix(15))..."
         var machine = StatechartWrapper(name: name)
         
         let lowerPrompt = prompt.lowercased()
         
         if lowerPrompt.contains("traffic") {
-            // Traffic Light Mock
             let json = """
             {
-              "id": "trafficLight",
-              "initial": "green",
-              "states": {
-                "green": { "on": { "TIMER": "yellow" } },
-                "yellow": { "on": { "TIMER": "red" } },
-                "red": { "on": { "TIMER": "green" } }
-              }
+              "name": "trafficLight",
+              "root_state": {
+                "label": "trafficLight",
+                "type": "OR",
+                "is_initial": true,
+                "children": [
+                  { "label": "green", "type": "BASIC", "is_initial": true },
+                  { "label": "yellow", "type": "BASIC" },
+                  { "label": "red", "type": "BASIC" }
+                ]
+              },
+              "transitions": [
+                { "from": ["green"], "to": ["yellow"], "event": "TIMER" },
+                { "from": ["yellow"], "to": ["red"], "event": "TIMER" },
+                { "from": ["red"], "to": ["green"], "event": "TIMER" }
+              ]
             }
             """
             machine.jsonContent = json
+        } else if lowerPrompt.contains("login") || lowerPrompt.contains("auth") {
+             // Login Flow Mock
+             let json = """
+             {
+               "name": "loginFlow",
+               "root_state": {
+                 "label": "loginFlow",
+                 "type": "OR",
+                 "is_initial": true,
+                 "children": [
+                   { "label": "idle", "type": "BASIC", "is_initial": true },
+                   { "label": "authenticating", "type": "BASIC" },
+                   { "label": "loggedIn", "type": "BASIC" },
+                   { "label": "error", "type": "BASIC" }
+                 ]
+               },
+               "transitions": [
+                 { "from": ["idle"], "to": ["authenticating"], "event": "LOGIN" },
+                 { "from": ["authenticating"], "to": ["loggedIn"], "event": "SUCCESS" },
+                 { "from": ["authenticating"], "to": ["error"], "event": "FAILURE" },
+                 { "from": ["loggedIn"], "to": ["idle"], "event": "LOGOUT" },
+                 { "from": ["error"], "to": ["authenticating"], "event": "RETRY" },
+                 { "from": ["error"], "to": ["idle"], "event": "CANCEL" }
+               ]
+             }
+             """
+             machine.jsonContent = json
+        } else if lowerPrompt.contains("music") || lowerPrompt.contains("player") {
+             // Music Player Mock
+             let json = """
+             {
+               "name": "musicPlayer",
+               "root_state": {
+                 "label": "musicPlayer",
+                 "type": "OR",
+                 "is_initial": true,
+                 "children": [
+                   { "label": "stopped", "type": "BASIC", "is_initial": true },
+                   { "label": "playing", "type": "BASIC" },
+                   { "label": "paused", "type": "BASIC" }
+                 ]
+               },
+               "transitions": [
+                 { "from": ["stopped"], "to": ["playing"], "event": "PLAY" },
+                 { "from": ["playing"], "to": ["paused"], "event": "PAUSE" },
+                 { "from": ["playing"], "to": ["stopped"], "event": "STOP" },
+                 { "from": ["paused"], "to": ["playing"], "event": "PLAY" },
+                 { "from": ["paused"], "to": ["stopped"], "event": "STOP" }
+               ]
+             }
+             """
+             machine.jsonContent = json
         } else if lowerPrompt.contains("toggle") || lowerPrompt.contains("switch") {
              // Toggle Mock
              let json = """
              {
-               "id": "toggle",
-               "initial": "inactive",
-               "states": {
-                 "inactive": { "on": { "TOGGLE": "active" } },
-                 "active": { "on": { "TOGGLE": "inactive" } }
-               }
+               "name": "toggle",
+               "root_state": {
+                 "label": "toggle",
+                 "type": "OR",
+                 "is_initial": true,
+                 "children": [
+                   { "label": "inactive", "type": "BASIC", "is_initial": true },
+                   { "label": "active", "type": "BASIC" }
+                 ]
+               },
+               "transitions": [
+                 { "from": ["inactive"], "to": ["active"], "event": "TOGGLE" },
+                 { "from": ["active"], "to": ["inactive"], "event": "TOGGLE" }
+               ]
              }
              """
              machine.jsonContent = json
         } else {
-            // Generic Mock
-            let json = """
-            {
-              "id": "generic",
-              "initial": "start",
-              "states": {
-                "start": { "on": { "NEXT": "end" } },
-                "end": { "type": "final" }
-              }
-            }
-            """
-            machine.jsonContent = json
+            // Generic Mock for unknown
+             let json = """
+             {
+               "name": "generic",
+               "root_state": {
+                 "label": "generic",
+                 "type": "OR",
+                 "is_initial": true,
+                 "children": [
+                   { "label": "start", "type": "BASIC", "is_initial": true },
+                   { "label": "process", "type": "BASIC" },
+                   { "label": "end", "type": "BASIC" },
+                   { "label": "fail", "type": "BASIC" }
+                 ]
+               },
+               "transitions": [
+                 { "from": ["start"], "to": ["process"], "event": "NEXT" },
+                 { "from": ["process"], "to": ["end"], "event": "COMPLETE" },
+                 { "from": ["process"], "to": ["fail"], "event": "ERROR" },
+                 { "from": ["fail"], "to": ["process"], "event": "RETRY" }
+               ]
+             }
+             """
+             machine.jsonContent = json
         }
         
-        machines.append(machine)
+        machines.insert(machine, at: 0)
+        machines.insert(machine, at: 0)
+    }
+
+    // MARK: - Remote Generation (SAE Steering)
+    
+    func generateRemote(prompt: String, steering: [Int: Double]) {
+        guard let url = URL(string: "http://localhost:8000/generate") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "prompt": prompt,
+            "steering": Dictionary(uniqueKeysWithValues: steering.map { (String($0.key), $0.value) })
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            print("Failed to encode request: \(error)")
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            if let error = error {
+                print("Remote Gen Error: \(error)")
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            do {
+                if let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let scJSON = jsonResponse["json"] as? String {
+                   
+                    DispatchQueue.main.async {
+                        guard let self = self else { return }
+                        
+                        // Check if we are already viewing a steered version of this prompt
+                        let expectedName = "Steered: \(prompt.prefix(10))"
+                        
+                        if let current = self.selectedMachine, current.name == expectedName {
+                            // Update in place to preserve view state (if possible)
+                            // StatechartWrapper's jsonContent is @Observation tracked, so this should trigger update
+                            if current.jsonContent != scJSON {
+                                current.jsonContent = scJSON
+                            }
+                        } else {
+                            // Create new
+                            let machine = StatechartWrapper(name: expectedName, jsonContent: scJSON)
+                            self.machines.insert(machine, at: 0)
+                            self.selectedMachine = machine
+                        }
+                    }
+                }
+            } catch {
+               print("Failed to decode response: \(error)")
+            }
+        }
+        task.resume()
+    }
+    
+    // MARK: - Deep Linking & restoration
+    
+    func restore(from url: URL) {
+        // Mock restoration logic
+        // Scheme: states://machine/<ID> or <Name>
+        // For simplicity, we match by name if ID isn't found
+        let path = url.lastPathComponent
+        if let machine = machines.first(where: { $0.id.uuidString == path || $0.name == path }) {
+             selectedMachine = machine
+        }
+    }
+    
+    func continueActivity(_ activity: NSUserActivity) {
+        if activity.activityType == "com.tmc.States.viewMachine",
+           let machineIDString = activity.userInfo?["machineID"] as? String {
+            if let machine = machines.first(where: { $0.id.uuidString == machineIDString }) {
+                selectedMachine = machine
+            }
+        }
     }
 }

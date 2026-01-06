@@ -10,7 +10,17 @@ class StatechartViewModel {
     var selection: Set<UUID> = []
     var activeStateIDs: Set<UUID> = [] // IDs of currently active states
     var scale: CGFloat = 1.0
+    var scale: CGFloat = 1.0
     var offset: CGSize = .zero
+    
+    // MARK: - Analysis
+    let analysisEngine = AnalysisEngine()
+    var analysisReport: AnalysisReport?
+    var showAnalysis: Bool = false
+    
+    // MARK: - Engine (Semantics)
+    var engine: StatechartEngine?
+    var showContextInspector: Bool = false
     
     // MARK: - Editor Mode
     enum EditorMode {
@@ -84,19 +94,28 @@ class StatechartViewModel {
             activeStateIDs = first
             simulationHistory = [first]
             currentStepIndex = 0
+            #if os(iOS)
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            #endif
         }
     }
-    
+
     func stepBack() {
         guard currentStepIndex > 0 else { return }
         currentStepIndex -= 1
         activeStateIDs = simulationHistory[currentStepIndex]
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
     }
-    
+
     func stepForward() {
         guard currentStepIndex < simulationHistory.count - 1 else { return }
         currentStepIndex += 1
         activeStateIDs = simulationHistory[currentStepIndex]
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
     }
     
     func jumpToStep(_ index: Int) {
@@ -124,41 +143,55 @@ class StatechartViewModel {
     
     /// Sends an event to the state machine, triggering transitions if valid
     func sendEvent(_ eventName: String) {
-        var nextActiveIDs = activeStateIDs
-        var handled = false
-        
-        // Find outgoing edges from currently active states that match eventName
-        // Note: This is a naive implementation. Harel statecharts have complex priority rules (depth-first, etc.)
-        // For visualizer parity, we initially support simple atomic transitions.
-        
-        let validEdges = edges.filter { edge in
-            activeStateIDs.contains(edge.source) && edge.label == eventName
+        // Lazy init engine if needed or update it
+        if engine == nil {
+            engine = StatechartEngine(nodes: nodes, edges: edges)
+            // Sync context if needed
+        } else {
+            // Ensure graph is up to date (naive sync for now)
+            engine?.updateDefinition(nodes: nodes, edges: edges)
         }
         
-        for edge in validEdges {
-            // Traverse
-            // 1. Exit source (if atomic) or just switch?
-            // Simple model: remove source, add target.
-            // Assumption: transitions are atomic-to-atomic or compound-to-atomic?
-            // If source is active, we leave it.
-            if nextActiveIDs.contains(edge.source) {
-                nextActiveIDs.remove(edge.source)
-                nextActiveIDs.insert(edge.target)
-                handled = true
-            }
-        }
+        // Sync Active State IDs -> Engine (if we manually toggled things outside engine)
+        engine?.activeStateIDs = activeStateIDs
+        engine?.context = [:] // TODO: Persist context in VM or let Engine own it?
         
-        if handled {
-            // Record History
+        engine?.sendEvent(eventName)
+        
+        // Sync Result Back
+        if let newActive = engine?.activeStateIDs {
+            
+            // History Management
             if currentStepIndex < simulationHistory.count - 1 {
                 simulationHistory = Array(simulationHistory.prefix(currentStepIndex + 1))
             }
-            activeStateIDs = nextActiveIDs
-            simulationHistory.append(nextActiveIDs)
-            currentStepIndex = simulationHistory.count - 1
-        } else {
-            print("Event '\(eventName)' ignored (no valid transitions from current state).")
+            
+            if newActive != activeStateIDs {
+                activeStateIDs = newActive
+                simulationHistory.append(newActive)
+                currentStepIndex = simulationHistory.count - 1
+                
+                #if os(iOS)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                #endif
+            } else {
+                // No change
+                #if os(iOS)
+                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                #endif
+            }
         }
+        
+        // Context Update?
+        // We need to inspect context in UI.
+        // engine.context is updated.
+    }
+    
+    // MARK: - Analysis Actions
+    
+    func analyze() {
+        self.analysisReport = analysisEngine.analyze(nodes: nodes, edges: edges)
+        self.showAnalysis = true
     }
     
     // MARK: - Protobuf Parsing
@@ -213,14 +246,12 @@ class StatechartViewModel {
         // --- Layout Extraction ---
         var finalPosition = CGPoint(x: parentOrigin.x + suggestedOffset.x, y: parentOrigin.y + suggestedOffset.y) // Default to suggested
         var size = CGSize(width: 150, height: 80)
-        var usedExplicitLayout = false
         
         // Attempt to extract Extensions_V1_StateLayout
         for ext in node.extensions {
             if let layout = try? Extensions_V1_StateLayout(unpackingAny: ext) {
                 if layout.hasPosition {
                     finalPosition = CGPoint(x: parentOrigin.x + layout.position.x, y: parentOrigin.y + layout.position.y)
-                    usedExplicitLayout = true
                 }
                 if layout.hasSize {
                     size = CGSize(width: layout.size.width, height: layout.size.height)
@@ -270,7 +301,13 @@ class StatechartViewModel {
             let toKey = t.to.joined(separator: "###")
             
             if let sourceID = pathMap[fromKey], let targetID = pathMap[toKey] {
-                let label = t.event
+                let event = t.event
+                let guardExpr = t.hasGuard ? t.guard.expression : nil
+                // Proto might have actions? 
+                // t.actions is repeated Action.
+                // We'll join them for now or pick first.
+                let action = t.actions.map { $0.label }.joined(separator: "; ")
+                
                 var waypoints: [CGPoint]? = nil
                 var routingType: FlowEdge.RoutingType = .orthogonal
                 
@@ -291,7 +328,7 @@ class StatechartViewModel {
                     }
                 }
                 
-                result.append(FlowEdge(source: sourceID, target: targetID, label: label, routingType: routingType, waypoints: waypoints))
+                result.append(FlowEdge(source: sourceID, target: targetID, event: event, guardExpression: guardExpr, action: action, routingType: routingType, waypoints: waypoints))
             }
         }
         return result
@@ -390,8 +427,15 @@ class StatechartViewModel {
             let toKey = t.to.joined(separator: "###")
             
             if let sourceID = pathMap[fromKey], let targetID = pathMap[toKey] {
-                let label = t.guardDef?.expression ?? ""
-                result.append(FlowEdge(source: sourceID, target: targetID, label: label, routingType: .orthogonal))
+                let event = t.event
+                let guardExpr = t.guardDef?.expression
+                var action: String? = nil
+                // StandardTransition definition check:
+                // struct StandardTransition: Codable { var from, to: [String]; var event: String?; var guardDef: ... }
+                // Need to verify standard transition struct fields.
+                // Assuming t.event exists.
+                
+                result.append(FlowEdge(source: sourceID, target: targetID, event: event, guardExpression: guardExpr, action: nil, routingType: .orthogonal))
             } else {
                 // If direct match failed, maybe the path in transition excludes Root?
                 // Try fuzzy matching or removing first element?
@@ -515,8 +559,11 @@ class StatechartViewModel {
                let targetKey = edge.target,
                let targetID = idMap[targetKey] {
                 
-                let label = edge.data?.eventTypeData?.eventType ?? ""
-                let flowEdge = FlowEdge(source: sourceID, target: targetID, label: label, routingType: .orthogonal)
+                let event = edge.data?.eventTypeData?.eventType
+                // Stately edges might contain guard/actions in `data`?
+                // For now just event.
+                
+                let flowEdge = FlowEdge(source: sourceID, target: targetID, event: event, routingType: .orthogonal)
                 result.append(flowEdge)
             }
         }
@@ -526,26 +573,51 @@ class StatechartViewModel {
     // MARK: - View Helpers
     
     func zoomToFit(viewSize: CGSize) {
+        guard viewSize.width > 0, viewSize.height > 0 else { return }
         guard !nodes.isEmpty else { return }
         
         let nodeRects = nodes.map { CGRect(origin: $0.position, size: $0.size) }
         let boundingBox = nodeRects.reduce(nodeRects[0]) { $0.union($1) }
         
-        // Add padding
-        let paddedRect = boundingBox.insetBy(dx: -50, dy: -50)
+        // Add padding (Generous padding for HUDs)
+        let padding: CGFloat = 100
+        let paddedRect = boundingBox.insetBy(dx: -padding, dy: -padding)
+        
+        guard paddedRect.width > 0, paddedRect.height > 0 else { return }
         
         let scaleX = viewSize.width / paddedRect.width
         let scaleY = viewSize.height / paddedRect.height
-        let fitScale = min(scaleX, scaleY, 1.0)
         
-        self.scale = fitScale
-        let contentCenter = CGPoint(x: boundingBox.midX, y: boundingBox.midY)
-        let viewCenter = CGPoint(x: viewSize.width/2, y: viewSize.height/2)
+        // Clamp initial fit
+        let fitScale = min(scaleX, scaleY, 1.2) // Don't zoom in too much if chart is tiny
         
-        self.offset = CGSize(
-            width: viewCenter.x - contentCenter.x * fitScale,
-            height: viewCenter.y - contentCenter.y * fitScale
-        )
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+            self.scale = fitScale
+            
+            let contentCenter = CGPoint(x: boundingBox.midX, y: boundingBox.midY)
+            self.offset = CGSize(
+                width: -contentCenter.x * fitScale,
+                height: -contentCenter.y * fitScale
+            )
+        }
+    }
+    
+    func centerNode(id: UUID, viewSize: CGSize) {
+        guard let node = nodes.first(where: { $0.id == id }) else { return }
+        
+        // Calculate offset to center this node
+        // center of node
+        let nodeCenter = CGPoint(x: node.position.x + node.size.width / 2, y: node.position.y + node.size.height / 2)
+        
+        // We want (nodeCenter * scale) + offset = (viewSize / 2)
+        // offset = (viewSize / 2) - (nodeCenter * scale)
+        
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            self.offset = CGSize(
+                width: (viewSize.width / 2) - (nodeCenter.x * self.scale),
+                height: (viewSize.height / 2) - (nodeCenter.y * self.scale)
+            )
+        }
     }
     
     // MARK: - Undo/Redo Support
@@ -557,7 +629,11 @@ class StatechartViewModel {
         let newNode = FlowNode(id: UUID(), position: position, label: "New State", type: .atomic)
         nodes.append(newNode)
         selection = [newNode.id]
-        
+
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
+
         // Register Undo: Remove the added node
         undoManager?.registerUndo(withTarget: self) { target in
             target.deleteNode(id: newNode.id)
@@ -568,41 +644,87 @@ class StatechartViewModel {
         // Identify nodes to delete (intersection of nodes and selection)
         let nodesToDelete = nodes.filter { selection.contains($0.id) }
         let nodeIDsToDelete = Set(nodesToDelete.map { $0.id })
-        
+
         // Identify edges to delete (connected to these nodes OR selected themselves)
         let edgesToDelete = edges.filter { edge in
             selection.contains(edge.id) ||
             nodeIDsToDelete.contains(edge.source) ||
             nodeIDsToDelete.contains(edge.target)
         }
-        
+
+        guard !nodesToDelete.isEmpty || !edgesToDelete.isEmpty else { return }
+
         // Perform Deletion (Action)
         nodes.removeAll { selection.contains($0.id) }
-        edges.removeAll { edgesToDelete.contains($0) } // Equatable check or ID check if FlowEdge is Equatable
-        
+        edges.removeAll { edgesToDelete.contains($0) }
+
         selection.removeAll()
-        
+
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+
         // Register Undo: Restore nodes and edges
         undoManager?.registerUndo(withTarget: self) { target in
             target.nodes.append(contentsOf: nodesToDelete)
             target.edges.append(contentsOf: edgesToDelete)
-            // Restore selection? Optional, but nice.
             target.selection = Set(nodesToDelete.map { $0.id }).union(edgesToDelete.map { $0.id })
         }
     }
     
     // Internal helper for undoing an add
-    private func deleteNode(id: UUID) {
-        if let index = nodes.firstIndex(where: { $0.id == id }) {
-            let node = nodes[index]
-            nodes.remove(at: index)
+    // Made public and robust for Context Menu usage
+    func deleteNode(id: UUID) {
+        guard let index = nodes.firstIndex(where: { $0.id == id }) else { return }
+        let node = nodes[index]
+        
+        // Find connected edges
+        let connectedEdges = edges.filter { $0.source == id || $0.target == id }
+        
+        // Perform Delete
+        nodes.remove(at: index)
+        edges.removeAll { connectedEdges.contains($0) }
+        
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+        
+        // Register Undo
+        undoManager?.registerUndo(withTarget: self) { target in
+            target.nodes.append(node)
+            target.edges.append(contentsOf: connectedEdges)
             
-            // Register Redo: Add it back
-            undoManager?.registerUndo(withTarget: self) { target in
-                target.nodes.append(node)
-                // If we redo an add, we should probably set selection to it
-                target.selection = [node.id]
+            // Redo
+            target.undoManager?.registerUndo(withTarget: target) { target in
+                target.deleteNode(id: id)
             }
+        }
+    }
+    
+    func duplicateNode(id: UUID) {
+        guard let node = nodes.first(where: { $0.id == id }) else { return }
+        
+        let offset = CGPoint(x: 20, y: 20)
+        let newPos = CGPoint(x: node.position.x + offset.x, y: node.position.y + offset.y)
+        
+        let newNode = FlowNode(
+            id: UUID(),
+            position: newPos,
+            label: "\(node.label) Copy",
+            type: node.type,
+            size: node.size,
+            parentID: node.parentID
+        )
+        
+        nodes.append(newNode)
+        selection = [newNode.id]
+        
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
+        
+        undoManager?.registerUndo(withTarget: self) { target in
+            target.deleteNode(id: newNode.id)
         }
     }
     
@@ -633,4 +755,60 @@ class StatechartViewModel {
         }
     }
     
+    func registerRenameUndo(id: UUID, oldLabel: String) {
+        guard let index = nodes.firstIndex(where: { $0.id == id }) else { return }
+        let currentLabel = nodes[index].label
+        
+        undoManager?.registerUndo(withTarget: self) { target in
+            target.renameNode(id: id, label: oldLabel)
+            
+            // Redo
+            target.undoManager?.registerUndo(withTarget: target) { target in
+                target.renameNode(id: id, label: currentLabel)
+            }
+        }
+    }
+    
+    private func renameNode(id: UUID, label: String) {
+        if let index = nodes.firstIndex(where: { $0.id == id }) {
+            nodes[index].label = label
+        }
+    }
+
+    func addSubstate(parentID: UUID) {
+        // Find parent to get position estimate
+        guard let parent = nodes.first(where: { $0.id == parentID }) else { return }
+        
+        let position = CGPoint(x: parent.position.x + 20, y: parent.position.y + 60)
+        let newNode = FlowNode(id: UUID(), position: position, label: "Substate", type: .atomic, parentID: parentID)
+        
+        nodes.append(newNode)
+        selection = [newNode.id]
+        
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+        
+        undoManager?.registerUndo(withTarget: self) { target in
+            target.deleteNode(id: newNode.id)
+        }
+    }
+    
+    func reparent(childID: UUID, newParentID: UUID?) {
+        guard let index = nodes.firstIndex(where: { $0.id == childID }) else { return }
+        
+        let oldParentID = nodes[index].parentID
+        if oldParentID == newParentID { return } // No change
+        
+        nodes[index].parentID = newParentID
+        
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+        
+        undoManager?.registerUndo(withTarget: self) { target in
+            target.reparent(childID: childID, newParentID: oldParentID)
+        }
+    }
 }
+

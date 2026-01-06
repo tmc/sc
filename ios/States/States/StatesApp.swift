@@ -15,6 +15,12 @@ struct StatesApp: App {
         WindowGroup {
             ContentView()
                 .environment(appViewModel)
+                .onOpenURL { url in
+                    appViewModel.restore(from: url)
+                }
+                .onContinueUserActivity("com.tmc.States.viewMachine") { activity in
+                    appViewModel.continueActivity(activity)
+                }
         }
     }
 }

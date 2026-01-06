@@ -1,17 +1,27 @@
 import SwiftUI
 
 struct PropertiesView: View {
-    var viewModel: StatechartViewModel
+    @Bindable var viewModel: StatechartViewModel
     
     var body: some View {
-        @Bindable var viewModel = viewModel
-        
         Form {
             if let selectedNodeID = viewModel.selection.first,
                let index = viewModel.nodes.firstIndex(where: { $0.id == selectedNodeID }) {
                 
-                Section("Node Properties") {
+                // --- Node Editing ---
+                Section {
                     TextField("Label", text: $viewModel.nodes[index].label)
+                        .textFieldStyle(.plain)
+                        .font(Theme.Typography.body)
+                        .padding(8)
+                        .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                } header: {
+                    Text("NODE PROPERTIES")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Section {
                     Picker("Type", selection: $viewModel.nodes[index].type) {
                         Text("Atomic").tag(FlowNode.NodeType.atomic)
                         Text("Compound").tag(FlowNode.NodeType.compound)
@@ -19,44 +29,90 @@ struct PropertiesView: View {
                         Text("Final").tag(FlowNode.NodeType.final)
                         Text("History").tag(FlowNode.NodeType.history)
                     }
+                    .pickerStyle(.menu)
+                    .tint(Theme.Colors.accent)
+                } header: {
+                    Text("CONFIGURATION")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
                 }
                 
-                Section("Metadata") {
-                    LabeledContent("ID", value: viewModel.nodes[index].id.uuidString)
-                    LabeledContent("Position", value: "\(Int(viewModel.nodes[index].position.x)), \(Int(viewModel.nodes[index].position.y))")
+                Section {
+                    LabeledContent {
+                        Text(viewModel.nodes[index].id.uuidString)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    } label: {
+                        Text("ID")
+                            .font(Theme.Typography.caption)
+                    }
+                    
+                    LabeledContent {
+                        Text("\(Int(viewModel.nodes[index].position.x)), \(Int(viewModel.nodes[index].position.y))")
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    } label: {
+                        Text("Position")
+                            .font(Theme.Typography.caption)
+                    }
+                } header: {
+                    Text("METADATA")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
                 }
                 
             } else if let selectedEdgeID = viewModel.selection.first,
                       let index = viewModel.edges.firstIndex(where: { $0.id == selectedEdgeID }) {
                 
-                Section("Transition Properties") {
+                // --- Edge Editing ---
+                Section {
                     TextField("Label", text: Binding(
                         get: { viewModel.edges[index].label ?? "" },
                         set: { viewModel.edges[index].label = $0.isEmpty ? nil : $0 }
                     ))
+                    .textFieldStyle(.plain)
+                    .font(Theme.Typography.body)
+                    .padding(8)
+                    .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                } header: {
+                    Text("TRANSITION")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
                 }
                 
-                Section("Connection") {
+                Section {
                     LabeledContent("Source", value: viewModel.nodes.first(where: { $0.id == viewModel.edges[index].source })?.label ?? "Unknown")
                     LabeledContent("Target", value: viewModel.nodes.first(where: { $0.id == viewModel.edges[index].target })?.label ?? "Unknown")
+                } header: {
+                    Text("CONNECTION")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
                 }
                 
             } else {
-                // Machine Inspector (Global)
-                Section("Simulation History") {
+                // --- Global / Machine Inspection ---
+                Section {
                     if viewModel.simulationHistory.isEmpty {
-                        Text("No history captured.")
-                            .foregroundStyle(.secondary)
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                            Text("No history captured.")
+                        }
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
                     } else {
                         List {
                             ForEach(Array(viewModel.simulationHistory.enumerated()), id: \.offset) { index, stateIDs in
                                 HStack {
                                     Text("Step \(index)")
                                         .font(.caption.monospaced())
+                                        .foregroundStyle(index == viewModel.currentStepIndex ? Theme.Colors.accent : .primary)
                                     Spacer()
                                     if index == viewModel.currentStepIndex {
-                                        Image(systemName: "arrow.left.circle.fill")
-                                            .foregroundStyle(.green)
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(Theme.Colors.accent)
                                     }
                                 }
                                 .contentShape(Rectangle())
@@ -69,9 +125,13 @@ struct PropertiesView: View {
                         }
                         .frame(minHeight: 150)
                     }
+                } header: {
+                    Text("SIMULATION HISTORY")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.secondary)
                 }
                 
-                Section("Machine Context") {
+                Section {
                     if let json = viewModel.machine.jsonContent,
                        let data = json.data(using: .utf8),
                        let obj = try? JSONSerialization.jsonObject(with: data, options: []),
@@ -79,30 +139,80 @@ struct PropertiesView: View {
                        let prettyString = String(data: prettyData, encoding: .utf8) {
                         
                         Text(prettyString)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.system(size: 10, design: .monospaced))
                             .lineLimit(nil)
                             .textSelection(.enabled)
-                            .padding(4)
-                            .background(Color(.systemFill))
-                            .cornerRadius(6)
+                            .padding(8)
+                            .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
                     } else {
                         Text("No JSON context available.")
                             .italic()
+                            .foregroundStyle(.secondary)
                     }
+                } header: {
+                    HStack {
+                        Text("MACHINE CONTEXT")
+                        Spacer()
+                        if let _ = viewModel.machine.jsonContent {
+                            Label("JSON", systemImage: "curlybraces")
+                                .font(.caption2)
+                        }
+                    }
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
         }
-        .inspectorColumnWidth(min: 250, ideal: 300, max: 400)
+        #if os(macOS)
+        .formStyle(.grouped)
+        #else
+        .listStyle(.insetGrouped) // Use list layout for form appearance on iOS
+        #endif
+        .inspectorColumnWidth(min: 220, ideal: 280, max: 350)
+        .background(Theme.Colors.sidebarBackground) // Consistent background
+        .scrollContentBackground(.hidden)
     }
 }
 
 #Preview("Properties - Populated") {
-    let vm = StatechartViewModel(machine: StatechartWrapper(name: "Preview"))
-    vm.selection = [vm.nodes.first!.id]
-    return PropertiesView(viewModel: vm)
+    struct PreviewWrapper: View {
+        @State var machine = StatechartWrapper(name: "Preview")
+        @State var viewModel: StatechartViewModel
+        
+        init() {
+            let m = StatechartWrapper(name: "Preview")
+            let vm = StatechartViewModel(machine: m)
+            
+            let node = FlowNode(id: UUID(), position: .zero, label: "Scanning", type: .atomic)
+            vm.nodes = [node]
+            vm.selection = [node.id]
+            
+            _machine = State(initialValue: m)
+            _viewModel = State(initialValue: vm)
+        }
+        
+        var body: some View {
+            PropertiesView(viewModel: viewModel)
+        }
+    }
+    return PreviewWrapper()
 }
 
 #Preview("Properties - Empty") {
-    let vm = StatechartViewModel(machine: StatechartWrapper(name: "Preview"))
-    return PropertiesView(viewModel: vm)
+     struct PreviewWrapper: View {
+        @State var machine = StatechartWrapper(name: "Preview")
+        @State var viewModel: StatechartViewModel
+        
+        init() {
+            let m = StatechartWrapper(name: "Preview")
+            let vm = StatechartViewModel(machine: m)
+            _machine = State(initialValue: m)
+            _viewModel = State(initialValue: vm)
+        }
+        
+        var body: some View {
+            PropertiesView(viewModel: viewModel)
+        }
+    }
+    return PreviewWrapper()
 }
