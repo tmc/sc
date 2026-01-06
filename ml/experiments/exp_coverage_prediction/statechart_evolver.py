@@ -722,9 +722,13 @@ class GenomeFactory:
         else:
             # Add a line from observed patterns if available
             if self.observed_line_patterns:
-                # Pick from observed patterns
-                pattern = random.choice(self.observed_line_patterns)
-                new_line = random.choice(list(pattern))
+                # Pick from non-empty observed patterns
+                non_empty = [p for p in self.observed_line_patterns if p]
+                if non_empty:
+                    pattern = random.choice(non_empty)
+                    new_line = random.choice(list(pattern))
+                else:
+                    new_line = random.randint(1, self.max_lines)
             else:
                 new_line = random.randint(1, self.max_lines)
             state.lines.add(new_line)
