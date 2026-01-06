@@ -1,0 +1,270 @@
+{
+  "results": [
+    {
+      "name": "entry_simple",
+      "category": "entry",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": false,
+      "expected_state": "Active",
+      "actual_state": "Active",
+      "expected_context": {
+        "count": 0
+      },
+      "actual_context": {
+        "count": 0
+      },
+      "expected_order": [
+        "Active.entry"
+      ],
+      "actual_order": [
+        "Idle.exit",
+        "Active.entry",
+        "trans:Idle->Active"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "exit_simple",
+      "category": "exit",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "Stopped",
+      "actual_state": "Stopped",
+      "expected_context": {
+        "cleaned_up": true
+      },
+      "actual_context": {
+        "cleaned_up": true
+      },
+      "expected_order": [
+        "Running.exit"
+      ],
+      "actual_order": [
+        "Running.exit"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "trans_simple",
+      "category": "transition",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": false,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "transition_count": 1
+      },
+      "actual_context": {
+        "transition_count": 1
+      },
+      "expected_order": [
+        "trans:A->B"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "order_exit_entry",
+      "category": "order",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": false,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "order": "A.exit,B.entry,"
+      },
+      "actual_context": {
+        "order": "A.exit,B.entry,"
+      },
+      "expected_order": [
+        "A.exit",
+        "B.entry"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "context_conditional",
+      "category": "context_mutation",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": false,
+      "expected_state": "High",
+      "actual_state": "High",
+      "expected_context": {
+        "value": 75,
+        "result": "above threshold"
+      },
+      "actual_context": {
+        "result": "above threshold",
+        "value": 75
+      },
+      "expected_order": [
+        "High.entry"
+      ],
+      "actual_order": [
+        "Check.exit",
+        "High.entry",
+        "trans:Check->High"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "combined_all",
+      "category": "combined",
+      "success": true,
+      "state_correct": false,
+      "context_correct": false,
+      "order_correct": false,
+      "expected_state": "Done",
+      "actual_state": "Processing",
+      "expected_context": {
+        "prepared": true,
+        "step": 2,
+        "started": true,
+        "result": 42,
+        "completed": true
+      },
+      "actual_context": {
+        "prepared": true,
+        "step": 1,
+        "started": true,
+        "result": 42,
+        "completed": true
+      },
+      "expected_order": [
+        "Ready.exit",
+        "trans:Ready->Processing",
+        "Processing.entry",
+        "Processing.exit",
+        "trans:Processing->Done",
+        "Done.entry"
+      ],
+      "actual_order": [
+        "Ready.exit",
+        "Processing.entry",
+        "Processing.exit",
+        "Done.entry",
+        "trans:Ready->Processing",
+        "trans:Processing->Done"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    }
+  ],
+  "category_stats": {
+    "entry": {
+      "total": 1,
+      "state_correct": 1,
+      "context_correct": 1,
+      "order_correct": 0
+    },
+    "exit": {
+      "total": 1,
+      "state_correct": 1,
+      "context_correct": 1,
+      "order_correct": 1
+    },
+    "transition": {
+      "total": 1,
+      "state_correct": 1,
+      "context_correct": 1,
+      "order_correct": 0
+    },
+    "order": {
+      "total": 1,
+      "state_correct": 1,
+      "context_correct": 1,
+      "order_correct": 0
+    },
+    "context_mutation": {
+      "total": 1,
+      "state_correct": 1,
+      "context_correct": 1,
+      "order_correct": 0
+    },
+    "combined": {
+      "total": 1,
+      "state_correct": 0,
+      "context_correct": 0,
+      "order_correct": 0
+    }
+  },
+  "overall": {
+    "total": 6,
+    "state_correct": 5,
+    "context_correct": 5,
+    "order_correct": 1,
+    "all_correct": 1
+  },
+  "summary": {
+    "overall": {
+      "state": 83,
+      "context": 83,
+      "order": 17,
+      "all": 17
+    },
+    "by_category": {
+      "entry": {
+        "state": 100,
+        "context": 100,
+        "order": 0
+      },
+      "exit": {
+        "state": 100,
+        "context": 100,
+        "order": 100
+      },
+      "transition": {
+        "state": 100,
+        "context": 100,
+        "order": 0
+      },
+      "order": {
+        "state": 100,
+        "context": 100,
+        "order": 0
+      },
+      "context_mutation": {
+        "state": 100,
+        "context": 100,
+        "order": 0
+      },
+      "combined": {
+        "state": 0,
+        "context": 0,
+        "order": 0
+      }
+    }
+  },
+  "model": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+  "timestamp": "2026-01-05T11:41:40.667354"
+}

@@ -1,0 +1,595 @@
+{
+  "results": [
+    {
+      "name": "entry_simple",
+      "category": "entry",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "Active",
+      "actual_state": "Active",
+      "expected_context": {
+        "count": 0
+      },
+      "actual_context": {
+        "count": 0
+      },
+      "expected_order": [
+        "Active.entry"
+      ],
+      "actual_order": [
+        "Idle.exit",
+        "Active.entry",
+        "trans:Idle->Active"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "entry_multiple",
+      "category": "entry",
+      "success": true,
+      "state_correct": true,
+      "context_correct": false,
+      "order_correct": true,
+      "expected_state": "On",
+      "actual_state": "On",
+      "expected_context": {
+        "power": true,
+        "brightness": 100
+      },
+      "actual_context": {
+        "cleaned": true
+      },
+      "expected_order": [
+        "On.entry"
+      ],
+      "actual_order": [
+        "Off.exit",
+        "On.entry",
+        "A.exit",
+        "trans:Off->On",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "entry_increment",
+      "category": "entry",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "visits": 6
+      },
+      "actual_context": {
+        "visits": 6
+      },
+      "expected_order": [
+        "B.entry"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "exit_simple",
+      "category": "exit",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "Stopped",
+      "actual_state": "Stopped",
+      "expected_context": {
+        "cleaned_up": true
+      },
+      "actual_context": {
+        "cleaned_up": true
+      },
+      "expected_order": [
+        "Running.exit"
+      ],
+      "actual_order": [
+        "Running.exit"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "exit_save_state",
+      "category": "exit",
+      "success": true,
+      "state_correct": true,
+      "context_correct": false,
+      "order_correct": true,
+      "expected_state": "Viewing",
+      "actual_state": "Viewing",
+      "expected_context": {
+        "current_data": "hello world",
+        "saved_data": "hello world"
+      },
+      "actual_context": {
+        "saved_data": "hello world"
+      },
+      "expected_order": [
+        "Editing.exit"
+      ],
+      "actual_order": [
+        "Editing.exit"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "trans_simple",
+      "category": "transition",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "transition_count": 1
+      },
+      "actual_context": {
+        "transition_count": 1
+      },
+      "expected_order": [
+        "trans:A->B"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "trans_set_target",
+      "category": "transition",
+      "success": true,
+      "state_correct": true,
+      "context_correct": false,
+      "order_correct": true,
+      "expected_state": "Dashboard",
+      "actual_state": "Dashboard",
+      "expected_context": {
+        "logged_in_at": 1234567890
+      },
+      "actual_context": {
+        "logged_in_at": 1234567890,
+        "dashboard": true
+      },
+      "expected_order": [
+        "trans:Login->Dashboard"
+      ],
+      "actual_order": [
+        "Login.exit",
+        "Dashboard.entry",
+        "trans:Login->Dashboard"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "order_exit_entry",
+      "category": "order",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "order": "A.exit,B.entry,"
+      },
+      "actual_context": {
+        "order": "A.exit,B.entry,"
+      },
+      "expected_order": [
+        "A.exit",
+        "B.entry"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "order_exit_trans_entry",
+      "category": "order",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": false,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "order": "A.exit,trans,B.entry,"
+      },
+      "actual_context": {
+        "order": "A.exit,trans,B.entry,"
+      },
+      "expected_order": [
+        "A.exit",
+        "trans:A->B",
+        "B.entry"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "order_nested_exit",
+      "category": "order",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "Other",
+      "actual_state": "Other",
+      "expected_context": {
+        "order": "Child.exit,Parent.exit,"
+      },
+      "actual_context": {
+        "order": "Child.exit,Parent.exit,"
+      },
+      "expected_order": [
+        "Child.exit",
+        "Parent.exit"
+      ],
+      "actual_order": [
+        "Child.exit",
+        "Parent.exit"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "order_nested_entry",
+      "category": "order",
+      "success": true,
+      "state_correct": true,
+      "context_correct": false,
+      "order_correct": false,
+      "expected_state": "Child",
+      "actual_state": "Child",
+      "expected_context": {
+        "order": "Parent.entry,Child.entry,"
+      },
+      "actual_context": {
+        "order": "Start.exit,Child.entry,"
+      },
+      "expected_order": [
+        "Parent.entry",
+        "Child.entry"
+      ],
+      "actual_order": [
+        "Start.exit",
+        "Child.entry",
+        "trans:Start->Child"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "context_conditional",
+      "category": "context_mutation",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "High",
+      "actual_state": "High",
+      "expected_context": {
+        "value": 75,
+        "result": "above threshold"
+      },
+      "actual_context": {
+        "result": "above threshold",
+        "value": 75
+      },
+      "expected_order": [
+        "High.entry"
+      ],
+      "actual_order": [
+        "Check.exit",
+        "High.entry",
+        "trans:Check->High"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "context_chain",
+      "category": "context_mutation",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "B",
+      "actual_state": "B",
+      "expected_context": {
+        "x": 10,
+        "y": 11
+      },
+      "actual_context": {
+        "x": 10,
+        "y": 11
+      },
+      "expected_order": [
+        "A.exit",
+        "B.entry"
+      ],
+      "actual_order": [
+        "A.exit",
+        "B.entry",
+        "trans:A->B"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "context_nested_access",
+      "category": "context_mutation",
+      "success": true,
+      "state_correct": true,
+      "context_correct": false,
+      "order_correct": true,
+      "expected_state": "Score",
+      "actual_state": "Score",
+      "expected_context": {
+        "player": {
+          "name": "Alice",
+          "score": 600
+        }
+      },
+      "actual_context": {
+        "player": {
+          "name": "Alice",
+          "score": 500
+        }
+      },
+      "expected_order": [
+        "Score.entry"
+      ],
+      "actual_order": [
+        "Game.exit",
+        "Score.entry",
+        "trans:Game->Score"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "context_multi_var",
+      "category": "context_mutation",
+      "success": true,
+      "state_correct": false,
+      "context_correct": true,
+      "order_correct": true,
+      "expected_state": "Computed",
+      "actual_state": "COMPUTED",
+      "expected_context": {
+        "a": 10,
+        "b": 20,
+        "c": 30
+      },
+      "actual_context": {
+        "a": 10,
+        "b": 20,
+        "c": 30
+      },
+      "expected_order": [
+        "Computed.entry"
+      ],
+      "actual_order": [
+        "Init.exit",
+        "Computed.entry",
+        "trans:Init->COMPUTE"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "combined_all",
+      "category": "combined",
+      "success": true,
+      "state_correct": false,
+      "context_correct": false,
+      "order_correct": false,
+      "expected_state": "Done",
+      "actual_state": "Processing",
+      "expected_context": {
+        "prepared": true,
+        "step": 2,
+        "started": true,
+        "result": 42,
+        "completed": true
+      },
+      "actual_context": {
+        "prepared": true,
+        "step": 1,
+        "started": true,
+        "result": 42,
+        "completed": true
+      },
+      "expected_order": [
+        "Ready.exit",
+        "trans:Ready->Processing",
+        "Processing.entry",
+        "Processing.exit",
+        "trans:Processing->Done",
+        "Done.entry"
+      ],
+      "actual_order": [
+        "Ready.exit",
+        "Processing.entry",
+        "Processing.exit",
+        "Done.entry",
+        "trans:Ready->Processing",
+        "trans:Processing->Done"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    },
+    {
+      "name": "self_transition",
+      "category": "combined",
+      "success": true,
+      "state_correct": true,
+      "context_correct": true,
+      "order_correct": false,
+      "expected_state": "Counter",
+      "actual_state": "Counter",
+      "expected_context": {
+        "count": 2,
+        "exited": 2,
+        "looped": 2
+      },
+      "actual_context": {
+        "count": 2,
+        "exited": 2,
+        "looped": 2
+      },
+      "expected_order": [
+        "Counter.exit",
+        "trans:Counter->Counter",
+        "Counter.entry",
+        "Counter.exit",
+        "trans:Counter->Counter",
+        "Counter.entry"
+      ],
+      "actual_order": [
+        "Counter.exit",
+        "Counter.entry",
+        "trans:Counter->Counter"
+      ],
+      "errors": [
+        "JSON parse error: '{' was never closed (<string>, line 1)"
+      ]
+    }
+  ],
+  "category_stats": {
+    "entry": {
+      "total": 3,
+      "state_correct": 3,
+      "context_correct": 2,
+      "order_correct": 3
+    },
+    "exit": {
+      "total": 2,
+      "state_correct": 2,
+      "context_correct": 1,
+      "order_correct": 2
+    },
+    "transition": {
+      "total": 2,
+      "state_correct": 2,
+      "context_correct": 1,
+      "order_correct": 2
+    },
+    "order": {
+      "total": 4,
+      "state_correct": 4,
+      "context_correct": 3,
+      "order_correct": 2
+    },
+    "context_mutation": {
+      "total": 4,
+      "state_correct": 3,
+      "context_correct": 3,
+      "order_correct": 4
+    },
+    "combined": {
+      "total": 2,
+      "state_correct": 1,
+      "context_correct": 1,
+      "order_correct": 0
+    }
+  },
+  "overall": {
+    "total": 17,
+    "state_correct": 15,
+    "context_correct": 11,
+    "order_correct": 13,
+    "all_correct": 8
+  },
+  "summary": {
+    "overall": {
+      "state": 88,
+      "context": 65,
+      "order": 76,
+      "all": 47
+    },
+    "by_category": {
+      "entry": {
+        "state": 100,
+        "context": 67,
+        "order": 100
+      },
+      "exit": {
+        "state": 100,
+        "context": 50,
+        "order": 100
+      },
+      "transition": {
+        "state": 100,
+        "context": 50,
+        "order": 100
+      },
+      "order": {
+        "state": 100,
+        "context": 75,
+        "order": 50
+      },
+      "context_mutation": {
+        "state": 75,
+        "context": 75,
+        "order": 100
+      },
+      "combined": {
+        "state": 50,
+        "context": 50,
+        "order": 0
+      }
+    }
+  },
+  "model": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+  "timestamp": "2026-01-05T11:46:44.673619"
+}
