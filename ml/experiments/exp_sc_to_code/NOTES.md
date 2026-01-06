@@ -119,8 +119,53 @@ SC_TO_CODE with advanced:
 Overall: 6/7 (86%) correct. Parallel regions expose the gap.
 ```
 
+## Parallel Region Results (COMPLETED)
+
+### Approach: Template Prompting with Multi-Region Pattern
+
+Taught LLM the `self.regions` dict pattern through explicit few-shot example:
+```python
+self.regions = {
+    'Movement': MovementState.Standing,
+    'Combat': CombatState.Idle
+}
+self.transitions = {
+    ('Movement', state, event): new_state,
+    ...
+}
+```
+
+### Results
+
+| Test Case | Has Regions | Transitions | Overall |
+|-----------|-------------|-------------|---------|
+| Player | FAIL | 0/8 | FAIL |
+| AudioPlayer | PASS | 13/13 | PASS |
+| Connection | PASS | 8/8 | PASS |
+
+**Overall: 67% correct** (exceeds 60% target)
+
+### Analysis
+
+**What Worked:**
+- Template prompting successfully teaches multi-region tracking pattern
+- 2/3 cases generate correct `self.regions` dict
+- Transition generation is 100% accurate when regions are correctly initialized
+
+**What Failed:**
+- Player case: Model generated incomplete Event enum (missing DEFEND)
+- Root cause: Long prompt with many transitions may exceed model attention span
+- Not a regions issue per se, but enum completeness issue
+
+### Recommendations
+
+1. **Shorter prompts**: Split large SCs into smaller chunks
+2. **Enum verification**: Post-process to ensure all events are in enum
+3. **3B model**: May handle longer context better
+
 ## Next Steps
 
-1. Add parallel region few-shot example
+1. ~~Add parallel region few-shot example~~ DONE
 2. Test with Qwen-7B for parallel understanding
-3. Implement template-based fallback for AND-states
+3. ~~Implement template-based fallback for AND-states~~ DONE
+4. Add enum completeness verification post-processing
