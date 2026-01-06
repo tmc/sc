@@ -1,0 +1,39 @@
+{
+  "name": "Button",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Released",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "Pressed",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Released"
+      ],
+      "to": [
+        "Pressed"
+      ],
+      "event": "PRESS"
+    },
+    {
+      "from": [
+        "Pressed"
+      ],
+      "to": [
+        "Released"
+      ],
+      "event": "RELEASE"
+    }
+  ]
+}

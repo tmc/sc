@@ -1,0 +1,67 @@
+{
+  "name": "Ticket",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Open",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "InProgress",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Review",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Closed",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "InProgress"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "InProgress"
+      ],
+      "to": [
+        "Review"
+      ],
+      "event": "SUBMIT"
+    },
+    {
+      "from": [
+        "Review"
+      ],
+      "to": [
+        "InProgress"
+      ],
+      "event": "REVISE"
+    },
+    {
+      "from": [
+        "Review"
+      ],
+      "to": [
+        "Closed"
+      ],
+      "event": "APPROVE"
+    }
+  ]
+}

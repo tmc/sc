@@ -1,0 +1,1826 @@
+{
+  "version": "1.0",
+  "total_tasks": 100,
+  "categories": {
+    "simple_toggle": 20,
+    "hierarchical": 20,
+    "parallel": 20,
+    "guards": 20,
+    "history": 20
+  },
+  "tasks": [
+    {
+      "id": "simple_toggle_00_toggle_switch",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart for a light switch with On and Off states",
+      "expected": {
+        "min_states": 2,
+        "max_states": 3,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [
+          "On",
+          "Off"
+        ],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_01_door_lock",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Create a statechart for a door lock with Locked and Unlocked states",
+      "expected": {
+        "min_states": 2,
+        "max_states": 3,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [
+          "Locked",
+          "Unlocked"
+        ],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_02_power_button",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Build a state machine for a power button (On/Off toggle)",
+      "expected": {
+        "min_states": 2,
+        "max_states": 3,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_03_pause_play",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart for media playback with Playing and Paused states",
+      "expected": {
+        "min_states": 2,
+        "max_states": 4,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [
+          "Playing",
+          "Paused"
+        ],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_04_mute_unmute",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Create a state machine for audio mute/unmute toggle",
+      "expected": {
+        "min_states": 2,
+        "max_states": 3,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_05_wifi_toggle",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Build a statechart for WiFi on/off toggle",
+      "expected": {
+        "min_states": 2,
+        "max_states": 3,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_06_dark_mode",
+      "category": "simple_toggle",
+      "difficulty": "easy",
+      "prompt": "Generate a state machine for dark mode toggle (Light/Dark)",
+      "expected": {
+        "min_states": 2,
+        "max_states": 3,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_07_traffic_light",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Create a statechart for a traffic light with Red, Yellow, and Green states",
+      "expected": {
+        "min_states": 3,
+        "max_states": 4,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [
+          "Red",
+          "Yellow",
+          "Green"
+        ],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_08_fan_speed",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Build a state machine for a 3-speed fan (Off, Low, Medium, High)",
+      "expected": {
+        "min_states": 4,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_09_washing_machine",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Generate a statechart for a washing machine cycle (Idle, Wash, Rinse, Spin, Done)",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_10_microwave",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Create a state machine for a microwave (Idle, Cooking, Paused, Done)",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_11_elevator_simple",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Build a statechart for an elevator with Idle, MovingUp, MovingDown states",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_12_connection_status",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Generate a state machine for connection status (Disconnected, Connecting, Connected)",
+      "expected": {
+        "min_states": 3,
+        "max_states": 4,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_13_auth_flow",
+      "category": "simple_toggle",
+      "difficulty": "medium",
+      "prompt": "Create a statechart for authentication flow (LoggedOut, LoggingIn, LoggedIn)",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_14_order_processing",
+      "category": "simple_toggle",
+      "difficulty": "hard",
+      "prompt": "Build a state machine for order processing (Pending, Processing, Shipped, Delivered, Cancelled)",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_15_document_workflow",
+      "category": "simple_toggle",
+      "difficulty": "hard",
+      "prompt": "Generate a statechart for document workflow (Draft, Review, Approved, Published, Archived)",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_16_build_pipeline",
+      "category": "simple_toggle",
+      "difficulty": "hard",
+      "prompt": "Create a state machine for CI/CD pipeline (Queued, Building, Testing, Deploying, Success, Failed)",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_17_payment_flow",
+      "category": "simple_toggle",
+      "difficulty": "hard",
+      "prompt": "Build a statechart for payment processing (Initiated, Validating, Processing, Completed, Failed, Refunded)",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_18_interview_process",
+      "category": "simple_toggle",
+      "difficulty": "hard",
+      "prompt": "Generate a state machine for interview process (Applied, Screening, Interview, Offer, Hired, Rejected)",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "simple_toggle_19_ticket_lifecycle",
+      "category": "simple_toggle",
+      "difficulty": "hard",
+      "prompt": "Create a statechart for support ticket lifecycle (New, Assigned, InProgress, Resolved, Closed, Reopened)",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_00_nested_player",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Generate a hierarchical statechart for a media player with Playing state containing Normal and FastForward substates",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_01_mode_submodes",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Create a statechart with Active state containing Ready and Busy substates",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_02_connection_retry",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Build a hierarchical state machine with Connected state having Stable and Reconnecting substates",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_03_editing_states",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart with Editing composite state containing Insert and Overwrite modes",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_04_power_modes",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Create a state machine with On state containing Normal and PowerSave substates",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_05_view_modes",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Build a statechart with Viewing state containing List and Grid substates",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_06_auth_substates",
+      "category": "hierarchical",
+      "difficulty": "easy",
+      "prompt": "Generate a hierarchical state machine with Authenticating state containing Username and Password substates",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_07_game_character",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Create a hierarchical statechart for a game character with Alive state containing Idle, Walking, Running, and Combat substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_08_form_wizard",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Build a state machine for a form wizard with Filling state containing Step1, Step2, Step3 substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_09_device_modes",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Generate a hierarchical statechart for a device with Active mode containing Normal, Silent, and DoNotDisturb substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_10_order_states",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Create a state machine with Processing composite state containing Validating, Charging, and Fulfilling substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_11_navigation_app",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Build a hierarchical statechart for navigation with Navigating state containing Driving, Walking, Transit substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_12_call_handling",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Generate a state machine for phone calls with InCall state containing Active, Hold, Muted substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_13_editor_modes",
+      "category": "hierarchical",
+      "difficulty": "medium",
+      "prompt": "Create a hierarchical statechart for editor with EditMode containing Visual, Command, and Insert substates",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_14_deep_nested",
+      "category": "hierarchical",
+      "difficulty": "hard",
+      "prompt": "Build a statechart with 3 levels of nesting: App > Module > Feature substates",
+      "expected": {
+        "min_states": 6,
+        "max_states": 10,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_15_game_state_machine",
+      "category": "hierarchical",
+      "difficulty": "hard",
+      "prompt": "Generate a hierarchical game state machine with Playing containing Level (Tutorial, Stage1, Boss) substates",
+      "expected": {
+        "min_states": 7,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_16_workflow_engine",
+      "category": "hierarchical",
+      "difficulty": "hard",
+      "prompt": "Create a state machine for workflow engine with Executing composite containing Initialize, Process, Finalize substates each with substates",
+      "expected": {
+        "min_states": 8,
+        "max_states": 15,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_17_ui_navigation",
+      "category": "hierarchical",
+      "difficulty": "hard",
+      "prompt": "Build a hierarchical statechart for UI navigation with tabs, each tab containing multiple views",
+      "expected": {
+        "min_states": 8,
+        "max_states": 15,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_18_device_lifecycle",
+      "category": "hierarchical",
+      "difficulty": "hard",
+      "prompt": "Generate a state machine for device lifecycle with Operating state containing Boot, Running (Normal, Diagnostic, Recovery), Shutdown substates",
+      "expected": {
+        "min_states": 8,
+        "max_states": 15,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "hierarchical_19_transaction_flow",
+      "category": "hierarchical",
+      "difficulty": "hard",
+      "prompt": "Create a hierarchical statechart for transaction with Active containing Prepare (Validate, Lock), Execute (Apply, Commit), Cleanup substates",
+      "expected": {
+        "min_states": 8,
+        "max_states": 15,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_00_av_player",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart with parallel Audio and Video regions, each with Playing/Paused states",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_01_alarm_clock",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Create a parallel statechart with Time display and Alarm regions running concurrently",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_02_keyboard_mouse",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Build a state machine with parallel Keyboard and Mouse input regions",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_03_network_status",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart with parallel WiFi and Cellular connection regions",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_04_cpu_gpu",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Create a parallel state machine for CPU and GPU operation states",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_05_mic_camera",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Build a statechart with parallel Microphone and Camera permission states",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_06_read_write",
+      "category": "parallel",
+      "difficulty": "easy",
+      "prompt": "Generate a state machine with parallel Read and Write operation regions",
+      "expected": {
+        "min_states": 4,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_07_vehicle_systems",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Create a statechart with parallel Engine, Transmission, and Brakes regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_08_media_center",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Build a parallel state machine for media center with Audio, Video, and Subtitle regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_09_robot_control",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Generate a statechart for robot with parallel Motion, Sensors, and Communication regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_10_smart_home",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Create a parallel statechart for smart home with Lighting, Climate, and Security regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_11_game_systems",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Build a state machine for game with parallel Physics, Rendering, and Audio regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_12_db_connection",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Generate a statechart with parallel Connection pool, Query execution, and Transaction regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_13_file_sync",
+      "category": "parallel",
+      "difficulty": "medium",
+      "prompt": "Create a parallel state machine for file sync with Upload, Download, and Conflict regions",
+      "expected": {
+        "min_states": 6,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_14_drone_control",
+      "category": "parallel",
+      "difficulty": "hard",
+      "prompt": "Build a statechart for drone with parallel Flight, Navigation, Camera, and Battery regions",
+      "expected": {
+        "min_states": 8,
+        "max_states": 16,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_15_os_kernel",
+      "category": "parallel",
+      "difficulty": "hard",
+      "prompt": "Generate a parallel state machine for OS kernel with Process, Memory, IO, and Scheduler regions",
+      "expected": {
+        "min_states": 8,
+        "max_states": 16,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_16_iot_device",
+      "category": "parallel",
+      "difficulty": "hard",
+      "prompt": "Create a statechart for IoT device with parallel Sensors, Actuators, Network, and Power regions",
+      "expected": {
+        "min_states": 8,
+        "max_states": 16,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_17_trading_system",
+      "category": "parallel",
+      "difficulty": "hard",
+      "prompt": "Build a parallel state machine for trading with Market data, Order management, Risk, and Reporting regions",
+      "expected": {
+        "min_states": 8,
+        "max_states": 16,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_18_video_conference",
+      "category": "parallel",
+      "difficulty": "hard",
+      "prompt": "Generate a statechart for video conference with parallel Audio, Video, Screen share, Chat, and Reactions regions",
+      "expected": {
+        "min_states": 10,
+        "max_states": 20,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "parallel_19_game_engine",
+      "category": "parallel",
+      "difficulty": "hard",
+      "prompt": "Create a parallel state machine for game engine with Input, Physics, Rendering, Audio, and Network regions each with substates",
+      "expected": {
+        "min_states": 10,
+        "max_states": 25,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_00_login_attempts",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart for login with guard [attempts < 3] on retry transition",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_01_age_gate",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Create a state machine with guard [age >= 18] for content access",
+      "expected": {
+        "min_states": 2,
+        "max_states": 4,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_02_stock_check",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Build a statechart for ordering with guard [stock > 0] on purchase transition",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_03_balance_check",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Generate a state machine for ATM with guard [balance >= amount] on withdraw",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_04_permission_check",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Create a statechart with guard [hasPermission] on action transition",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_05_temperature_guard",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Build a state machine for thermostat with guard [temp > threshold] on heating/cooling transitions",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_06_size_limit",
+      "category": "guards",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart for upload with guard [size < maxSize] on upload transition",
+      "expected": {
+        "min_states": 3,
+        "max_states": 5,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_07_rate_limiter",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Create a state machine for API with guard [requests < limit && !blocked] on request transition",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_08_multi_factor",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Build a statechart for 2FA with guards [passwordValid] and [codeValid] on sequential transitions",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_09_shopping_cart",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Generate a state machine for checkout with guards [cartNotEmpty], [addressValid], [paymentValid]",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_10_workflow_approval",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Create a statechart for document approval with guards [level1Approved], [level2Approved]",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_11_resource_allocation",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Build a state machine with guards [cpuAvailable && memoryAvailable] on allocation transition",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_12_priority_queue",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Generate a statechart for task processing with guards [isHighPriority], [isMediumPriority]",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_13_subscription_tiers",
+      "category": "guards",
+      "difficulty": "medium",
+      "prompt": "Create a state machine with guards [tier == 'premium'], [tier == 'pro'] for feature access",
+      "expected": {
+        "min_states": 4,
+        "max_states": 7,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_14_complex_auth",
+      "category": "guards",
+      "difficulty": "hard",
+      "prompt": "Build a statechart for authentication with guards combining [credentialsValid && !accountLocked && mfaVerified]",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_15_auction_system",
+      "category": "guards",
+      "difficulty": "hard",
+      "prompt": "Generate a state machine for auction with guards [bid > currentBid], [time < deadline], [bidder != owner]",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_16_booking_system",
+      "category": "guards",
+      "difficulty": "hard",
+      "prompt": "Create a statechart for booking with guards [slotAvailable], [paymentSuccessful], [noConflicts]",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_17_trade_execution",
+      "category": "guards",
+      "difficulty": "hard",
+      "prompt": "Build a state machine for trading with guards [marketOpen], [sufficientFunds], [riskWithinLimits], [orderValid]",
+      "expected": {
+        "min_states": 6,
+        "max_states": 10,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_18_deployment_pipeline",
+      "category": "guards",
+      "difficulty": "hard",
+      "prompt": "Generate a statechart for deployment with guards [testsPass], [approvalGranted], [targetHealthy], [rollbackAvailable]",
+      "expected": {
+        "min_states": 6,
+        "max_states": 10,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "guards_19_access_control",
+      "category": "guards",
+      "difficulty": "hard",
+      "prompt": "Create a state machine for access control with guards combining role, permission, time window, and IP whitelist checks",
+      "expected": {
+        "min_states": 6,
+        "max_states": 10,
+        "min_transitions": 1,
+        "has_hierarchy": false,
+        "has_parallel": false,
+        "has_guards": true,
+        "has_history": false,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_00_player_resume",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart for media player with shallow history to resume play position",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_01_editor_undo",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Create a state machine with history state for returning to previous editing mode",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_02_tab_memory",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Build a statechart that remembers last active tab using shallow history",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_03_mode_restore",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Generate a state machine that restores previous mode after interruption using history",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_04_view_history",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Create a statechart for app with history state to return to last viewed screen",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_05_call_hold",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Build a state machine for phone call that remembers state before hold using history",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_06_game_pause",
+      "category": "history",
+      "difficulty": "easy",
+      "prompt": "Generate a statechart for game that returns to exact state after pause using history",
+      "expected": {
+        "min_states": 4,
+        "max_states": 6,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_07_wizard_back",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Create a state machine for wizard with shallow history for back navigation",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_08_session_restore",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Build a statechart that uses deep history to restore full session state after timeout",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_09_interrupt_resume",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Generate a state machine that handles interrupts and resumes via deep history",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_10_error_recovery",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Create a statechart with history for recovering to last good state after error",
+      "expected": {
+        "min_states": 5,
+        "max_states": 8,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_11_navigation_history",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Build a state machine for navigation with both shallow and deep history options",
+      "expected": {
+        "min_states": 6,
+        "max_states": 10,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_12_workflow_suspend",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Generate a statechart for workflow that can suspend and resume with history",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_13_power_save_resume",
+      "category": "history",
+      "difficulty": "medium",
+      "prompt": "Create a state machine for device that saves full state with deep history before sleep",
+      "expected": {
+        "min_states": 5,
+        "max_states": 9,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_14_deep_nested_history",
+      "category": "history",
+      "difficulty": "hard",
+      "prompt": "Build a statechart with 3-level nesting and deep history that preserves full substate configuration",
+      "expected": {
+        "min_states": 8,
+        "max_states": 15,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_15_transaction_checkpoint",
+      "category": "history",
+      "difficulty": "hard",
+      "prompt": "Generate a state machine for transactions with checkpoints using history for rollback",
+      "expected": {
+        "min_states": 7,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_16_parallel_history",
+      "category": "history",
+      "difficulty": "hard",
+      "prompt": "Create a statechart with parallel regions each having their own history states",
+      "expected": {
+        "min_states": 8,
+        "max_states": 16,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": true,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_17_multi_undo",
+      "category": "history",
+      "difficulty": "hard",
+      "prompt": "Build a state machine with multiple history levels for undo/redo functionality",
+      "expected": {
+        "min_states": 7,
+        "max_states": 12,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_18_context_switch",
+      "category": "history",
+      "difficulty": "hard",
+      "prompt": "Generate a statechart for multi-context system with per-context deep history",
+      "expected": {
+        "min_states": 8,
+        "max_states": 14,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    },
+    {
+      "id": "history_19_game_checkpoint",
+      "category": "history",
+      "difficulty": "hard",
+      "prompt": "Create a state machine for game save system with deep history across multiple game substates",
+      "expected": {
+        "min_states": 8,
+        "max_states": 16,
+        "min_transitions": 1,
+        "has_hierarchy": true,
+        "has_parallel": false,
+        "has_guards": false,
+        "has_history": true,
+        "required_states": [],
+        "required_events": []
+      },
+      "hints": []
+    }
+  ]
+}

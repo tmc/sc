@@ -1,0 +1,112 @@
+{
+  "name": "Complex10",
+  "root_state": {
+    "label": "__root__",
+    "type": 3,
+    "children": [
+      {
+        "label": "MainRegion",
+        "type": 2,
+        "children": [
+          {
+            "label": "Idle",
+            "type": 1,
+            "is_initial": true
+          },
+          {
+            "label": "Active",
+            "type": 2,
+            "children": [
+              {
+                "label": "Sub1",
+                "type": 1,
+                "is_initial": true
+              },
+              {
+                "label": "Sub2",
+                "type": 1
+              }
+            ]
+          },
+          {
+            "label": "Done",
+            "type": 1
+          }
+        ]
+      },
+      {
+        "label": "MonitorRegion",
+        "type": 2,
+        "children": [
+          {
+            "label": "Monitoring",
+            "type": 1,
+            "is_initial": true
+          },
+          {
+            "label": "Alert",
+            "type": 1
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Sub1"
+      ],
+      "event": "START",
+      "guard": "ready"
+    },
+    {
+      "from": [
+        "Sub1"
+      ],
+      "to": [
+        "Sub2"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Sub2"
+      ],
+      "to": [
+        "Done"
+      ],
+      "event": "COMPLETE"
+    },
+    {
+      "from": [
+        "Active"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "CANCEL"
+    },
+    {
+      "from": [
+        "Monitoring"
+      ],
+      "to": [
+        "Alert"
+      ],
+      "event": "THRESHOLD",
+      "guard": "value > limit"
+    },
+    {
+      "from": [
+        "Alert"
+      ],
+      "to": [
+        "Monitoring"
+      ],
+      "event": "ACKNOWLEDGE"
+    }
+  ]
+}

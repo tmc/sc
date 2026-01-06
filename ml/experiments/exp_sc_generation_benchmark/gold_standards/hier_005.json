@@ -1,0 +1,88 @@
+{
+  "name": "WashingMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Idle",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "Running",
+        "type": 2,
+        "is_initial": false,
+        "children": [
+          {
+            "label": "Washing",
+            "type": 1,
+            "is_initial": true
+          },
+          {
+            "label": "Rinsing",
+            "type": 1,
+            "is_initial": false
+          },
+          {
+            "label": "Spinning",
+            "type": 1,
+            "is_initial": false
+          }
+        ]
+      },
+      {
+        "label": "Done",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Washing"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "Washing"
+      ],
+      "to": [
+        "Rinsing"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Rinsing"
+      ],
+      "to": [
+        "Spinning"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Spinning"
+      ],
+      "to": [
+        "Done"
+      ],
+      "event": "COMPLETE"
+    },
+    {
+      "from": [
+        "Done"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "RESET"
+    }
+  ]
+}

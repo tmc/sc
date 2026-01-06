@@ -1,0 +1,39 @@
+{
+  "name": "Valve",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Closed",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "Open",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Closed"
+      ],
+      "to": [
+        "Open"
+      ],
+      "event": "OPEN"
+    },
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "Closed"
+      ],
+      "event": "CLOSE"
+    }
+  ]
+}

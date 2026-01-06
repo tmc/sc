@@ -1,0 +1,736 @@
+{
+  "name": "SC Generation Benchmark v1.0",
+  "description": "Standardized 100-task benchmark for evaluating statechart generation",
+  "version": "1.0",
+  "categories": {
+    "simple": {
+      "count": 20,
+      "description": "3-5 states, no nesting, basic transitions"
+    },
+    "hierarchical": {
+      "count": 20,
+      "description": "Nested states, 2-3 levels deep"
+    },
+    "parallel": {
+      "count": 20,
+      "description": "Orthogonal regions, concurrent states"
+    },
+    "guards": {
+      "count": 20,
+      "description": "Conditional transitions with guards"
+    },
+    "complex": {
+      "count": 20,
+      "description": "All features combined"
+    }
+  },
+  "difficulty_scale": {
+    "1": "Trivial - 2 states",
+    "2": "Easy - 3-5 states, simple transitions",
+    "3": "Medium - hierarchy OR parallel OR guards",
+    "4": "Hard - multiple features",
+    "5": "Expert - all features combined"
+  },
+  "tasks": [
+    {
+      "id": "simple_001",
+      "prompt": "Create a statechart for a light switch with On and Off states",
+      "difficulty": 1,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_001.json"
+    },
+    {
+      "id": "simple_002",
+      "prompt": "Create a statechart for a door with Open and Closed states",
+      "difficulty": 1,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_002.json"
+    },
+    {
+      "id": "simple_003",
+      "prompt": "Create a statechart for a button with Pressed and Released states",
+      "difficulty": 1,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_003.json"
+    },
+    {
+      "id": "simple_004",
+      "prompt": "Create a statechart for a toggle with Active and Inactive states",
+      "difficulty": 1,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_004.json"
+    },
+    {
+      "id": "simple_005",
+      "prompt": "Create a statechart for a valve with Open and Closed states",
+      "difficulty": 1,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_005.json"
+    },
+    {
+      "id": "simple_006",
+      "prompt": "Create a statechart for a traffic light with Red, Yellow, Green states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_006.json"
+    },
+    {
+      "id": "simple_007",
+      "prompt": "Create a statechart for a media player with Playing, Paused, Stopped states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_007.json"
+    },
+    {
+      "id": "simple_008",
+      "prompt": "Create a statechart for a connection with Disconnected, Connecting, Connected states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_008.json"
+    },
+    {
+      "id": "simple_009",
+      "prompt": "Create a statechart for a download with Idle, Downloading, Complete states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_009.json"
+    },
+    {
+      "id": "simple_010",
+      "prompt": "Create a statechart for a process with Ready, Running, Finished states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_010.json"
+    },
+    {
+      "id": "simple_011",
+      "prompt": "Create a statechart for a fan with Off, Low, Medium, High states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_011.json"
+    },
+    {
+      "id": "simple_012",
+      "prompt": "Create a statechart for a phone with Idle, Ringing, Active, Ended states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_012.json"
+    },
+    {
+      "id": "simple_013",
+      "prompt": "Create a statechart for an order with New, Processing, Shipped, Delivered states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_013.json"
+    },
+    {
+      "id": "simple_014",
+      "prompt": "Create a statechart for a timer with Stopped, Running, Paused, Alarm states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_014.json"
+    },
+    {
+      "id": "simple_015",
+      "prompt": "Create a statechart for a session with LoggedOut, LoggingIn, LoggedIn, LoggingOut states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_015.json"
+    },
+    {
+      "id": "simple_016",
+      "prompt": "Create a statechart for a document with Draft, Review, Approved, Published states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_016.json"
+    },
+    {
+      "id": "simple_017",
+      "prompt": "Create a statechart for a ticket with Open, InProgress, Review, Closed states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_017.json"
+    },
+    {
+      "id": "simple_018",
+      "prompt": "Create a statechart for a build with Queued, Building, Testing, Deployed, Failed states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_018.json"
+    },
+    {
+      "id": "simple_019",
+      "prompt": "Create a statechart for a microwave with Idle, SetTime, Cooking, Done states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_019.json"
+    },
+    {
+      "id": "simple_020",
+      "prompt": "Create a statechart for an elevator with Floor1, Floor2, Floor3, Moving states",
+      "difficulty": 2,
+      "category": "simple",
+      "gold_standard_file": "gold_standards/simple_020.json"
+    },
+    {
+      "id": "hier_001",
+      "prompt": "Create a statechart for a media player with Playing state containing Normal and FastForward substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_001.json"
+    },
+    {
+      "id": "hier_002",
+      "prompt": "Create a statechart for a phone with Active state containing Talking and OnHold substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_002.json"
+    },
+    {
+      "id": "hier_003",
+      "prompt": "Create a statechart for a game with Playing state containing InGame and Paused substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_003.json"
+    },
+    {
+      "id": "hier_004",
+      "prompt": "Create a statechart for a door lock with Locked state containing Armed and Unarmed substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_004.json"
+    },
+    {
+      "id": "hier_005",
+      "prompt": "Create a statechart for a washing machine with Running state containing Washing, Rinsing, Spinning substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_005.json"
+    },
+    {
+      "id": "hier_006",
+      "prompt": "Create a statechart for a car with Running state containing Idle, Accelerating, Cruising substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_006.json"
+    },
+    {
+      "id": "hier_007",
+      "prompt": "Create a statechart for a thermostat with Active state containing Heating and Cooling substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_007.json"
+    },
+    {
+      "id": "hier_008",
+      "prompt": "Create a statechart for a robot with Moving state containing Forward, Backward, Turning substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_008.json"
+    },
+    {
+      "id": "hier_009",
+      "prompt": "Create a statechart for an ATM with Transaction state containing Withdrawal, Deposit, Balance substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_009.json"
+    },
+    {
+      "id": "hier_010",
+      "prompt": "Create a statechart for a printer with Printing state containing Receiving, Processing, Output substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_010.json"
+    },
+    {
+      "id": "hier_011",
+      "prompt": "Create a statechart for a camera with Recording state containing Preview, Capturing, Saving substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_011.json"
+    },
+    {
+      "id": "hier_012",
+      "prompt": "Create a statechart for a microwave with Cooking state containing Heating, Rotating substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_012.json"
+    },
+    {
+      "id": "hier_013",
+      "prompt": "Create a statechart for a TV with On state containing Menu, Channel, Settings substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_013.json"
+    },
+    {
+      "id": "hier_014",
+      "prompt": "Create a statechart for a coffee maker with Brewing state containing Heating, Extracting, Dispensing substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_014.json"
+    },
+    {
+      "id": "hier_015",
+      "prompt": "Create a statechart for a game character with Alive state containing Idle, Moving, Attacking substates",
+      "difficulty": 3,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_015.json"
+    },
+    {
+      "id": "hier_016",
+      "prompt": "Create a statechart for an HVAC system with Operating state containing Fan, Compressor, Heater substates",
+      "difficulty": 4,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_016.json"
+    },
+    {
+      "id": "hier_017",
+      "prompt": "Create a 3-level statechart for a vending machine: Operating > Transaction > Payment substates",
+      "difficulty": 4,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_017.json"
+    },
+    {
+      "id": "hier_018",
+      "prompt": "Create a 3-level statechart for authentication: Session > Auth > Verification substates",
+      "difficulty": 4,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_018.json"
+    },
+    {
+      "id": "hier_019",
+      "prompt": "Create a 3-level statechart for order processing: Active > Fulfillment > Shipping substates",
+      "difficulty": 4,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_019.json"
+    },
+    {
+      "id": "hier_020",
+      "prompt": "Create a 3-level statechart for a smart home: Home > Room > Device substates",
+      "difficulty": 4,
+      "category": "hierarchical",
+      "gold_standard_file": "gold_standards/hier_020.json"
+    },
+    {
+      "id": "parallel_001",
+      "prompt": "Create a statechart with parallel regions for a car: Engine (On/Off) and Lights (On/Off)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_001.json"
+    },
+    {
+      "id": "parallel_002",
+      "prompt": "Create a statechart with parallel regions for a phone: Network (Connected/Disconnected) and Battery (Charging/Discharging)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_002.json"
+    },
+    {
+      "id": "parallel_003",
+      "prompt": "Create a statechart with parallel regions for a TV: Power (On/Off) and Mute (Muted/Unmuted)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_003.json"
+    },
+    {
+      "id": "parallel_004",
+      "prompt": "Create a statechart with parallel regions for a thermostat: Fan (On/Off) and Mode (Heat/Cool/Auto)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_004.json"
+    },
+    {
+      "id": "parallel_005",
+      "prompt": "Create a statechart with parallel regions for a robot: Movement (Idle/Moving) and Sensor (Scanning/Idle)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_005.json"
+    },
+    {
+      "id": "parallel_006",
+      "prompt": "Create a statechart with parallel regions for a game: Player (Alive/Dead) and Timer (Running/Paused)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_006.json"
+    },
+    {
+      "id": "parallel_007",
+      "prompt": "Create a statechart with parallel regions for audio: Playback (Playing/Stopped) and Volume (Normal/Muted)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_007.json"
+    },
+    {
+      "id": "parallel_008",
+      "prompt": "Create a statechart with parallel regions for a door: Lock (Locked/Unlocked) and Alarm (Armed/Disarmed)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_008.json"
+    },
+    {
+      "id": "parallel_009",
+      "prompt": "Create a statechart with parallel regions for a camera: Recording (On/Off) and Flash (Auto/On/Off)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_009.json"
+    },
+    {
+      "id": "parallel_010",
+      "prompt": "Create a statechart with parallel regions for a printer: Paper (Ready/Empty) and Ink (Ready/Low)",
+      "difficulty": 3,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_010.json"
+    },
+    {
+      "id": "parallel_011",
+      "prompt": "Create a statechart with 3 parallel regions for a smart watch: Display, Heart Monitor, GPS",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_011.json"
+    },
+    {
+      "id": "parallel_012",
+      "prompt": "Create a statechart with 3 parallel regions for a drone: Flight, Camera, Battery",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_012.json"
+    },
+    {
+      "id": "parallel_013",
+      "prompt": "Create a statechart with 3 parallel regions for a car dashboard: Speed, Fuel, Temperature",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_013.json"
+    },
+    {
+      "id": "parallel_014",
+      "prompt": "Create a statechart with 3 parallel regions for a security system: Motion, Door, Window sensors",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_014.json"
+    },
+    {
+      "id": "parallel_015",
+      "prompt": "Create a statechart with 3 parallel regions for a media center: Video, Audio, Network",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_015.json"
+    },
+    {
+      "id": "parallel_016",
+      "prompt": "Create a statechart with parallel regions where each region has 3 states",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_016.json"
+    },
+    {
+      "id": "parallel_017",
+      "prompt": "Create a statechart with nested parallel: Outer parallel with inner sequential states",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_017.json"
+    },
+    {
+      "id": "parallel_018",
+      "prompt": "Create a statechart for concurrent processes: Process A and Process B running in parallel",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_018.json"
+    },
+    {
+      "id": "parallel_019",
+      "prompt": "Create a statechart with fork and join: parallel split then synchronize",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_019.json"
+    },
+    {
+      "id": "parallel_020",
+      "prompt": "Create a statechart for a multi-threaded system with 2 concurrent execution paths",
+      "difficulty": 4,
+      "category": "parallel",
+      "gold_standard_file": "gold_standards/parallel_020.json"
+    },
+    {
+      "id": "guard_001",
+      "prompt": "Create a statechart for a door lock that unlocks only if PIN is correct",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_001.json"
+    },
+    {
+      "id": "guard_002",
+      "prompt": "Create a statechart for a login with lockout after 3 failed attempts",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_002.json"
+    },
+    {
+      "id": "guard_003",
+      "prompt": "Create a statechart for a thermostat that heats if temp < target",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_003.json"
+    },
+    {
+      "id": "guard_004",
+      "prompt": "Create a statechart for a counter that resets when count >= 10",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_004.json"
+    },
+    {
+      "id": "guard_005",
+      "prompt": "Create a statechart for a battery that warns when level < 20%",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_005.json"
+    },
+    {
+      "id": "guard_006",
+      "prompt": "Create a statechart for checkout that proceeds only if cart not empty",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_006.json"
+    },
+    {
+      "id": "guard_007",
+      "prompt": "Create a statechart for a dispenser that dispenses only if inventory > 0",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_007.json"
+    },
+    {
+      "id": "guard_008",
+      "prompt": "Create a statechart for a game that ends when lives == 0",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_008.json"
+    },
+    {
+      "id": "guard_009",
+      "prompt": "Create a statechart for authentication that locks after timeout > 30min",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_009.json"
+    },
+    {
+      "id": "guard_010",
+      "prompt": "Create a statechart for a queue that processes only if queue not empty",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_010.json"
+    },
+    {
+      "id": "guard_011",
+      "prompt": "Create a statechart for a traffic light with pedestrian crossing guard",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_011.json"
+    },
+    {
+      "id": "guard_012",
+      "prompt": "Create a statechart for an elevator that moves only if door is closed",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_012.json"
+    },
+    {
+      "id": "guard_013",
+      "prompt": "Create a statechart for a vending machine with sufficient credit guard",
+      "difficulty": 3,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_013.json"
+    },
+    {
+      "id": "guard_014",
+      "prompt": "Create a statechart with multiple guards on same event (if/else)",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_014.json"
+    },
+    {
+      "id": "guard_015",
+      "prompt": "Create a statechart with compound guard (condition1 AND condition2)",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_015.json"
+    },
+    {
+      "id": "guard_016",
+      "prompt": "Create a statechart with OR guard (condition1 OR condition2)",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_016.json"
+    },
+    {
+      "id": "guard_017",
+      "prompt": "Create a statechart with negated guard (NOT condition)",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_017.json"
+    },
+    {
+      "id": "guard_018",
+      "prompt": "Create a statechart with numeric comparison guards (<, >, ==)",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_018.json"
+    },
+    {
+      "id": "guard_019",
+      "prompt": "Create a statechart with state-dependent guards (in(State))",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_019.json"
+    },
+    {
+      "id": "guard_020",
+      "prompt": "Create a statechart with timer-based guards (after(5s))",
+      "difficulty": 4,
+      "category": "guards",
+      "gold_standard_file": "gold_standards/guard_020.json"
+    },
+    {
+      "id": "complex_001",
+      "prompt": "Create a statechart for a smart thermostat with hierarchy, parallel fan/compressor, and temperature guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_001.json"
+    },
+    {
+      "id": "complex_002",
+      "prompt": "Create a statechart for a car with nested Engine states, parallel Lights, and fuel level guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_002.json"
+    },
+    {
+      "id": "complex_003",
+      "prompt": "Create a statechart for a game with Player hierarchy, parallel Timer, and health guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_003.json"
+    },
+    {
+      "id": "complex_004",
+      "prompt": "Create a statechart for an ATM with Transaction substates, parallel Card/Cash, and balance guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_004.json"
+    },
+    {
+      "id": "complex_005",
+      "prompt": "Create a statechart for a drone with Flight hierarchy, parallel Camera/GPS, and battery guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_005.json"
+    },
+    {
+      "id": "complex_006",
+      "prompt": "Create a statechart for a washing machine with Cycle substates, parallel Water/Motor, and load guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_006.json"
+    },
+    {
+      "id": "complex_007",
+      "prompt": "Create a statechart for a phone call with Call substates, parallel Network/Audio, and signal guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_007.json"
+    },
+    {
+      "id": "complex_008",
+      "prompt": "Create a statechart for a robot vacuum with Clean hierarchy, parallel Navigation/Dust, and battery guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_008.json"
+    },
+    {
+      "id": "complex_009",
+      "prompt": "Create a statechart for a smart home with Room hierarchy, parallel Lighting/HVAC, and presence guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_009.json"
+    },
+    {
+      "id": "complex_010",
+      "prompt": "Create a statechart for e-commerce checkout with Payment substates, parallel Inventory/Shipping, and validation guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_010.json"
+    },
+    {
+      "id": "complex_011",
+      "prompt": "Create a statechart for a coffee machine with Brew hierarchy, parallel Heater/Pump, and water level guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_011.json"
+    },
+    {
+      "id": "complex_012",
+      "prompt": "Create a statechart for a security system with Alarm substates, parallel Sensors, and authorization guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_012.json"
+    },
+    {
+      "id": "complex_013",
+      "prompt": "Create a statechart for a video conference with Call hierarchy, parallel Audio/Video, and bandwidth guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_013.json"
+    },
+    {
+      "id": "complex_014",
+      "prompt": "Create a statechart for a medical device with Operation substates, parallel Monitoring, and safety guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_014.json"
+    },
+    {
+      "id": "complex_015",
+      "prompt": "Create a statechart for industrial automation with Process hierarchy, parallel Sensors/Actuators, and safety guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_015.json"
+    },
+    {
+      "id": "complex_016",
+      "prompt": "Create a statechart for a vehicle with Drive hierarchy, parallel Engine/Transmission, and speed guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_016.json"
+    },
+    {
+      "id": "complex_017",
+      "prompt": "Create a statechart for a printer with Job hierarchy, parallel Paper/Ink, and capacity guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_017.json"
+    },
+    {
+      "id": "complex_018",
+      "prompt": "Create a statechart for a music player with Playback hierarchy, parallel Display/Audio, and playlist guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_018.json"
+    },
+    {
+      "id": "complex_019",
+      "prompt": "Create a statechart for a microwave with Cook hierarchy, parallel Turntable/Magnetron, and door guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_019.json"
+    },
+    {
+      "id": "complex_020",
+      "prompt": "Create a statechart for an elevator system with Movement hierarchy, parallel Doors/Indicators, and floor/weight guards",
+      "difficulty": 5,
+      "category": "complex",
+      "gold_standard_file": "gold_standards/complex_020.json"
+    }
+  ]
+}

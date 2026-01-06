@@ -1,0 +1,67 @@
+{
+  "name": "Microwave",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Idle",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "SetTime",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Cooking",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Done",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "SetTime"
+      ],
+      "event": "SET"
+    },
+    {
+      "from": [
+        "SetTime"
+      ],
+      "to": [
+        "Cooking"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "Cooking"
+      ],
+      "to": [
+        "Done"
+      ],
+      "event": "TIMER"
+    },
+    {
+      "from": [
+        "Done"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "OPEN"
+    }
+  ]
+}

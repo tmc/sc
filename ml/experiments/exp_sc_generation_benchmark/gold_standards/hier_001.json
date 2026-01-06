@@ -1,0 +1,69 @@
+{
+  "name": "MediaPlayer",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Stopped",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "Playing",
+        "type": 2,
+        "is_initial": false,
+        "children": [
+          {
+            "label": "Normal",
+            "type": 1,
+            "is_initial": true
+          },
+          {
+            "label": "FastForward",
+            "type": 1,
+            "is_initial": false
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Stopped"
+      ],
+      "to": [
+        "Normal"
+      ],
+      "event": "PLAY"
+    },
+    {
+      "from": [
+        "Normal"
+      ],
+      "to": [
+        "FastForward"
+      ],
+      "event": "FF"
+    },
+    {
+      "from": [
+        "FastForward"
+      ],
+      "to": [
+        "Normal"
+      ],
+      "event": "NORMAL"
+    },
+    {
+      "from": [
+        "Playing"
+      ],
+      "to": [
+        "Stopped"
+      ],
+      "event": "STOP"
+    }
+  ]
+}

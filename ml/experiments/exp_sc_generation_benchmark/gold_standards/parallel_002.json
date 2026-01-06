@@ -1,0 +1,79 @@
+{
+  "name": "Phone",
+  "root_state": {
+    "label": "__root__",
+    "type": 3,
+    "children": [
+      {
+        "label": "Network",
+        "type": 2,
+        "children": [
+          {
+            "label": "Disconnected",
+            "type": 1,
+            "is_initial": true
+          },
+          {
+            "label": "Connected",
+            "type": 1,
+            "is_initial": false
+          }
+        ]
+      },
+      {
+        "label": "Battery",
+        "type": 2,
+        "children": [
+          {
+            "label": "Discharging",
+            "type": 1,
+            "is_initial": true
+          },
+          {
+            "label": "Charging",
+            "type": 1,
+            "is_initial": false
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Disconnected"
+      ],
+      "to": [
+        "Connected"
+      ],
+      "event": "TOGGLE_R1"
+    },
+    {
+      "from": [
+        "Connected"
+      ],
+      "to": [
+        "Disconnected"
+      ],
+      "event": "TOGGLE_R1"
+    },
+    {
+      "from": [
+        "Discharging"
+      ],
+      "to": [
+        "Charging"
+      ],
+      "event": "TOGGLE_R2"
+    },
+    {
+      "from": [
+        "Charging"
+      ],
+      "to": [
+        "Discharging"
+      ],
+      "event": "TOGGLE_R2"
+    }
+  ]
+}

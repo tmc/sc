@@ -1,0 +1,76 @@
+{
+  "name": "Session",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "LoggedOut",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "LoggingIn",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "LoggedIn",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "LoggingOut",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "LoggedOut"
+      ],
+      "to": [
+        "LoggingIn"
+      ],
+      "event": "LOGIN"
+    },
+    {
+      "from": [
+        "LoggingIn"
+      ],
+      "to": [
+        "LoggedIn"
+      ],
+      "event": "SUCCESS"
+    },
+    {
+      "from": [
+        "LoggingIn"
+      ],
+      "to": [
+        "LoggedOut"
+      ],
+      "event": "FAILURE"
+    },
+    {
+      "from": [
+        "LoggedIn"
+      ],
+      "to": [
+        "LoggingOut"
+      ],
+      "event": "LOGOUT"
+    },
+    {
+      "from": [
+        "LoggingOut"
+      ],
+      "to": [
+        "LoggedOut"
+      ],
+      "event": "COMPLETE"
+    }
+  ]
+}

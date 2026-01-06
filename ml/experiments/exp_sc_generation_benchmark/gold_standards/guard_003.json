@@ -1,0 +1,66 @@
+{
+  "name": "Thermostat",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Idle",
+        "type": 1,
+        "is_initial": true
+      },
+      {
+        "label": "Heating",
+        "type": 1,
+        "is_initial": false
+      },
+      {
+        "label": "Cooling",
+        "type": 1,
+        "is_initial": false
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Heating"
+      ],
+      "event": "CHECK",
+      "guard": "temp < target"
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Cooling"
+      ],
+      "event": "CHECK",
+      "guard": "temp > target"
+    },
+    {
+      "from": [
+        "Heating"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "CHECK",
+      "guard": "temp >= target"
+    },
+    {
+      "from": [
+        "Cooling"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "CHECK",
+      "guard": "temp <= target"
+    }
+  ]
+}
