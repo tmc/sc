@@ -1,0 +1,228 @@
+{
+  "root_state": {
+    "label": "SudokuReasoning",
+    "type": "parallel",
+    "children": [
+      {
+        "label": "ConstraintFocus",
+        "type": "normal",
+        "children": [
+          {
+            "label": "RowFocus",
+            "type": "basic"
+          },
+          {
+            "label": "ColFocus",
+            "type": "basic"
+          },
+          {
+            "label": "BoxFocus",
+            "type": "basic"
+          },
+          {
+            "label": "NeutralFocus",
+            "type": "basic",
+            "is_initial": true
+          }
+        ]
+      },
+      {
+        "label": "SolvingPhase",
+        "type": "normal",
+        "children": [
+          {
+            "label": "EarlyCycle",
+            "type": "basic",
+            "is_initial": true
+          },
+          {
+            "label": "MidCycle",
+            "type": "basic"
+          },
+          {
+            "label": "LateCycle",
+            "type": "basic"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "EarlyCycle"
+      ],
+      "to": [
+        "MidCycle"
+      ],
+      "event": "H_CYCLE"
+    },
+    {
+      "from": [
+        "MidCycle"
+      ],
+      "to": [
+        "LateCycle"
+      ],
+      "event": "H_CYCLE"
+    },
+    {
+      "from": [
+        "NeutralFocus"
+      ],
+      "to": [
+        "RowFocus"
+      ],
+      "event": "ROW_CONSTRAINT"
+    },
+    {
+      "from": [
+        "NeutralFocus"
+      ],
+      "to": [
+        "ColFocus"
+      ],
+      "event": "COL_CONSTRAINT"
+    },
+    {
+      "from": [
+        "NeutralFocus"
+      ],
+      "to": [
+        "BoxFocus"
+      ],
+      "event": "BOX_CONSTRAINT"
+    }
+  ],
+  "feature_mapping": {
+    "RowFocus": [
+      5,
+      19,
+      70,
+      78,
+      117,
+      135,
+      193,
+      216,
+      298,
+      318,
+      338,
+      580,
+      584,
+      603,
+      609,
+      655,
+      670,
+      695,
+      721,
+      821,
+      827,
+      844,
+      845,
+      897,
+      938,
+      973,
+      974,
+      1004
+    ],
+    "ColFocus": [
+      727
+    ],
+    "BoxFocus": [
+      91,
+      1015
+    ],
+    "EarlyCycle": [
+      5,
+      19,
+      69,
+      70,
+      74,
+      78,
+      91,
+      117,
+      135,
+      163,
+      193,
+      216,
+      227,
+      230,
+      298,
+      318,
+      319,
+      338,
+      355,
+      401,
+      459,
+      463,
+      536,
+      571,
+      584,
+      603,
+      609,
+      632,
+      635,
+      639,
+      655,
+      657,
+      665,
+      670,
+      695,
+      698,
+      721,
+      727,
+      766,
+      788,
+      808,
+      821,
+      844,
+      845,
+      846,
+      897,
+      907,
+      937,
+      938,
+      973,
+      974,
+      1004,
+      1014,
+      1015
+    ],
+    "LateCycle": [
+      28,
+      30,
+      38,
+      59,
+      92,
+      97,
+      144,
+      201,
+      215,
+      315,
+      357,
+      372,
+      489,
+      491,
+      496,
+      501,
+      583,
+      590,
+      597,
+      608,
+      650,
+      656,
+      661,
+      685,
+      715,
+      763,
+      769,
+      778,
+      858,
+      942,
+      972,
+      979,
+      981,
+      1006
+    ]
+  }
+}

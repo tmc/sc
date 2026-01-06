@@ -1,0 +1,713 @@
+{
+  "model_name": "guard_gated",
+  "epochs": 100,
+  "seed": 42,
+  "train_history": [
+    {
+      "epoch": 1,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 2,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 3,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 4,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 5,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 6,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 7,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 8,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 9,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 10,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 11,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 12,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 13,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 14,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 15,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 16,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 17,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 18,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 19,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 20,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 21,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 22,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 23,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 24,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 25,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 26,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 27,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 28,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 29,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 30,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 31,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 32,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 33,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 34,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 35,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 36,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 37,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 38,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 39,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 40,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 41,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 42,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 43,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 44,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 45,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 46,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 47,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 48,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 49,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 50,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 51,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 52,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 53,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 54,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 55,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 56,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 57,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 58,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 59,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 60,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 61,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 62,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 63,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 64,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 65,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 66,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 67,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 68,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 69,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 70,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 71,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 72,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 73,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 74,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 75,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 76,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 77,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 78,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 79,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 80,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 81,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 82,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 83,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 84,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 85,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 86,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 87,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 88,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 89,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 90,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 91,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 92,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 93,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 94,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 95,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 96,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 97,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 98,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 99,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    },
+    {
+      "epoch": 100,
+      "loss": NaN,
+      "cell_accuracy": 0.1111111119389534,
+      "exact_accuracy": 0.0,
+      "violation_rate": 0.0
+    }
+  ],
+  "final_cell_accuracy": 0.1111111119389534,
+  "final_exact_accuracy": 0.0,
+  "final_violation_rate": 0.0,
+  "training_time_seconds": 8307.256004810333,
+  "epochs_to_50_cell": null,
+  "epochs_to_70_cell": null
+}
