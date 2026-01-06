@@ -1854,3 +1854,199 @@ SimpleSCConfig(
 - `experiments/exp_trm_vs_sc_sudoku/sc_trm_simple.py` - SC-TRM with inference guards
 - `experiments/exp_trm_vs_sc_sudoku/scale_comparison.py` - Scale comparison experiment
 - `experiments/exp_trm_vs_sc_sudoku/error_analysis.py` - Error pattern analysis
+
+---
+
+## SC-TRM Ablation Study: Creative Approaches to Advance Constraint Reasoning
+
+**Goal**: Push SC-TRM from ~55% cell accuracy toward TRM paper's 87% exact accuracy through multiple parallel research tracks.
+
+### Overview
+
+We tested 5 approaches to improve SC-TRM:
+
+| Approach | Key Idea | Cell Accuracy | Improvement |
+|----------|----------|---------------|-------------|
+| Vanilla TRM | Baseline | 47.5% | - |
+| STE Guards | Gradient flow through hard masks | 60.4% | +12.9% |
+| Confidence Guards | Dynamic guard strength by entropy | 61.5% | +14.0% |
+| **Attention Bias** | Soft constraint in attention patterns | **77.2%** | **+29.7%** |
+| **Hierarchical SC** | Board → Unit → Cell message passing | **76.9%** | **+29.4%** |
+
+### Track A: Gradient Flow (STE + Confidence Guards)
+
+**Problem**: Hard constraint masks block gradient flow during training.
+
+#### STE Guards (`ste_guards.py`)
+
+Uses Straight-Through Estimator: forward uses hard mask, backward uses soft approximation.
+
+```python
+class STEGuard(nn.Module):
+    def __call__(self, logits, valid_mask, training=True):
+        if not training:
+            return logits + mx.log(valid_mask + 1e-10)
+        # STE: forward uses hard, backward uses soft
+        hard_masked = logits + mx.log(valid_mask + 1e-10)
+        soft_mask = valid_mask * (1 - self.soft_epsilon) + self.soft_epsilon
+        soft_masked = logits + mx.log(soft_mask)
+        return hard_masked - mx.stop_gradient(hard_masked - soft_masked)
+```
+
+**Result**: 60.4% accuracy (+5.4% vs inference-only guards)
+
+#### Confidence Guards (`confidence_guards.py`)
+
+Dynamic guard strength based on prediction entropy:
+- Low confidence (high entropy) → soft guards (exploration)
+- High confidence (low entropy) → hard guards (exploitation)
+
+```python
+def compute_guard_strength(self, confidence):
+    return mx.sigmoid((confidence - self.threshold) * self.temperature)
+```
+
+**Result**: 61.5% accuracy (+14.0% vs vanilla)
+
+### Track B: SAE Discovery (`sae_discovery.py`)
+
+**Goal**: Discover what TRM learns internally rather than hand-coding guards.
+
+#### Activation Extraction
+
+Extracted hidden states at each H-cycle:
+- Shape: [200, 3, 81, 128] = 200 samples × 3 H-cycles × 81 cells × 128 dim
+- Flattened: 48,600 activation vectors for SAE training
+
+#### TopK SAE Training
+
+- Latent dim: 1024 (8× expansion)
+- TopK: 16 active features per position
+- Training: 30 epochs
+
+#### Feature Discovery
+
+| Category | Count | Description |
+|----------|-------|-------------|
+| Active features | 130 | Features that fire at least once |
+| Row-focused | 28 | Attend strongly to specific row |
+| Col-focused | 1 | Attend strongly to specific column |
+| Box-focused | 2 | Attend strongly to specific box |
+| Early-cycle | 54 | Active mainly in H-cycle 1 |
+| Late-cycle | 34 | Active mainly in H-cycle 3 |
+| Dead | 894 | Never activate |
+
+**Key insight**: Model learns row-based reasoning primarily (28 row features vs 1 col feature).
+
+#### Generated Statechart
+
+SAE features mapped to statechart structure with two orthogonal regions:
+1. **ConstraintFocus**: RowFocus | ColFocus | BoxFocus | NeutralFocus
+2. **SolvingPhase**: EarlyCycle | MidCycle | LateCycle
+
+### Track C: Hierarchical SC-TRM (`hierarchical_sc_trm.py`)
+
+**Insight**: Sudoku has natural hierarchy - model it explicitly.
+
+```
+Level 3: Board State (global solving progress)
+        ↓
+Level 2: Unit State (27 units: 9 rows + 9 cols + 9 boxes)
+        ↓
+Level 1: Cell State (81 individual cells)
+```
+
+#### Architecture
+
+1. **UnitEncoder**: Aggregates 9 cells per unit into unit representation
+2. **BoardEncoder**: Attention-based aggregation of 27 units into board state
+3. **TopDownGuidance**: Board → Units → Cells message passing
+
+#### Message Flow
+
+- **Bottom-up**: cell_states → unit_states → board_state
+- **Top-down**: board_state → unit_states → cell_states (gated)
+
+**Result**: 76.9% accuracy (+29.4% vs vanilla)
+
+### Track D: Attention Bias (`attention_bias.py`)
+
+**Insight**: Instead of hard logit masking (blocks gradients), encode constraints as soft attention patterns.
+
+```
+Hard guards:  logits += log(valid_mask)     → Gradient blocked
+Soft attention: attention[i,j] *= affinity[i,j] → Gradients flow
+```
+
+#### Constraint Affinity Matrix
+
+81×81 matrix where `affinity[i,j] = 1` if cells share constraint (row/col/box).
+
+```python
+def build_constraint_affinity_matrix():
+    # cells in same row/col/box have affinity = 1
+    same_row = (rows_i == rows_j).astype(mx.float32)
+    same_col = (cols_i == cols_j).astype(mx.float32)
+    same_box = (boxes_i == boxes_j).astype(mx.float32)
+    return mx.maximum(mx.maximum(same_row, same_col), same_box)
+```
+
+#### Per-Head Learnable Scale
+
+Each attention head learns how much to use the constraint bias:
+```
+Layer 0: [1.166, 1.189, 1.177, 1.171]
+Layer 1: [1.184, 1.163, 1.147, 1.177]
+Layer 2: [1.172, 1.178, 1.137, 1.199]
+```
+
+All heads learned to use constraints slightly above baseline (1.13-1.20×).
+
+#### Bias Annealing
+
+- Start: soft (0.5×) → explore freely
+- End: firm (3.0×) → exploit learned patterns
+
+**Result**: 77.2% accuracy (+29.7% vs vanilla) - **BEST APPROACH**
+
+### Key Insights
+
+1. **Attention bias is the winner**: +29.7% improvement by encoding constraints as soft attention patterns
+2. **Hierarchical structure matches human solving**: Top-down guidance from global context
+3. **SAE reveals internal reasoning**: Model learns row-focused features
+4. **STE/Confidence improve but limited**: Still constrained by hard masking structure
+5. **Gradients matter most**: Approaches that allow gradient flow outperform hard masking
+
+### Recommendations
+
+1. **Use attention bias for new SC-TRM projects**: Best balance of improvement and simplicity
+2. **Combine approaches**: Attention bias + Hierarchical may yield even better results
+3. **Train longer with more data**: Current 77% cell accuracy at 1K samples suggests room for improvement
+4. **Scale up**: Test with larger models and more training data
+
+### Files Created
+
+- `experiments/exp_trm_vs_sc_sudoku/ste_guards.py` - STE implementation
+- `experiments/exp_trm_vs_sc_sudoku/confidence_guards.py` - Dynamic guards
+- `experiments/exp_trm_vs_sc_sudoku/activation_extractor.py` - SAE data extraction
+- `experiments/exp_trm_vs_sc_sudoku/sae_discovery.py` - SAE training and analysis
+- `experiments/exp_trm_vs_sc_sudoku/attention_bias.py` - Soft constraint encoding
+- `experiments/exp_trm_vs_sc_sudoku/hierarchical_sc_trm.py` - Multi-level structure
+- `experiments/exp_trm_vs_sc_sudoku/ablation_study.py` - Comprehensive comparison
+
+### Reproduction
+
+```bash
+# Individual approaches
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/ste_guards.py
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/confidence_guards.py
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/attention_bias.py
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/hierarchical_sc_trm.py
+
+# SAE discovery pipeline
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/activation_extractor.py --mode=extract
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/sae_discovery.py
+
+# Full ablation study
+.venv/bin/python3 experiments/exp_trm_vs_sc_sudoku/ablation_study.py
+```
