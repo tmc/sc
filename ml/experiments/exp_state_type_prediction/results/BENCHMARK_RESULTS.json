@@ -1,0 +1,60 @@
+{
+  "session": "DDB5",
+  "model": "Qwen2.5-Coder-1.5B-Instruct-4bit",
+  "metrics": {
+    "basic": 85.71428571428571,
+    "or": 85.71428571428571,
+    "parallel": 100.0,
+    "edge": 66.66666666666666,
+    "overall": 85.18518518518519
+  },
+  "by_category": {
+    "BASIC": {
+      "correct": 6,
+      "total": 7,
+      "accuracy": 85.71428571428571,
+      "errors": [
+        {
+          "description": "Waiting state for input",
+          "expected": "BASIC",
+          "predicted": "OR"
+        }
+      ]
+    },
+    "OR": {
+      "correct": 6,
+      "total": 7,
+      "accuracy": 85.71428571428571,
+      "errors": [
+        {
+          "description": "Door state: Open, Closed, or Locked",
+          "expected": "OR",
+          "predicted": "PARALLEL"
+        }
+      ]
+    },
+    "PARALLEL": {
+      "correct": 7,
+      "total": 7,
+      "accuracy": 100.0,
+      "errors": []
+    },
+    "EDGE": {
+      "correct": 4,
+      "total": 6,
+      "accuracy": 66.66666666666666,
+      "errors": [
+        {
+          "description": "Audio with Volume and Balance controls",
+          "expected": "PARALLEL",
+          "predicted": "OR"
+        },
+        {
+          "description": "Dashboard showing either Graph or Table view",
+          "expected": "OR",
+          "predicted": "PARALLEL"
+        }
+      ]
+    }
+  }
+}
