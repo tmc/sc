@@ -28,6 +28,7 @@ Development roadmap for the statecharts implementation based on Harel's formalis
 3. Write architecture documentation
 4. Fix flaky CI tests, enable coverage reporting
 5. Add godoc comments for exported functions
+6. Expand todo items to find and get issues fully resolved
 
 ## Q4 2025
 
