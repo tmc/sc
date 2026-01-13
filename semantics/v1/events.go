@@ -87,6 +87,8 @@ type EventProcessor struct {
 	cancel context.CancelFunc
 	// wg tracks running goroutines
 	wg sync.WaitGroup
+	// machineMutex protects machine access
+	machineMutex sync.RWMutex
 }
 
 // EventQueue implements a thread-safe priority queue for events
@@ -136,7 +138,7 @@ func (f *ConditionalFilter) Name() string {
 func NewEventProcessor(machine *sc.Machine) *EventProcessor {
 	ctx, cancel := context.WithCancel(context.Background())
 	queue := NewEventQueue()
-	
+
 	return &EventProcessor{
 		machine: machine,
 		queue:   queue,
@@ -221,30 +223,30 @@ func (ep *EventProcessor) RemoveFilter(name string) {
 // SendEvent sends an external event to the processor
 func (ep *EventProcessor) SendEvent(eventLabel string, data *structpb.Struct) error {
 	event := &ProcessedEvent{
-		Event: &sc.Event{Label: eventLabel},
-		Type:  EventTypeExternal,
-		Priority: PriorityNormal,
+		Event:     &sc.Event{Label: eventLabel},
+		Type:      EventTypeExternal,
+		Priority:  PriorityNormal,
 		Timestamp: time.Now(),
-		Data: data,
-		Source: "external",
-		ID: fmt.Sprintf("ext_%d_%s", time.Now().UnixNano(), eventLabel),
+		Data:      data,
+		Source:    "external",
+		ID:        fmt.Sprintf("ext_%d_%s", time.Now().UnixNano(), eventLabel),
 	}
-	
+
 	return ep.queue.Enqueue(*event)
 }
 
 // SendEventWithPriority sends an event with specified priority
 func (ep *EventProcessor) SendEventWithPriority(eventLabel string, priority EventPriority, data *structpb.Struct) error {
 	event := &ProcessedEvent{
-		Event: &sc.Event{Label: eventLabel},
-		Type:  EventTypeExternal,
-		Priority: priority,
+		Event:     &sc.Event{Label: eventLabel},
+		Type:      EventTypeExternal,
+		Priority:  priority,
 		Timestamp: time.Now(),
-		Data: data,
-		Source: "external",
-		ID: fmt.Sprintf("ext_%d_%s", time.Now().UnixNano(), eventLabel),
+		Data:      data,
+		Source:    "external",
+		ID:        fmt.Sprintf("ext_%d_%s", time.Now().UnixNano(), eventLabel),
 	}
-	
+
 	return ep.queue.Enqueue(*event)
 }
 
@@ -259,18 +261,18 @@ func (ep *EventProcessor) generateInternalEvent(eventType EventType, stateName s
 	default:
 		eventLabel = fmt.Sprintf("internal_%s", stateName)
 	}
-	
+
 	event := ProcessedEvent{
-		Event: &sc.Event{Label: eventLabel},
-		Type:  eventType,
-		Priority: PriorityHigh,
-		Timestamp: time.Now(),
-		Data: data,
-		Source: "internal",
+		Event:        &sc.Event{Label: eventLabel},
+		Type:         eventType,
+		Priority:     PriorityHigh,
+		Timestamp:    time.Now(),
+		Data:         data,
+		Source:       "internal",
 		TargetStates: []string{stateName},
-		ID: fmt.Sprintf("int_%d_%s", time.Now().UnixNano(), eventLabel),
+		ID:           fmt.Sprintf("int_%d_%s", time.Now().UnixNano(), eventLabel),
 	}
-	
+
 	// Internal events bypass filtering
 	ep.queue.EnqueueInternal(event)
 }
@@ -278,7 +280,7 @@ func (ep *EventProcessor) generateInternalEvent(eventType EventType, stateName s
 // processLoop is the main event processing loop
 func (ep *EventProcessor) processLoop() {
 	defer ep.wg.Done()
-	
+
 	for {
 		select {
 		case <-ep.ctx.Done():
@@ -288,7 +290,7 @@ func (ep *EventProcessor) processLoop() {
 			if !ok {
 				return // Queue is closed
 			}
-			
+
 			ep.processEvent(event)
 		}
 	}
@@ -296,20 +298,23 @@ func (ep *EventProcessor) processLoop() {
 
 // processEvent processes a single event
 func (ep *EventProcessor) processEvent(event ProcessedEvent) {
+	ep.machineMutex.Lock()
+	defer ep.machineMutex.Unlock()
+
 	// Apply filters
 	if !ep.applyFilters(event) {
 		ep.addTrace(event, "filtered", nil, nil, nil, nil)
 		return
 	}
-	
+
 	// Record initial state
 	initialStates := ep.getCurrentStateLabels()
-	
+
 	// Process the event based on type
 	var transitions []string
 	var finalStates []string
 	var err error
-	
+
 	switch event.Type {
 	case EventTypeExternal:
 		transitions, finalStates, err = ep.handleExternalEvent(event)
@@ -320,7 +325,7 @@ func (ep *EventProcessor) processEvent(event ProcessedEvent) {
 	default:
 		err = fmt.Errorf("unknown event type: %v", event.Type)
 	}
-	
+
 	// Add trace
 	ep.addTrace(event, "processed", initialStates, finalStates, transitions, err)
 }
@@ -329,14 +334,14 @@ func (ep *EventProcessor) processEvent(event ProcessedEvent) {
 func (ep *EventProcessor) handleExternalEvent(event ProcessedEvent) ([]string, []string, error) {
 	currentStates := ep.getCurrentStateLabels()
 	executedTransitions := make([]string, 0)
-	
+
 	// Find enabled transitions for this event
 	enabledTransitions := ep.findEnabledTransitions(event.Event.Label, currentStates)
-	
+
 	if len(enabledTransitions) == 0 {
 		return nil, currentStates, nil // No transition, stay in current state
 	}
-	
+
 	// Execute transitions based on priority and consistency
 	for _, transition := range enabledTransitions {
 		if ep.canExecuteTransition(transition, currentStates) {
@@ -345,12 +350,12 @@ func (ep *EventProcessor) handleExternalEvent(event ProcessedEvent) ([]string, [
 				return executedTransitions, ep.getCurrentStateLabels(), err
 			}
 			executedTransitions = append(executedTransitions, transition.Label)
-			
+
 			// Update current states for next iteration
 			currentStates = ep.getCurrentStateLabels()
 		}
 	}
-	
+
 	return executedTransitions, ep.getCurrentStateLabels(), nil
 }
 
@@ -396,7 +401,7 @@ func (ep *EventProcessor) handleExitEvent(event ProcessedEvent) ([]string, []str
 func (ep *EventProcessor) findEnabledTransitions(eventLabel string, currentStates []string) []*sc.Transition {
 	// Pre-allocate with estimated capacity
 	enabled := make([]*sc.Transition, 0, 4)
-	
+
 	for _, transition := range ep.machine.Statechart.Transitions {
 		if transition.Event == eventLabel {
 			// Check if any of the transition's source states are currently active
@@ -408,7 +413,7 @@ func (ep *EventProcessor) findEnabledTransitions(eventLabel string, currentState
 			}
 		}
 	}
-	
+
 	// Sort by priority (first defined transition has higher priority)
 	sort.Slice(enabled, func(i, j int) bool {
 		// Find indices in the original transitions slice
@@ -416,7 +421,7 @@ func (ep *EventProcessor) findEnabledTransitions(eventLabel string, currentState
 		jIndex := ep.findTransitionIndex(enabled[j])
 		return iIndex < jIndex
 	})
-	
+
 	return enabled
 }
 
@@ -440,18 +445,18 @@ func (ep *EventProcessor) canExecuteTransition(transition *sc.Transition, curren
 			break
 		}
 	}
-	
+
 	if !sourceActive {
 		return false
 	}
-	
+
 	// Check guard condition if present
 	if transition.Guard != nil && transition.Guard.Expression != "" {
 		// For now, we'll assume all guards are true
 		// In a full implementation, this would evaluate the guard expression
 		return true
 	}
-	
+
 	return true
 }
 
@@ -460,7 +465,7 @@ func (ep *EventProcessor) executeTransition(transition *sc.Transition, event Pro
 	if ep.machine.Configuration == nil || len(ep.machine.Configuration.States) == 0 {
 		return fmt.Errorf("invalid machine configuration")
 	}
-	
+
 	// Find the current state that matches the transition source
 	var sourceStateIndex = -1
 	for i, stateRef := range ep.machine.Configuration.States {
@@ -474,24 +479,24 @@ func (ep *EventProcessor) executeTransition(transition *sc.Transition, event Pro
 			break
 		}
 	}
-	
+
 	if sourceStateIndex < 0 {
 		return fmt.Errorf("source state not found in configuration")
 	}
-	
+
 	// Generate exit events for the source state
 	sourceState := ep.machine.Configuration.States[sourceStateIndex].Label
 	ep.generateInternalEvent(EventTypeExit, sourceState, event.Data)
-	
+
 	// Update the machine configuration
 	if len(transition.To) > 0 {
 		ep.machine.Configuration.States[sourceStateIndex].Label = transition.To[0]
-		
+
 		// Generate entry events for the target state
 		targetState := transition.To[0]
 		ep.generateInternalEvent(EventTypeEntry, targetState, event.Data)
 	}
-	
+
 	// Execute transition actions
 	for _, action := range transition.Actions {
 		err := ep.executeAction(action, event)
@@ -499,7 +504,7 @@ func (ep *EventProcessor) executeTransition(transition *sc.Transition, event Pro
 			return fmt.Errorf("failed to execute action %s: %w", action.Label, err)
 		}
 	}
-	
+
 	// Update context if present
 	if ep.machine.Context != nil && ep.machine.Context.Fields != nil {
 		if countValue, exists := ep.machine.Context.Fields["count"]; exists {
@@ -509,7 +514,7 @@ func (ep *EventProcessor) executeTransition(transition *sc.Transition, event Pro
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -525,7 +530,7 @@ func (ep *EventProcessor) getCurrentStateLabels() []string {
 	if ep.machine.Configuration == nil {
 		return nil
 	}
-	
+
 	labels := make([]string, len(ep.machine.Configuration.States))
 	for i, state := range ep.machine.Configuration.States {
 		labels[i] = state.Label
@@ -533,11 +538,34 @@ func (ep *EventProcessor) getCurrentStateLabels() []string {
 	return labels
 }
 
+// GetConfiguration returns the current configuration of the machine in a thread-safe manner
+func (ep *EventProcessor) GetConfiguration() *sc.Configuration {
+	ep.machineMutex.RLock()
+	defer ep.machineMutex.RUnlock()
+
+	if ep.machine == nil || ep.machine.Configuration == nil {
+		return nil
+	}
+
+	// Create a deep copy to avoid races on the returned object
+	config := &sc.Configuration{
+		States: make([]*sc.StateRef, len(ep.machine.Configuration.States)),
+	}
+
+	for i, state := range ep.machine.Configuration.States {
+		config.States[i] = &sc.StateRef{
+			Label: state.Label,
+		}
+	}
+
+	return config
+}
+
 // applyFilters applies all registered filters to an event
 func (ep *EventProcessor) applyFilters(event ProcessedEvent) bool {
 	ep.filterMutex.RLock()
 	defer ep.filterMutex.RUnlock()
-	
+
 	for _, filter := range ep.filters {
 		if !filter.Filter(event, ep.machine) {
 			return false
@@ -553,10 +581,10 @@ func (ep *EventProcessor) addTrace(event ProcessedEvent, action string, fromStat
 	if !ep.tracing {
 		return
 	}
-	
+
 	ep.traceMutex.Lock()
 	defer ep.traceMutex.Unlock()
-	
+
 	trace := EventTrace{
 		Event:       event,
 		Timestamp:   time.Now(),
@@ -566,9 +594,9 @@ func (ep *EventProcessor) addTrace(event ProcessedEvent, action string, fromStat
 		Transitions: transitions,
 		Error:       err,
 	}
-	
+
 	ep.trace = append(ep.trace, trace)
-	
+
 	// Prevent unbounded growth by keeping only the most recent traces
 	if len(ep.trace) > maxTraceSize {
 		// Keep the second half to maintain continuity
@@ -581,11 +609,11 @@ func (ep *EventProcessor) addTrace(event ProcessedEvent, action string, fromStat
 func (eq *EventQueue) Enqueue(event ProcessedEvent) error {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
-	
+
 	if eq.closed {
 		return fmt.Errorf("queue is closed")
 	}
-	
+
 	eq.events = append(eq.events, event)
 	eq.sortEvents()
 	eq.cond.Signal()
@@ -596,11 +624,11 @@ func (eq *EventQueue) Enqueue(event ProcessedEvent) error {
 func (eq *EventQueue) EnqueueInternal(event ProcessedEvent) error {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
-	
+
 	if eq.closed {
 		return fmt.Errorf("queue is closed")
 	}
-	
+
 	// Internal events go to the front based on priority
 	eq.events = append(eq.events, event)
 	eq.sortEvents()
@@ -612,7 +640,7 @@ func (eq *EventQueue) EnqueueInternal(event ProcessedEvent) error {
 func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 	eq.mutex.Lock()
 	defer eq.mutex.Unlock()
-	
+
 	for len(eq.events) == 0 && !eq.closed {
 		// Check if context is done before waiting
 		select {
@@ -620,10 +648,10 @@ func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 			return ProcessedEvent{}, false
 		default:
 		}
-		
+
 		// Wait for an event to be available
 		eq.cond.Wait()
-		
+
 		// Check context again after waking up
 		select {
 		case <-ctx.Done():
@@ -631,11 +659,11 @@ func (eq *EventQueue) Dequeue(ctx context.Context) (ProcessedEvent, bool) {
 		default:
 		}
 	}
-	
+
 	if len(eq.events) == 0 {
 		return ProcessedEvent{}, false
 	}
-	
+
 	event := eq.events[0]
 	eq.events = eq.events[1:]
 	return event, true

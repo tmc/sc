@@ -69,73 +69,73 @@ func EventProcessorExample() {
 
 	// Create event processor
 	processor := semantics.NewEventProcessor(machine)
-	
+
 	// Enable tracing for debugging
 	processor.EnableTracing()
-	
+
 	// Add a maintenance filter
 	maintenanceMode := false
-	maintenanceFilter := semantics.NewConditionalFilter("maintenance", 
+	maintenanceFilter := semantics.NewConditionalFilter("maintenance",
 		func(event semantics.ProcessedEvent, machine *sc.Machine) bool {
 			return !maintenanceMode
 		})
 	processor.AddFilter(maintenanceFilter)
-	
+
 	// Start the processor
 	processor.Start()
 	defer processor.Stop()
-	
+
 	fmt.Println("=== Turnstile Event Processing Example ===")
-	
+
 	// Simulate turnstile usage
 	fmt.Println("\n1. Initial state:")
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Try to push without coin (should stay locked)
 	fmt.Println("\n2. Pushing without coin:")
 	processor.SendEvent("PUSH", nil)
 	time.Sleep(10 * time.Millisecond) // Wait for processing
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Insert coin (should unlock)
 	fmt.Println("\n3. Inserting coin:")
 	processor.SendEvent("COIN", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Push to go through (should lock again)
 	fmt.Println("\n4. Pushing through:")
 	processor.SendEvent("PUSH", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Test priority handling
 	fmt.Println("\n5. Testing priority handling:")
 	processor.SendEventWithPriority("COIN", semantics.PriorityLow, nil)
 	processor.SendEventWithPriority("EMERGENCY_STOP", semantics.PriorityCritical, nil)
 	processor.SendEventWithPriority("PUSH", semantics.PriorityHigh, nil)
 	time.Sleep(20 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Test maintenance mode
 	fmt.Println("\n6. Enabling maintenance mode:")
 	maintenanceMode = true
 	processor.SendEvent("COIN", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	fmt.Println("\n7. Disabling maintenance mode:")
 	maintenanceMode = false
 	processor.SendEvent("COIN", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Print event trace
 	fmt.Println("\n=== Event Trace ===")
 	trace := processor.GetTrace()
 	for i, entry := range trace {
-		fmt.Printf("%d. %s: %s -> %s (Action: %s)\n", 
-			i+1, 
+		fmt.Printf("%d. %s: %s -> %s (Action: %s)\n",
+			i+1,
 			entry.Event.Event.Label,
 			formatStates(entry.FromStates),
 			formatStates(entry.ToStates),
@@ -144,7 +144,7 @@ func EventProcessorExample() {
 			fmt.Printf("   Error: %v\n", entry.Error)
 		}
 	}
-	
+
 	fmt.Println("\n=== Example Complete ===")
 }
 
@@ -188,7 +188,7 @@ func OrthogonalEventExample() {
 				{Label: "Play", From: []string{"Paused", "Stopped"}, To: []string{"Playing"}, Event: "PLAY"},
 				{Label: "Pause", From: []string{"Playing"}, To: []string{"Paused"}, Event: "PAUSE"},
 				{Label: "Stop", From: []string{"Playing", "Paused"}, To: []string{"Stopped"}, Event: "STOP"},
-				
+
 				// Volume transitions
 				{Label: "Mute", From: []string{"Normal"}, To: []string{"Muted"}, Event: "MUTE"},
 				{Label: "Unmute", From: []string{"Muted"}, To: []string{"Normal"}, Event: "UNMUTE"},
@@ -212,44 +212,44 @@ func OrthogonalEventExample() {
 	defer processor.Stop()
 
 	fmt.Println("\n=== Orthogonal States Event Processing Example ===")
-	
+
 	fmt.Println("\n1. Initial state (Paused + Normal):")
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	// Test independent transitions in orthogonal regions
 	fmt.Println("\n2. Start playing:")
 	processor.SendEvent("PLAY", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	fmt.Println("\n3. Mute audio (independent of playback):")
 	processor.SendEvent("MUTE", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	fmt.Println("\n4. Pause playback (audio still muted):")
 	processor.SendEvent("PAUSE", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	fmt.Println("\n5. Unmute audio:")
 	processor.SendEvent("UNMUTE", nil)
 	time.Sleep(10 * time.Millisecond)
-	printCurrentState(machine)
-	
+	printCurrentState(processor.GetConfiguration())
+
 	fmt.Println("\n=== Orthogonal Example Complete ===")
 }
 
 // Helper functions for the examples
 
-func printCurrentState(machine *sc.Machine) {
-	if machine.Configuration == nil || len(machine.Configuration.States) == 0 {
+func printCurrentState(config *sc.Configuration) {
+	if config == nil || len(config.States) == 0 {
 		fmt.Println("  No active states")
 		return
 	}
-	
+
 	fmt.Print("  Current states: ")
-	for i, state := range machine.Configuration.States {
+	for i, state := range config.States {
 		if i > 0 {
 			fmt.Print(", ")
 		}

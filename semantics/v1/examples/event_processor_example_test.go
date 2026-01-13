@@ -54,32 +54,36 @@ func TestEventProcessorExampleLogic(t *testing.T) {
 	defer processor.Stop()
 
 	// Test initial state
-	if len(machine.Configuration.States) != 1 || machine.Configuration.States[0].Label != "Locked" {
-		t.Errorf("Expected initial state to be Locked, got %v", machine.Configuration.States)
+	config := processor.GetConfiguration()
+	if len(config.States) != 1 || config.States[0].Label != "Locked" {
+		t.Errorf("Expected initial state to be Locked, got %v", config.States)
 	}
 
 	// Test pushing without coin (should stay locked)
 	processor.SendEvent("PUSH", nil)
 	time.Sleep(10 * time.Millisecond)
-	
-	if len(machine.Configuration.States) != 1 || machine.Configuration.States[0].Label != "Locked" {
-		t.Errorf("Expected state to remain Locked after push, got %v", machine.Configuration.States)
+
+	config = processor.GetConfiguration()
+	if len(config.States) != 1 || config.States[0].Label != "Locked" {
+		t.Errorf("Expected state to remain Locked after push, got %v", config.States)
 	}
 
 	// Test inserting coin (should unlock)
 	processor.SendEvent("COIN", nil)
 	time.Sleep(10 * time.Millisecond)
-	
-	if len(machine.Configuration.States) != 1 || machine.Configuration.States[0].Label != "Unlocked" {
-		t.Errorf("Expected state to be Unlocked after coin, got %v", machine.Configuration.States)
+
+	config = processor.GetConfiguration()
+	if len(config.States) != 1 || config.States[0].Label != "Unlocked" {
+		t.Errorf("Expected state to be Unlocked after coin, got %v", config.States)
 	}
 
 	// Test pushing through (should lock again)
 	processor.SendEvent("PUSH", nil)
 	time.Sleep(10 * time.Millisecond)
-	
-	if len(machine.Configuration.States) != 1 || machine.Configuration.States[0].Label != "Locked" {
-		t.Errorf("Expected state to be Locked after push, got %v", machine.Configuration.States)
+
+	config = processor.GetConfiguration()
+	if len(config.States) != 1 || config.States[0].Label != "Locked" {
+		t.Errorf("Expected state to be Locked after push, got %v", config.States)
 	}
 
 	// Verify trace has events
@@ -116,32 +120,34 @@ func TestEventProcessorMaintenanceFilter(t *testing.T) {
 
 	// Add maintenance filter
 	maintenanceMode := true
-	maintenanceFilter := semantics.NewConditionalFilter("maintenance", 
+	maintenanceFilter := semantics.NewConditionalFilter("maintenance",
 		func(event semantics.ProcessedEvent, machine *sc.Machine) bool {
 			return !maintenanceMode
 		})
 	processor.AddFilter(maintenanceFilter)
-	
+
 	processor.Start()
 	defer processor.Stop()
 
 	// Test that events are filtered when maintenance mode is on
 	processor.SendEvent("COIN", nil)
 	time.Sleep(10 * time.Millisecond)
-	
+
 	// Should still be locked because event was filtered
-	if len(machine.Configuration.States) != 1 || machine.Configuration.States[0].Label != "Locked" {
-		t.Errorf("Expected state to remain Locked when maintenance mode is on, got %v", machine.Configuration.States)
+	config := processor.GetConfiguration()
+	if len(config.States) != 1 || config.States[0].Label != "Locked" {
+		t.Errorf("Expected state to remain Locked when maintenance mode is on, got %v", config.States)
 	}
 
 	// Turn off maintenance mode
 	maintenanceMode = false
 	processor.SendEvent("COIN", nil)
 	time.Sleep(10 * time.Millisecond)
-	
+
 	// Should now be unlocked
-	if len(machine.Configuration.States) != 1 || machine.Configuration.States[0].Label != "Unlocked" {
-		t.Errorf("Expected state to be Unlocked when maintenance mode is off, got %v", machine.Configuration.States)
+	config = processor.GetConfiguration()
+	if len(config.States) != 1 || config.States[0].Label != "Unlocked" {
+		t.Errorf("Expected state to be Unlocked when maintenance mode is off, got %v", config.States)
 	}
 }
 
@@ -216,11 +222,12 @@ func TestOrthogonalEventExampleLogic(t *testing.T) {
 	defer processor.Stop()
 
 	// Test initial state (should have both Paused and Normal)
-	actualStates := make([]string, len(machine.Configuration.States))
-	for i, state := range machine.Configuration.States {
+	config := processor.GetConfiguration()
+	actualStates := make([]string, len(config.States))
+	for i, state := range config.States {
 		actualStates[i] = state.Label
 	}
-	
+
 	if len(actualStates) != 2 {
 		t.Errorf("Expected 2 initial states, got %d: %v", len(actualStates), actualStates)
 	}
@@ -241,12 +248,13 @@ func TestOrthogonalEventExampleLogic(t *testing.T) {
 	// Test playing (should change playback but not volume)
 	processor.SendEvent("PLAY", nil)
 	time.Sleep(10 * time.Millisecond)
-	
-	actualStates = make([]string, len(machine.Configuration.States))
-	for i, state := range machine.Configuration.States {
+
+	config = processor.GetConfiguration()
+	actualStates = make([]string, len(config.States))
+	for i, state := range config.States {
 		actualStates[i] = state.Label
 	}
-	
+
 	if !hasState(actualStates, "Playing") || !hasState(actualStates, "Normal") {
 		t.Errorf("Expected states [Playing, Normal] after PLAY, got %v", actualStates)
 	}
@@ -254,12 +262,13 @@ func TestOrthogonalEventExampleLogic(t *testing.T) {
 	// Test muting (should change volume but not playback)
 	processor.SendEvent("MUTE", nil)
 	time.Sleep(10 * time.Millisecond)
-	
-	actualStates = make([]string, len(machine.Configuration.States))
-	for i, state := range machine.Configuration.States {
+
+	config = processor.GetConfiguration()
+	actualStates = make([]string, len(config.States))
+	for i, state := range config.States {
 		actualStates[i] = state.Label
 	}
-	
+
 	if !hasState(actualStates, "Playing") || !hasState(actualStates, "Muted") {
 		t.Errorf("Expected states [Playing, Muted] after MUTE, got %v", actualStates)
 	}
@@ -319,8 +328,8 @@ func TestPrintCurrentState(t *testing.T) {
 					t.Errorf("printCurrentState panicked: %v", r)
 				}
 			}()
-			
-			printCurrentState(tt.machine)
+
+			printCurrentState(tt.machine.Configuration)
 		})
 	}
 }
@@ -397,7 +406,7 @@ func TestEventPriorityHandling(t *testing.T) {
 	processor.SendEventWithPriority("LOW", semantics.PriorityLow, nil)
 	processor.SendEventWithPriority("CRITICAL", semantics.PriorityCritical, nil)
 	processor.SendEventWithPriority("HIGH", semantics.PriorityHigh, nil)
-	
+
 	time.Sleep(20 * time.Millisecond)
 
 	trace := processor.GetTrace()
