@@ -115,5 +115,5 @@ struct SteeringView: View {
 }
 
 #Preview {
-    SteeringView(steeringValues: .constant([10: 5.0]), onGenerate: { _ in })
+    SteeringView(steeringValues: .constant([10: 5.0]), onGenerate: { _, _ in })
 }

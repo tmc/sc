@@ -9,34 +9,25 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AppViewModel.self) var viewModel
-    @State private var showSteering = false
-    @State private var steeringValues: [Int: Double] = [:]
+
 
     var body: some View {
         NavigationSplitView {
             MachineListView()
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button(action: { showSteering = true }) {
-                            Label("Steer Gen", systemImage: "network")
-                        }
-                    }
-                }
 #if os(macOS)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 200)
 #endif
         } detail: {
             if let machine = viewModel.selectedMachine {
-                VisualizerView(machine: machine)
+                VisualizerView(machine: machine, onGenerate: viewModel.generateRemote)
                     .id(machine.id) // Ensure view recreation on change
             } else {
-                Text("Select a Statechart")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .sheet(isPresented: $showSteering) {
-            SteeringView(steeringValues: $steeringValues) { prompt, steering in
-                viewModel.generateRemote(prompt: prompt, steering: steering)
+                if #available(iOS 17.0, macOS 14.0, *) {
+                    ContentUnavailableView("Select a Statechart", systemImage: "flowchart", description: Text("Select a statechart from the sidebar to view or edit it."))
+                } else {
+                    Text("Select a Statechart")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }

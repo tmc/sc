@@ -17,7 +17,43 @@ final class StatesUITests: XCTestCase {
     }
 
     @MainActor
-    func testInspectAllCharts() throws {
+    func testCreationFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
+        
+        // 1. Create New Chart
+        let newChartButton = app.buttons["New Chart"]
+        XCTAssertTrue(newChartButton.waitForExistence(timeout: 2), "New Chart button should exist")
+        newChartButton.tap()
+        
+        // 2. Find and Enter New Chart
+        // It's usually inserted at the top or sorted. Name is "New Chart".
+        let newChartCell = app.buttons["New Chart"]
+        XCTAssertTrue(newChartCell.waitForExistence(timeout: 2), "New Chart row should appear")
+        newChartCell.firstMatch.tap()
+        
+        // 3. Verify Visualizer Loaded by checking for "Add State" toolbar button
+        let addStateButton = app.buttons["Add State"]
+        XCTAssertTrue(addStateButton.waitForExistence(timeout: 5), "Visualizer should load")
+        
+        // 4. Add a State
+        addStateButton.tap()
+        
+        // 5. Verify Node Appears
+        // Nodes are accessible elements labeled by their text.
+        // Default label is "New State"
+        let newNode = app.buttons["New State"] // Or other element type depending on modifier
+        // FlowView nodes use .accessibilityAddTraits(.isButton)
+        XCTAssertTrue(newNode.waitForExistence(timeout: 2), "New State node should appear on canvas")
+        
+        // 6. Navigation Back (iPhone only, but safe to check existence)
+        if app.navigationBars.buttons.firstMatch.exists && !app.navigationBars["Statecharts"].exists {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+    }
+
+    @MainActor
+    func testInspectSampleData() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -32,31 +68,20 @@ final class StatesUITests: XCTestCase {
             // Find the cell
             let machineCell = app.buttons[machineName]
             
-            // On iPad/Mac (SplitView), the list might be always visible or in a column.
-            // On iPhone, we might need to go back.
-            // Assuming iPad for now as per user request/simulator.
-            
             if machineCell.waitForExistence(timeout: 2) {
-                machineCell.tap()
+                machineCell.firstMatch.tap()
                 
                 // Verify Visualizer Loaded
-                // We check for the "Simulate" button which is part of the Visualizer view toolbar
                 let simulateButton = app.buttons["Simulate"]
                 XCTAssertTrue(simulateButton.waitForExistence(timeout: 5), "Visualizer should load for \(machineName)")
                 
-                // Optional: Check for a node specific to that machine?
-                // For now, toolbar existence proves view body loaded without crash.
-                
-                // Go back if needed (split view doesn't need back)
-                // If collapsed (iPhone), we need back button.
-                if !app.navigationBars["Statecharts"].exists {
+                // Go back if needed (iPhone/collapsed split)
+                if !app.navigationBars["Statecharts"].exists && app.navigationBars.buttons.count > 0 {
                      app.navigationBars.buttons.firstMatch.tap()
                 }
             } else {
-                 // It might be scrolled off screen? Or list empty?
-                 // For now, log failure if main sample data missing.
                  XCTContext.runActivity(named: "Check for \(machineName)") { _ in
-                     // Fallback check static text
+                     // Fallback check static text if it's not a button?
                      if app.staticTexts[machineName].exists {
                          app.staticTexts[machineName].tap()
                          XCTAssertTrue(app.buttons["Simulate"].exists)

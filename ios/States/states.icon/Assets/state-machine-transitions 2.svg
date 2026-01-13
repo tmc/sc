@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 L1.5,3 Z" fill="black"/>
+    </marker>
+  </defs>
+
+  <!-- State 1 (top left) -->
+  <rect x="120" y="260" width="260" height="160" rx="80" ry="80" fill="none" stroke="black" stroke-width="28"/>
+
+  <!-- State 2 (top right) -->
+  <rect x="644" y="260" width="260" height="160" rx="80" ry="80" fill="none" stroke="black" stroke-width="28"/>
+
+  <!-- State 3 (bottom center) -->
+  <rect x="382" y="660" width="260" height="160" rx="80" ry="80" fill="none" stroke="black" stroke-width="28"/>
+
+  <!-- Arrow 1: State1 -> State2 (horizontal) -->
+  <!-- From Right edge of State 1 to Left edge of State 2 -->
+  <path d="M380,340 L634,340" stroke="black" stroke-width="20" marker-end="url(#arrow)"/>
+
+  <!-- Arrow 2: State1 -> State3 (diagonal down-right) -->
+  <!-- From Bottom of State 1 to Top-Left of State 3 -->
+  <!-- Approx intersection calculation or manual centering -->
+  <!-- State 1 Center (250, 340). State 3 Center (512, 740) -->
+  <!-- Simplified connection points for visual clarity similar to original -->
+  <path d="M250,420 L450,660" stroke="black" stroke-width="20" marker-end="url(#arrow)"/> 
+
+  <!-- Arrow 3: State2 -> State3 (diagonal down-left) -->
+  <path d="M774,420 L574,660" stroke="black" stroke-width="20" marker-end="url(#arrow)"/>
+</svg>

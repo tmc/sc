@@ -10,13 +10,20 @@ class StatechartViewModel {
     var selection: Set<UUID> = []
     var activeStateIDs: Set<UUID> = [] // IDs of currently active states
     var scale: CGFloat = 1.0
-    var scale: CGFloat = 1.0
     var offset: CGSize = .zero
+    
+    // MARK: - Marquee Selection
+    var selectionRect: CGRect? = nil
+    var initialSelectionBeforeDrag: Set<UUID> = []
     
     // MARK: - Analysis
     let analysisEngine = AnalysisEngine()
     var analysisReport: AnalysisReport?
     var showAnalysis: Bool = false
+    
+    // MARK: - Async Loading
+    var isLoading: Bool = false
+    private var loadTask: Task<Void, Never>?
     
     // MARK: - Engine (Semantics)
     var engine: StatechartEngine?
@@ -37,7 +44,10 @@ class StatechartViewModel {
     func load(machine: StatechartWrapper) {
         self.machine = machine
         
-        // Reset state
+        // Cancel previous task
+        loadTask?.cancel()
+        
+        // Reset state immediately
         self.nodes = []
         self.edges = []
         self.selection = []
@@ -45,41 +55,73 @@ class StatechartViewModel {
         self.simulationHistory = []
         self.currentStepIndex = 0
         self.mode = .editing
+        self.isLoading = true
         
-        guard let json = machine.jsonContent, !json.isEmpty, let data = json.data(using: .utf8) else {
-            zoomToFit(viewSize: CGSize(width: 800, height: 600))
+        guard let json = machine.jsonContent, !json.isEmpty else {
+            self.isLoading = false
             return
         }
+        
+        // Background Parsing
+        loadTask = Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self = self else { return }
             
-        // Attempt 0: Protobuf
-        if let proto = machine.proto {
-            parseProtoDefinition(proto)
-            zoomToFit(viewSize: CGSize(width: 800, height: 600))
-            return
-        }
+            // Perform heavy parsing in background
+            var newNodes: [FlowNode] = []
+            var newEdges: [FlowEdge] = []
+            var newActive: Set<UUID> = []
+            var newHistory: [Set<UUID>] = []
             
-        // Attempt 1: Standard SC Format
-        do {
-            let definition = try JSONDecoder().decode(StandardStatechart.self, from: data)
-            parseStandardDefinition(definition)
-        } catch let standardError {
-            // Attempt 2: Stately Format
-            do {
-                let definition = try JSONDecoder().decode(StatelyDefinition.self, from: data)
-                parseStatelyDefinition(definition)
-            } catch let statelyError {
-                 print("Error decoding Standard JSON: \(standardError)")
-                 print("Error decoding Stately JSON: \(statelyError)")
-                 
-                let errorID = UUID()
-                self.nodes = [
-                    FlowNode(id: errorID, position: CGPoint(x: 100, y: 100), label: "Error Parsing JSON: \(standardError.localizedDescription) / \(statelyError.localizedDescription)", type: .atomic)
-                ]
+            // 1. Attempt Proto (Fastest if available?)
+            // We need to re-create the wrapper logic here or just decode manually.
+            // StatechartWrapper.proto computes it property.
+            // We can just use StatechartWrapper logic if it's thread safe (it's a struct, so yes).
+            // But 'machine' capture is thread safe? Yes, value type.
+            
+            // Attempt Proto
+            if let proto = machine.proto {
+                 let (n, e, a) = StatechartViewModel.parseProtoStatic(proto)
+                 newNodes = n
+                 newEdges = e
+                 newActive = a
+            } else if let data = json.data(using: .utf8) {
+                // Attempt Standard
+                if let definition = try? JSONDecoder().decode(StandardStatechart.self, from: data) {
+                    let (n, e, a) = StatechartViewModel.parseStandardStatic(definition)
+                    newNodes = n
+                    newEdges = e
+                    newActive = a
+                } else if let definition = try? JSONDecoder().decode(StatelyDefinition.self, from: data) {
+                    // Attempt Stately
+                    let (n, e) = StatechartViewModel.parseStatelyStatic(definition)
+                    newNodes = n
+                    newEdges = e
+                    // Stately doesn't define active?
+                    if let first = n.first { newActive = [first.id] }
+                } else {
+                     // Error
+                     // We can handle error on main actor
+                }
+            }
+            
+            if newActive.isEmpty, let first = newNodes.first(where: { $0.type == .atomic }) {
+                newActive = [first.id]
+            }
+            if !newActive.isEmpty { newHistory = [newActive] }
+            
+            // Update UI on MainActor
+            if !Task.isCancelled {
+                await MainActor.run {
+                    self.nodes = newNodes
+                    self.edges = newEdges
+                    self.activeStateIDs = newActive
+                    self.simulationHistory = newHistory
+                    self.isLoading = false
+                    
+                    self.zoomToFit(viewSize: CGSize(width: 800, height: 600)) // Default size, view will resize on appear
+                }
             }
         }
-        
-        // Initial fit
-        zoomToFit(viewSize: CGSize(width: 800, height: 600))
     }
     
     // MARK: - Simulation State
@@ -196,12 +238,14 @@ class StatechartViewModel {
     
     // MARK: - Protobuf Parsing
     
-    private func parseProtoDefinition(_ definition: Statecharts_V1_Statechart) {
+    private static func parseProtoStatic(_ definition: Statecharts_V1_Statechart) -> ([FlowNode], [FlowEdge], Set<UUID>) {
         var pathMap: [String: UUID] = [:]
+        var nodes: [FlowNode] = []
+        var active: Set<UUID> = []
         
         // 1. Flatten Nodes
         if definition.hasRootState {
-            self.nodes = StatechartViewModel.visitProtoNode(
+            nodes = StatechartViewModel.visitProtoNode(
                 definition.rootState,
                 parentID: nil,
                 currentPath: [],
@@ -212,13 +256,14 @@ class StatechartViewModel {
         }
         
         // 2. Map Edges
-        self.edges = StatechartViewModel.mapProtoEdges(from: definition.transitions, pathMap: pathMap)
+        let edges = StatechartViewModel.mapProtoEdges(from: definition.transitions, pathMap: pathMap)
         
         // 3. Set Initial Active State
-        if let firstAtomic = self.nodes.first(where: { $0.type == .atomic }) {
-            self.activeStateIDs.insert(firstAtomic.id)
+        if let firstAtomic = nodes.first(where: { $0.type == .atomic }) {
+            active.insert(firstAtomic.id)
         }
-        self.simulationHistory = [self.activeStateIDs]
+        
+        return (nodes, edges, active)
     }
     
     
@@ -336,30 +381,31 @@ class StatechartViewModel {
     
     // MARK: - Standard Format Parsing
     
-    private func parseStandardDefinition(_ definition: StandardStatechart) {
-        var pathMap: [String: UUID] = [:] // "root.Child" -> UUID
+    private static func parseStandardStatic(_ definition: StandardStatechart) -> ([FlowNode], [FlowEdge], Set<UUID>) {
+        var pathMap: [String: UUID] = [:]
+        var active: Set<UUID> = []
         
-        // 1. Flatten Nodes & Build Path Map
-        // Root label usually ignored in path for children? Or implied?
-        // Let's assume path is based on labels.
-        self.nodes = StatechartViewModel.visitStandardNode(
+        // 1. Flatten Nodes
+        let nodes = StatechartViewModel.visitStandardNode(
             definition.rootState,
             parentID: nil,
             currentPath: [],
             pathMap: &pathMap,
-            position: CGPoint(x: 50, y: 50) 
+            position: CGPoint(x: 50, y: 50)
         )
         
         // 2. Map Edges
+        var edges: [FlowEdge] = []
         if let transitions = definition.transitions {
-            self.edges = StatechartViewModel.mapStandardEdges(from: transitions, pathMap: pathMap)
+            edges = StatechartViewModel.mapStandardEdges(from: transitions, pathMap: pathMap)
         }
         
         // 3. Set Initial Active State
-        if let firstAtomic = self.nodes.first(where: { $0.type == .atomic }) {
-            self.activeStateIDs.insert(firstAtomic.id)
+        if let firstAtomic = nodes.first(where: { $0.type == .atomic }) {
+            active.insert(firstAtomic.id)
         }
-        self.simulationHistory = [self.activeStateIDs]
+        
+        return (nodes, edges, active)
     }
     
     private static func visitStandardNode(_ node: StandardState, parentID: UUID?, currentPath: [String], pathMap: inout [String: UUID], position: CGPoint) -> [FlowNode] {
@@ -378,6 +424,8 @@ class StatechartViewModel {
         // Let's use Joined separator.
         let pathKey = newPath.joined(separator: "###") 
         pathMap[pathKey] = id
+        // Also map by label for simple transitions (last write wins for duplicates)
+        pathMap[node.label] = id
         
         // Determine Type
         var nodeType: FlowNode.NodeType = .atomic
@@ -427,15 +475,10 @@ class StatechartViewModel {
             let toKey = t.to.joined(separator: "###")
             
             if let sourceID = pathMap[fromKey], let targetID = pathMap[toKey] {
-                let event = t.event
-                let guardExpr = t.guardDef?.expression
-                var action: String? = nil
-                // StandardTransition definition check:
-                // struct StandardTransition: Codable { var from, to: [String]; var event: String?; var guardDef: ... }
-                // Need to verify standard transition struct fields.
-                // Assuming t.event exists.
+                // Derive event name from available StandardTransition fields (if any)
+                let event: String? = t.event
                 
-                result.append(FlowEdge(source: sourceID, target: targetID, event: event, guardExpression: guardExpr, action: nil, routingType: .orthogonal))
+                result.append(FlowEdge(source: sourceID, target: targetID, event: event, guardExpression: t.guardDef?.expression, action: nil, routingType: .orthogonal))
             } else {
                 // If direct match failed, maybe the path in transition excludes Root?
                 // Try fuzzy matching or removing first element?
@@ -464,21 +507,20 @@ class StatechartViewModel {
     
     // MARK: - Stately Parsing
     
-    private func parseStatelyDefinition(_ definition: StatelyDefinition) {
+    private static func parseStatelyStatic(_ definition: StatelyDefinition) -> ([FlowNode], [FlowEdge]) {
          var localIDMap: [String: UUID] = [:]
-         var parsedNodes: [FlowNode] = []
          
          // 1. Flatten Nodes & Build ID Map
-         parsedNodes = StatechartViewModel.parseNodes(
+         let nodes = StatechartViewModel.parseNodes(
              rootNode: definition.rootNode,
              parentID: nil,
              idMap: &localIDMap
          )
          
-         self.nodes = parsedNodes
-         
          // 2. Map Edges using ID Map
-         self.edges = StatechartViewModel.mapEdges(from: definition.edges, idMap: localIDMap)
+         let edges = StatechartViewModel.mapEdges(from: definition.edges, idMap: localIDMap)
+         
+         return (nodes, edges)
     }
 
 
@@ -672,6 +714,43 @@ class StatechartViewModel {
         }
     }
     
+    // MARK: - Marquee Logic
+    
+    func startMarquee(at startPoint: CGPoint, isAdditive: Bool) {
+        if !isAdditive {
+            selection.removeAll()
+        }
+        initialSelectionBeforeDrag = selection
+        // selectionRect starts as zero-size at startPoint (in Logic Space)
+        // But the View handles the rect creation usually. 
+        // We just need to know we are starting.
+    }
+    
+    func updateMarquee(rect: CGRect) {
+        self.selectionRect = rect
+        
+        // Find nodes intersecting rect
+        let hitNodes = nodes.filter { node in
+            let nodeRect = CGRect(origin: node.position, size: node.size)
+            return rect.intersects(nodeRect)
+        }
+        
+        let hitIDs = Set(hitNodes.map { $0.id })
+        
+        // Combine with initial selection
+        // Typical behavior: Shift adds/toggles? 
+        // For simplicity: Union with initial.
+        // If we want "Rubber Band Select" usually it selects what is in the box.
+        // If Shift held, we add to what was selected BEFORE drag.
+        
+        selection = initialSelectionBeforeDrag.union(hitIDs)
+    }
+    
+    func endMarquee() {
+        self.selectionRect = nil
+        self.initialSelectionBeforeDrag = []
+    }
+    
     // Internal helper for undoing an add
     // Made public and robust for Context Menu usage
     func deleteNode(id: UUID) {
@@ -698,6 +777,12 @@ class StatechartViewModel {
             target.undoManager?.registerUndo(withTarget: target) { target in
                 target.deleteNode(id: id)
             }
+        }
+    }
+    
+    func duplicateSelection() {
+        for id in selection {
+            duplicateNode(id: id)
         }
     }
     

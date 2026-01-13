@@ -6,7 +6,7 @@ struct SimulationToolbar: View {
     @FocusState private var isEventFieldFocused: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 8) {
             // Stop Button
             Button(action: {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -18,32 +18,38 @@ struct SimulationToolbar: View {
             }) {
                 Image(systemName: "stop.fill")
                     .font(.title3)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
-                    .background(Color.red.opacity(0.15), in: Circle())
+                    .background(AnyShapeStyle(Color.red.opacity(0.9)), in: Circle())
+                    .shadow(color: Color.red.opacity(0.3), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
             .help("Stop Simulation (Esc)")
 
             Divider()
-                .frame(height: 28)
+                .frame(height: 20)
+                .padding(.horizontal, 4)
 
             // Step Controls
-            HStack(spacing: 12) {
+            HStack(spacing: 4) {
                 Button(action: { viewModel.resetSimulation() }) {
                     Image(systemName: "arrow.counterclockwise")
                         .font(.body.weight(.medium))
+                        .frame(width: 28, height: 28)
+                        .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
                 .help("Reset (⌘0)")
 
-                HStack(spacing: 4) {
+                HStack(spacing: 0) {
                     Button(action: { withAnimation(.easeInOut(duration: 0.15)) { viewModel.stepBack() } }) {
                         Image(systemName: "chevron.left")
+                            .font(.body.weight(.bold))
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.currentStepIndex == 0)
-                    .padding(4)
                     
                     Text("Step \(viewModel.currentStepIndex + 1)")
                         .font(.caption.monospacedDigit().weight(.medium))
@@ -52,20 +58,23 @@ struct SimulationToolbar: View {
 
                     Button(action: { withAnimation(.easeInOut(duration: 0.15)) { viewModel.stepForward() } }) {
                         Image(systemName: "chevron.right")
+                            .font(.body.weight(.bold))
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.currentStepIndex >= viewModel.simulationHistory.count - 1)
-                    .padding(4)
                 }
-                .padding(4)
-                .background(Color.secondary.opacity(0.05), in: Capsule())
+                .padding(2)
+                .background(AnyShapeStyle(Color.secondary.opacity(0.05)), in: Capsule())
             }
 
             Divider()
-                .frame(height: 28)
+                .frame(height: 20)
+                .padding(.horizontal, 4)
 
             // Event Injection
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 HStack(spacing: 4) {
                     Image(systemName: "bolt.fill")
                         .font(.caption)
@@ -73,39 +82,45 @@ struct SimulationToolbar: View {
 
                     TextField("Event", text: $eventName)
                         .textFieldStyle(.plain)
-                        .frame(width: 100)
+                        .font(.callout)
+                        .frame(width: 90)
                         .focused($isEventFieldFocused)
                         .onSubmit { sendEvent() }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.secondary.opacity(0.08), in: Capsule())
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(AnyShapeStyle(Color.secondary.opacity(0.08)), in: Capsule())
 
                 Button(action: sendEvent) {
-                    Text("Send")
-                        .font(.subheadline.weight(.semibold))
+                    Image(systemName: "arrow.up")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 28, height: 28)
+                        .background(AnyShapeStyle(eventName.isEmpty ? Color.secondary.opacity(0.2) : Theme.Colors.accent), in: Circle())
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
                 .disabled(eventName.isEmpty)
-                .controlSize(.small)
             }
             
             // Active State Indicators (Brief)
             if !viewModel.activeStateIDs.isEmpty {
-                Divider().frame(height: 20)
+                Divider().frame(height: 20).padding(.horizontal, 4)
                 HStack(spacing: -8) {
                     ForEach(Array(viewModel.activeStateIDs.prefix(3)), id: \.self) { id in
                          Circle()
                             .fill(Color.green)
                             .frame(width: 8, height: 8)
                             .overlay(Circle().stroke(Theme.Colors.nodeBackground, lineWidth: 1))
+                            .shadow(color: Color.green.opacity(0.4), radius: 2)
                     }
                 }
             }
         }
-        .padding(12)
-        .ultraThinGlass()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .glassPill()
         .padding(.horizontal)
+        .padding(.bottom, 8)
     }
 
     private func sendEvent() {
@@ -143,3 +158,4 @@ struct SimulationToolbar: View {
     }
     return SimulationToolbarPreview()
 }
+

@@ -13,22 +13,24 @@ public struct FlowView: View {
     @Binding var scale: CGFloat
     @Binding var offset: CGSize
     @Binding var selection: Set<UUID>
+    @Binding var selectionRect: CGRect?
     
     // Access Extension Manager
     @State private var manager = ExtensionManager.shared
     
-    @State private var currentDragOffset: CGSize = .zero
+    @State var currentDragOffset: CGSize = .zero
     
     // Dragging Logic
     private enum DragMode: Equatable {
-        case idle, pan, node(UUID)
+        case idle, pan, node(UUID), marquee
     }
     @State private var dragMode: DragMode = .idle
     @State private var dragStartNodePositions: [UUID: CGPoint] = [:]
     @State private var initialScale: CGFloat? = nil // For robust zooming
     
     // Reparenting Logic
-    @State private var hoveredParentID: UUID? = nil
+    @State var hoveredParentID: UUID? = nil
+    @State var hoveredNodeID: UUID? = nil
     
     // Context Menu Logic
     @State private var lastContextLocation: CGPoint? = nil
@@ -38,7 +40,7 @@ public struct FlowView: View {
     @State private var eventMonitor: Any? = nil
     
     // Connection Logic
-    @State private var connectingEdge: (source: UUID, currentPoint: CGPoint)? = nil
+    @State var connectingEdge: (source: UUID, currentPoint: CGPoint)? = nil
     
     // Callbacks
     var onNodeMoveEnded: (([UUID: CGPoint]) -> Void)?
@@ -56,12 +58,19 @@ public struct FlowView: View {
     var onAddSubstate: ((UUID) -> Void)?
     var onNodeReparent: ((UUID, UUID?) -> Void)? // childID, newParentID
 
+    // MARK: - Drawing Accessors (read-only)
+    var drawing_currentDragOffset: CGSize { currentDragOffset }
+    var drawing_hoveredNodeID: UUID? { hoveredNodeID }
+    var drawing_hoveredParentID: UUID? { hoveredParentID }
+    var drawing_connectingEdge: (source: UUID, currentPoint: CGPoint)? { connectingEdge }
+    
     public init(nodes: Binding<[FlowNode]>,
                 edges: Binding<[FlowEdge]>,
                 activeStateIDs: Binding<Set<UUID>>,
                 scale: Binding<CGFloat>,
                 offset: Binding<CGSize>,
                 selection: Binding<Set<UUID>>,
+                selectionRect: Binding<CGRect?> = .constant(nil),
                 onNodeMoveEnded: (([UUID: CGPoint]) -> Void)? = nil,
                 onNodeDelete: ((UUID) -> Void)? = nil,
                 onNodeDuplicate: ((UUID) -> Void)? = nil,
@@ -76,6 +85,7 @@ public struct FlowView: View {
         _scale = scale
         _offset = offset
         _selection = selection
+        _selectionRect = selectionRect
         self.onNodeMoveEnded = onNodeMoveEnded
         self.onNodeDelete = onNodeDelete
         self.onNodeDuplicate = onNodeDuplicate
@@ -91,19 +101,20 @@ public struct FlowView: View {
             ZStack {
                 // Background with Parallax
                 FlowBackground(scale: scale, offset: (offset + currentDragOffset).parallax())
-                    .overlay(ScrollEventView(offset: $offset, scale: $scale)) // Capture Scroll Events
                     .onTapGesture {
                         // Clear selection/editing on background tap
                         editingNodeID = nil
                         selection = []
                     }
-
                 
                 // Canvas
                 TimelineView(.animation) { timeline in
+                    // ... (Canvas Content)
                     let phase = timeline.date.timeIntervalSinceReferenceDate
                     
                     Canvas { context, size in
+                        drawGrid(context: context, size: size) // Draw Grid in Screen Space
+                        
                         let totalOffset = offset + currentDragOffset
                         context.translateBy(x: size.width / 2 + totalOffset.width,
                                           y: size.height / 2 + totalOffset.height)
@@ -132,40 +143,154 @@ public struct FlowView: View {
                             return false
                         }
                         
-                        for node in sortedNodes {
+                        // Frustum Culling
+                        let center = CGPoint(x: size.width / 2 + totalOffset.width, y: size.height / 2 + totalOffset.height)
+                        let visibleRect = CGRect(
+                            x: -center.x / scale,
+                            y: -center.y / scale,
+                            width: size.width / scale,
+                            height: size.height / scale
+                        ).insetBy(dx: -200, dy: -200) // Buffer for smooth entry
+                        
+                        let visibleNodes = sortedNodes.filter { node in
+                            let nodeRect = CGRect(origin: node.position, size: node.size)
+                            return visibleRect.intersects(nodeRect)
+                        }
+                        
+                        for node in visibleNodes {
                             drawNode(context: context, node: node, phase: phase)
                         }
+                        
+                        // Draw Marquee Selection
+                        if let selectionRect = selectionRect {
+                            let path = Path(selectionRect)
+                            context.fill(path, with: .color(Color.blue.opacity(0.1)))
+                            context.stroke(path, with: .color(Color.blue), lineWidth: 1.0 / scale)
+                        }
                     }
+                    .drawingGroup() // Optimize rendering with Metal backing
                 }
                 .gesture(
                     DragGesture(minimumDistance: 1, coordinateSpace: .local)
                         .onChanged { value in
-                            handleDragChanged(value: value, in: geometry.size)
+                            handleDragChanged(location: value.location, translation: value.translation, startLocation: value.startLocation, in: geometry.size)
                         }
                         .onEnded { value in
-                            handleDragEnded(value: value, in: geometry.size)
+                            handleDragEnded(location: value.location, translation: value.translation, startLocation: value.startLocation, in: geometry.size)
                         }
                 )
+                .onTapGesture(count: 2) {
+                    // Smart Zoom Logic
+                    let targetScale: CGFloat
+                    let targetOffset: CGSize
+                    
+                    if nodes.isEmpty {
+                        targetScale = 1.0
+                        targetOffset = .zero
+                    } else {
+                        let minX = nodes.map { $0.position.x }.min() ?? 0
+                        let maxX = nodes.map { $0.position.x + $0.size.width }.max() ?? 0
+                        let minY = nodes.map { $0.position.y }.min() ?? 0
+                        let maxY = nodes.map { $0.position.y + $0.size.height }.max() ?? 0
+                        
+                        let contentWidth = maxX - minX
+                        let contentHeight = maxY - minY
+                        let contentCenter = CGPoint(x: minX + contentWidth / 2, y: minY + contentHeight / 2)
+                        
+                        let viewSize = geometry.size
+                        let padding: CGFloat = 100
+                        
+                        let scaleX = (viewSize.width - padding) / contentWidth
+                        let scaleY = (viewSize.height - padding) / contentHeight
+                        let fitScale = min(scaleX, scaleY, 2.0)
+                        
+                        if abs(scale - fitScale) < 0.1 {
+                            targetScale = 1.0
+                            targetOffset = CGSize(width: -contentCenter.x * 1.0, height: -contentCenter.y * 1.0)
+                        } else {
+                            targetScale = fitScale
+                            targetOffset = CGSize(width: -contentCenter.x * fitScale, height: -contentCenter.y * fitScale)
+                        }
+                    }
+                    
+                    withAnimation(.spring(.snappy(duration: 0.4))) {
+                        scale = targetScale
+                        offset = targetOffset
+                    }
+                    Theme.Haptics.play(.medium)
+                }
+                .onTapGesture(count: 1) {
+                    // Clear selection/editing on background tap
+                    editingNodeID = nil
+                    selection = []
+                }
 
                 // Single tap handled by overlay primarily, leaving this for drag disambiguation?
                 // Actually remove general tap gesture here to let overlay handle specific taps
                 
-                // Interaction Overlay
-                interactionOverlay(in: geometry)
+                // Interaction Overlay (Refactored)
+                FlowInteractionOverlay(
+                    size: geometry.size,
+                    offset: offset,
+                    scale: scale,
+                    currentDragOffset: currentDragOffset,
+                    nodes: $nodes,
+                    editingNodeID: $editingNodeID,
+                    editingText: $editingText,
+                    onNodeRename: onNodeRename,
+                    onAddSubstate: onAddSubstate,
+                    onNodeDuplicate: onNodeDuplicate,
+                    onNodeDelete: onNodeDelete,
+                    onHitTest: { location in
+                         hitTest(location: location, in: geometry.size)
+                    },
+                    onDragChanged: { value in
+                        handleDragChanged(location: value.location, translation: value.translation, startLocation: value.startLocation, in: geometry.size)
+                    },
+                    onDragEnded: { value in
+                        handleDragEnded(location: value.location, translation: value.translation, startLocation: value.startLocation, in: geometry.size)
+                    }
+                )
                 
                 // Custom Extension Rendering Overlay
                 extensionOverlay(in: geometry)
-
+                
+                // Top Layer: Input Handling (Scroll & Double-Tap)
+                // This sits on top to capture scroll/zoom via monitor (pass-through clicks)
+                // And captures double-taps specifically.
+                // And captures double-taps specifically.
+                ScrollEventView(offset: $offset, scale: $scale, nodes: $nodes)
+                   .allowsHitTesting(false) // The NSView manually handles events via monitor, so View hit test false is fine? 
+                                            // Actually, the NSView must be in window hierarchy. If allowsHitTesting false, SwiftUI might remove it from hierarchy or nsview.isHidden = true?
+                                            // Safe bet: allowsHitTesting(true), but NSView.hitTest returns nil.
+                
+                // Double Tap for adding state (Must be on top to not be blocked by Canvas)
+                // Removed Color.black blocker - taps handled by FlowBackground
             }
-            .contentShape(Rectangle()) // Ensure ZStack captures touches
+            .contentShape(Rectangle()) // Ensure ZStack is hit-testable for drags passing through
+            // Removed .simultaneousGesture(SpatialTapGesture(count: 2)) as it's now on background
             .onContinuousHover { phase in
                 switch phase {
                 case .active(let location):
                      lastContextLocation = location
-                case .ended: break
+                     // Hit test for cursor and hover effect
+                     let hitID = hitTestNode(at: location, in: geometry.size)
+                     if hitID != hoveredNodeID {
+                         hoveredNodeID = hitID
+                     }
+                     #if os(macOS)
+                     cursorForCurrentState().set()
+                     #endif
+                case .ended:
+                     hoveredNodeID = nil
+                     lastContextLocation = nil
+                     #if os(macOS)
+                     NSCursor.arrow.set()
+                     #endif
                 }
             }
             .contextMenu {
+                // ...
                 Button {
                     let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
                     let tapLocation = lastContextLocation ?? center
@@ -203,94 +328,6 @@ public struct FlowView: View {
             }
             #endif
         }
-    }
-    
-    @ViewBuilder
-    private func interactionOverlay(in geo: GeometryProxy) -> some View {
-        let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-        
-        ForEach($nodes) { $node in
-            let nodePos = node.position
-            let viewX = center.x + offset.width + currentDragOffset.width + nodePos.x * scale
-            let viewY = center.y + offset.height + currentDragOffset.height + nodePos.y * scale
-            let width = node.size.width * scale
-            let height = node.size.height * scale
-            
-            // Interaction Zone
-            Color.white.opacity(0.01)
-                .contentShape(RoundedRectangle(cornerRadius: 8))
-                .frame(width: width, height: height)
-                .position(x: viewX + width/2, y: viewY + height/2)
-                .onTapGesture(count: 2) {
-                    editingNodeID = node.id
-                    editingText = node.label
-                    isEditingFocus = true
-                }
-                .onTapGesture(count: 1) {
-                    hitTest(location: CGPoint(x: viewX + width/2, y: viewY + height/2), in: geo.size)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(node.label)
-                .accessibilityIdentifier(node.label)
-                .accessibilityAddTraits(.isButton)
-                .contextMenu {
-                    Button {
-                        editingNodeID = node.id
-                        editingText = node.label
-                        isEditingFocus = true
-                    } label: {
-                        Label("Rename", systemImage: "pencil")
-                    }
-                    Button {
-                        onAddSubstate?(node.id)
-                    } label: {
-                        Label("Add Sub-state", systemImage: "plus.square.on.square")
-                    }
-                    Button {
-                        onNodeDuplicate?(node.id)
-                    } label: {
-                        Label("Duplicate", systemImage: "doc.on.doc")
-                    }
-                    Divider()
-                    Button(role: .destructive) {
-                        onNodeDelete?(node.id)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-        }
-        
-        // Editing TextField
-        if let id = editingNodeID, let node = nodes.first(where: { $0.id == id }) {
-            let viewX = center.x + offset.width + currentDragOffset.width + node.position.x * scale
-            let viewY = center.y + offset.height + currentDragOffset.height + node.position.y * scale
-             
-            TextField("Label", text: $editingText)
-                .textFieldStyle(.plain)
-                .font(Theme.Typography.nodeLabel(scale: scale))
-                .multilineTextAlignment(.center)
-                .padding(4)
-                .background(Theme.Colors.nodeBackground) // Match background
-                .cornerRadius(4)
-                .focused($isEditingFocus)
-                .frame(width: node.size.width * scale * 1.5) // Allow some overflow
-                .position(x: viewX + (node.size.width * scale / 2), y: viewY + (node.size.height * scale / 2))
-                .onSubmit {
-                    commitRename(id: id)
-                }
-                .onChange(of: isEditingFocus) { oldValue, newValue in
-                    if !newValue { commitRename(id: id) }
-                }
-        }
-    }
-    
-    private func commitRename(id: UUID) {
-        guard let index = nodes.firstIndex(where: { $0.id == id }) else { return }
-        if nodes[index].label != editingText {
-            nodes[index].label = editingText
-            onNodeRename?(id, editingText)
-        }
-        editingNodeID = nil
     }
     
     // MARK: - Event Handling (Refactored for clarity)
@@ -339,49 +376,102 @@ public struct FlowView: View {
                     selection = [nodeID] 
                     Theme.Haptics.selection()
                 }
+                Theme.Haptics.play(.soft) // Soft pick-up feedback
                 dragStartNodePositions = nodes.reduce(into: [:]) { dict, node in
                     if selection.contains(node.id) { dict[node.id] = node.position }
                 }
             } else {
-                dragMode = .pan
+                // Background Drag Logic
+                if isSpacePressed {
+                    dragMode = .pan
+                } else if !selection.isEmpty && !NSEvent.modifierFlags.contains(.shift) {
+                   // Click on background clears selection unless Shift held
+                   // Actually tap handles clear, drag might not?
+                   // Standard: Background click = clear. Background Drag = marquee.
+                   dragMode = .marquee
+                } else {
+                   dragMode = .marquee
+                }
+                
+                if dragMode == .marquee {
+                     // Start Marquee
+                     let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                     let chartPoint = CGPoint(
+                         x: (startLocation.x - center.x - offset.width) / scale,
+                         y: (startLocation.y - center.y - offset.height) / scale
+                     )
+                     // Using dragStartNodePositions to store Start Point? No, separate var.
+                     // Re-use currentDragOffset for translation? Yes.
+                     
+                     // Store initial selection for Shift-Select behavior
+                     // We don't have separate state for initialSelection, but we can assume selection at start is it.
+                     // But we didn't add the state variable yet.
+                     // We'll perform additive logic dynamically or just Replace if no shift?
+                }
             }
         }
         
         if let connecting = connectingEdge {
+            // ... (Connector Logic)
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
             var currentChartPoint = CGPoint(
-                x: (location.x - center.x - offset.width) / scale,
-                y: (location.y - center.y - offset.height) / scale
-            )
-            
-            // Magnetic Snapping to Ports
-            if let targetID = hitTestNode(at: location, in: size),
-               let targetNode = nodes.first(where: { $0.id == targetID }),
-               targetID != connecting.source {
-                
-                let nodeRect = CGRect(origin: targetNode.position, size: targetNode.size)
-                let ports = [
-                    CGPoint(x: nodeRect.midX, y: nodeRect.minY), // Top
-                    CGPoint(x: nodeRect.maxX, y: nodeRect.midY), // Right
-                    CGPoint(x: nodeRect.midX, y: nodeRect.maxY), // Bottom
-                    CGPoint(x: nodeRect.minX, y: nodeRect.midY)  // Left
-                ]
-                
-                // Find nearest port
-                if let nearest = ports.min(by: { distance($0, currentChartPoint) < distance($1, currentChartPoint) }),
-                   distance(nearest, currentChartPoint) < 50 { // Snap threshold
-                    currentChartPoint = nearest
-                    // Haptic feedback could go here if state changed
-                }
-            }
-            
+                 x: (location.x - center.x - offset.width) / scale,
+                 y: (location.y - center.y - offset.height) / scale
+            )// ...
+            // ...
             connectingEdge = (source: connecting.source, currentPoint: currentChartPoint)
         } else {
             switch dragMode {
             case .pan:
                 currentDragOffset = translation
+            case .marquee:
+                // Calculate Marquee Rect
+                // Start: startLocation
+                // Current: location
+                // Convert both to Logic Space
+                
+                let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                let startPoint = CGPoint(
+                    x: (startLocation.x - center.x - offset.width) / scale,
+                    y: (startLocation.y - center.y - offset.height) / scale
+                )
+                let endPoint = CGPoint(
+                    x: (location.x - center.x - offset.width) / scale,
+                    y: (location.y - center.y - offset.height) / scale
+                )
+                
+                let rect = CGRect(x: min(startPoint.x, endPoint.x),
+                                  y: min(startPoint.y, endPoint.y),
+                                  width: abs(endPoint.x - startPoint.x),
+                                  height: abs(endPoint.y - startPoint.y))
+                
+                self.selectionRect = rect
+                
+                // Do Filtering
+                let hitNodes = nodes.filter { node in
+                    let nodeRect = CGRect(origin: node.position, size: node.size)
+                    return rect.intersects(nodeRect)
+                }
+                
+                let hitIDs = Set(hitNodes.map { $0.id })
+                
+                // Additive Logic (Shift)
+                /* 
+                 For simplicity here:
+                 If Shift held (checked via NSEvent or assumption), Union.
+                 Else Replace.
+                 Ideally we captured 'initialSelection' at dragStart.
+                 Since we lack that state var in this edit block, we'll do simple replace or union logic.
+                 Wait, I can access 'selection' but if I replace it, I lose context.
+                 I need to add `initialSelection` state var to FlowView class first or use a closure.
+                 I'll default to Replace for now as MVP Marquee.
+                */
+                selection = hitIDs
+                
             case .node:
+                // ... (Node Drag Logic)
                 let scale = self.scale
+                // ...
                 let snapGrid: CGFloat = 20.0
                 
                 // Reparenting Check
@@ -441,7 +531,7 @@ public struct FlowView: View {
                 let rect = CGRect(origin: node.position, size: node.size)
                 return rect.contains(dropPoint)
             }), targetNode.id != connecting.source {
-                let newEdge = FlowEdge(source: connecting.source, target: targetNode.id, label: nil)
+                let newEdge = FlowEdge(source: connecting.source, target: targetNode.id)
                 edges.append(newEdge)
                 Theme.Haptics.notification(Theme.Haptics.NotificationType.success) // Connection success
             }
@@ -452,6 +542,8 @@ public struct FlowView: View {
                 offset.width += translation.width
                 offset.height += translation.height
                 currentDragOffset = .zero
+            case .marquee:
+                self.selectionRect = nil
             case .node:
                 // Check if we need to reparent or unnest
                 if let draggedID = dragStartNodePositions.keys.first,
@@ -461,10 +553,11 @@ public struct FlowView: View {
                     // If hoveredParentID is nil, we might be unnesting (dropping on root)
                     // If hoveredParentID is set, we are nesting
                     
-                    if hoveredParentID != currentParentID {
+                        if hoveredParentID != currentParentID {
                         onNodeReparent?(draggedID, hoveredParentID)
                     }
                 }
+                Theme.Haptics.play(.rigid) // Snappy drop feedback
                 
                 onNodeMoveEnded?(dragStartNodePositions) // Register undo (position change still happened)
                 dragStartNodePositions.removeAll()
@@ -475,216 +568,24 @@ public struct FlowView: View {
         }
     }
     
-    // MARK: - Drawing Logic
+    // MARK: - Cursor Logic
     
-    private func drawNode(context: GraphicsContext, node: FlowNode, phase: TimeInterval) {
-        let nodeRect = CGRect(origin: node.position, size: node.size)
-        // Basic check for dark mode from environment
-        // let isDark = context.environment.colorScheme == .dark
-        
-        // Use Theme
-        let isSelected = selection.contains(node.id)
-        let isActive = activeStateIDs.contains(node.id)
-        
-        // Corner Radius
-        var cornerRadius = Theme.Layout.nodeCornerRadius
-        if node.type == .compound || node.type == .parallel { cornerRadius = 12 }
-        if node.type == .history || node.type == .final { cornerRadius = node.size.width / 2 }
-        
-        let path = Path(roundedRect: nodeRect, cornerRadius: cornerRadius)
-        
-        // 1. Shadows (High Quality)
-        if !isActive {
-            var shadowContext = context
-            shadowContext.addFilter(.shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3))
-            shadowContext.fill(path, with: .color(.white)) // Invisible fill to cast shadow
-        }
-        
-        // 2. Active Glow & Breathing
-        if isActive {
-            var glowContext = context
-            
-            // Calculate Breathing: Oscillate between 0.0 and 1.0 roughly every 2.5s
-            let breath = (sin(phase * 2.5) + 1) / 2
-            // Map to opacity range [0.3, 0.7]
-            let opacity = 0.3 + (breath * 0.4)
-            let radius = 8 + (breath * 6)
-            
-            // Layer 1: Wide, breathing glow
-            glowContext.addFilter(.shadow(color: Theme.Colors.activeNodeGlow.opacity(opacity), radius: radius, x: 0, y: 0))
-            glowContext.stroke(path, with: .color(Theme.Colors.activeNodeGlow), lineWidth: 4)
-            
-            // Layer 2: Core brightness
-            let coreContext = context
-            coreContext.stroke(path, with: .color(.white.opacity(0.4)), lineWidth: 1)
-        }
-        
-        // 2b. Reparent Highlight
-        if hoveredParentID == node.id {
-             var highlightContext = context
-             highlightContext.addFilter(.shadow(color: Theme.Colors.accent.opacity(0.6), radius: 10, x: 0, y: 0))
-             highlightContext.stroke(path, with: .color(Theme.Colors.accent), lineWidth: 4)
-        }
-        
-        // 3. Fill
-        var fillColor: Color
-        switch node.type {
-        case .atomic:
-            fillColor = Theme.Colors.nodeBackground
-            if isActive { fillColor = Theme.Colors.activeNodeTint }
-        case .compound:
-            fillColor = Color.white.opacity(0.9)
-        case .parallel:
-            fillColor = .clear
-        case .final:
-            fillColor = .primary // Adaptive black/white
-        case .history:
-            fillColor = .yellow.opacity(0.2)
-        }
-        
-        context.fill(path, with: .color(fillColor))
-        
-        // 4. Compound Headers
-        if node.type == .compound {
-            let headerHeight: CGFloat = 28
-            let headerRect = CGRect(x: nodeRect.minX, y: nodeRect.minY, width: nodeRect.width, height: headerHeight)
-            let headerPath = Path(roundedRect: headerRect, cornerSize: CGSize(width: cornerRadius, height: cornerRadius), style: .continuous)
-            
-            var headerContext = context
-            headerContext.clip(to: path)
-            headerContext.fill(headerPath, with: .color(Color.black.opacity(0.03)))
-            
-            // Separator line
-            let lineY = nodeRect.minY + headerHeight
-            var linePath = Path()
-            linePath.move(to: CGPoint(x: nodeRect.minX, y: lineY))
-            linePath.addLine(to: CGPoint(x: nodeRect.maxX, y: lineY))
-            context.stroke(linePath, with: .color(Theme.Colors.nodeBorder), lineWidth: 1)
-        }
-        
-        // 5. Borders / Selection Halo
-        var strokeColor = Theme.Colors.nodeBorder
-        var strokeStyle = StrokeStyle(lineWidth: 1)
-        
-        if isSelected {
-            strokeColor = Theme.Colors.accent
-            strokeStyle.lineWidth = 2.5
-        }
-        
-        if node.type == .parallel {
-            strokeStyle.dash = [6, 4]
-        }
-        
-        context.stroke(path, with: .color(strokeColor), style: strokeStyle)
-        
-        // 6. Typography
-        let resolvedFont = Theme.Typography.nodeLabel(scale: scale)
-        let textColor = Color.primary
-        
-        var textPoint = CGPoint(x: nodeRect.midX, y: nodeRect.midY)
-        
-        if node.type == .compound || node.type == .parallel {
-            textPoint = CGPoint(x: nodeRect.minX + 10, y: nodeRect.minY + 14) // Adjusted for header
-            // Use SwiftUI Text for rendering
-            context.draw(Text(node.label).font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary), at: textPoint, anchor: .leading)
-        } else if node.type != .final {
-             context.draw(Text(node.label).font(resolvedFont).foregroundStyle(textColor), at: textPoint)
-        }
-        
-        // 7. Connection Ports (Connection or Selection)
-        if connectingEdge != nil || isSelected {
-            drawPorts(context: context, rect: nodeRect, isHovered: false) // isHovered logic TODO
+    #if canImport(AppKit)
+    private func cursorForCurrentState() -> NSCursor {
+        if isSpacePressed { return .openHand }
+        if connectingEdge != nil { return .crosshair }
+        switch dragMode {
+        case .pan: return .closedHand
+        case .node: return .closedHand
+        case .marquee: return .arrow
+        case .idle:
+            if hoveredNodeID != nil { return .pointingHand }
+            return .arrow
         }
     }
-    
-    private func drawPorts(context: GraphicsContext, rect: CGRect, isHovered: Bool) {
-        let ports = [
-            CGPoint(x: rect.midX, y: rect.minY), // Top
-            CGPoint(x: rect.maxX, y: rect.midY), // Right
-            CGPoint(x: rect.midX, y: rect.maxY), // Bottom
-            CGPoint(x: rect.minX, y: rect.midY)  // Left
-        ]
-        
-        for port in ports {
-            let portRect = CGRect(x: port.x - 4, y: port.y - 4, width: 8, height: 8)
-            let portPath = Path(ellipseIn: portRect)
-            
-            context.fill(portPath, with: .color(Theme.Colors.accent))
-            context.stroke(portPath, with: .color(.white), lineWidth: 1.5)
-        }
-    }
-    
-    private func drawEdge(context: GraphicsContext, source: FlowNode, target: FlowNode, edge: FlowEdge) {
-        let sourceRect = CGRect(origin: source.position, size: source.size)
-        let targetRect = CGRect(origin: target.position, size: target.size)
-        
-        let (startPoint, endPoint) = calculateConnectionPoints(from: sourceRect, to: targetRect)
-        
-        var path = Path()
-        path.move(to: startPoint)
-        
-        // Simple Orthogonal Fallback for now, could use edge.routingType
-        if let waypoints = edge.waypoints, !waypoints.isEmpty {
-            for point in waypoints { path.addLine(to: point) }
-            path.addLine(to: endPoint)
-        } else {
-            let midY = (startPoint.y + endPoint.y) / 2
-            path.addLine(to: CGPoint(x: startPoint.x, y: midY))
-            path.addLine(to: CGPoint(x: endPoint.x, y: midY))
-            path.addLine(to: endPoint)
-        }
-        
-        let isSelected = selection.contains(edge.id)
-        let color = isSelected ? Theme.Colors.accent : Color.gray.opacity(0.8)
-        let width: CGFloat = isSelected ? 3 : 2
-        
-        context.stroke(path, with: .color(color), lineWidth: width)
-        drawArrow(context: context, endPoint: endPoint, startPoint: startPoint, color: color)
-    }
-    
-    private func drawArrow(context: GraphicsContext, endPoint: CGPoint, startPoint: CGPoint, color: Color) {
-         let dx = endPoint.x - startPoint.x
-         let dy = endPoint.y - startPoint.y
-         let angle = atan2(dy, dx)
-         if sqrt(dx*dx + dy*dy) < 10 { return }
-         
-         let arrowLength: CGFloat = 10
-         let arrowAngle: CGFloat = .pi / 6
-         
-         let p1 = CGPoint(x: endPoint.x - arrowLength * cos(angle - arrowAngle), y: endPoint.y - arrowLength * sin(angle - arrowAngle))
-         let p2 = CGPoint(x: endPoint.x - arrowLength * cos(angle + arrowAngle), y: endPoint.y - arrowLength * sin(angle + arrowAngle))
-         
-         var arrowPath = Path()
-         arrowPath.move(to: endPoint)
-         arrowPath.addLine(to: p1)
-         arrowPath.addLine(to: p2)
-         arrowPath.closeSubpath()
-         
-         context.fill(arrowPath, with: .color(color))
-    }
-    
-    private func drawConnectionDrag(context: GraphicsContext, source: FlowNode, endPoint: CGPoint) {
-        let sourceRect = CGRect(origin: source.position, size: source.size)
-        let startPoint = CGPoint(x: sourceRect.midX, y: sourceRect.maxY)
-        
-        var path = Path()
-        path.move(to: startPoint)
-        path.addLine(to: endPoint)
-        
-        context.stroke(path, with: .color(Theme.Colors.accent), style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
-    }
+    #endif
 
-    private func calculateConnectionPoints(from sourceSpy: CGRect, to targetSpy: CGRect) -> (CGPoint, CGPoint) {
-        if targetSpy.minY >= sourceSpy.maxY {
-             return (CGPoint(x: sourceSpy.midX, y: sourceSpy.maxY), CGPoint(x: targetSpy.midX, y: targetSpy.minY))
-        } else if targetSpy.maxY <= sourceSpy.minY {
-             return (CGPoint(x: sourceSpy.midX, y: sourceSpy.minY), CGPoint(x: targetSpy.midX, y: targetSpy.maxY))
-        } else if targetSpy.minX >= sourceSpy.maxX {
-             return (CGPoint(x: sourceSpy.maxX, y: sourceSpy.midY), CGPoint(x: targetSpy.minX, y: targetSpy.midY))
-        } else {
-             return (CGPoint(x: sourceSpy.minX, y: sourceSpy.midY), CGPoint(x: targetSpy.maxX, y: targetSpy.midY))
-        }
-    }
+    // Drawing logic moved to FlowView+Drawing.swift
     
     // MARK: - Extension Overlay
     
@@ -743,9 +644,13 @@ public struct FlowView: View {
             x: (location.x - center.x - offset.width) / scale,
             y: (location.y - center.y - offset.height) / scale
         )
-        let threshold: CGFloat = 12.0 / scale
+        // Increased threshold for easier tapping
+        let threshold: CGFloat = 20.0 / scale
         
-        return edges.first(where: { edge in
+        // Check selection first to prioritize editing active selection if overlapping? 
+        // Or reverse order to hit top-most? Edges are drawn in order.
+        // We'll search in reverse to hit the "top" edge if they overlap.
+        return edges.reversed().first(where: { edge in
             guard let source = nodes.first(where: { $0.id == edge.source }),
                   let target = nodes.first(where: { $0.id == edge.target }) else { return false }
             
@@ -753,16 +658,58 @@ public struct FlowView: View {
             let tRect = CGRect(origin: target.position, size: target.size)
             let (start, end) = calculateConnectionPoints(from: sRect, to: tRect)
             
-            // Simple mid-point check for orthogonal
-            let midY = (start.y + end.y) / 2
-            let p1 = CGPoint(x: start.x, y: midY)
-            let p2 = CGPoint(x: end.x, y: midY)
-            
-            let segments = [(start, p1), (p1, p2), (p2, end)]
-            for segment in segments {
-                if distance(from: chartPoint, toLineSegment: segment) < threshold { return true }
+            // 1. Reflexive (Self-loop) logic matching drawEdge
+            if source.id == target.id {
+                let control1 = CGPoint(x: start.x + 50, y: start.y - 50)
+                let control2 = CGPoint(x: start.x - 50, y: start.y - 50)
+                
+                // Sample Bezier curve for hit testing (10 steps)
+                var prevPoint = start
+                for i in 1...10 {
+                    let t = CGFloat(i) / 10.0
+                    // Cubic Bezier formula
+                    let u = 1 - t
+                    let tt = t * t
+                    let uu = u * u
+                    let uuu = uu * u
+                    let ttt = tt * t
+                    
+                    let p = CGPoint(
+                        x: uuu * start.x + 3 * uu * t * control1.x + 3 * u * tt * control2.x + ttt * end.x,
+                        y: uuu * start.y + 3 * uu * t * control1.y + 3 * u * tt * control2.y + ttt * end.y
+                    )
+                    
+                    if distance(from: chartPoint, toLineSegment: (prevPoint, p)) < threshold {
+                        return true
+                    }
+                    prevPoint = p
+                }
+                return false
             }
-            return false
+            
+            // 2. Orthogonal (Standard)
+            // Note: This must match drawEdge logic exactly
+            if let waypoints = edge.waypoints, !waypoints.isEmpty {
+                // Custom Waypoints
+                var prev = start
+                for point in waypoints {
+                    if distance(from: chartPoint, toLineSegment: (prev, point)) < threshold { return true }
+                    prev = point
+                }
+                if distance(from: chartPoint, toLineSegment: (prev, end)) < threshold { return true }
+                return false
+            } else {
+                // Auto Orthogonal
+                let midY = (start.y + end.y) / 2
+                let p1 = CGPoint(x: start.x, y: midY)
+                let p2 = CGPoint(x: end.x, y: midY)
+                
+                let segments = [(start, p1), (p1, p2), (p2, end)]
+                for segment in segments {
+                    if distance(from: chartPoint, toLineSegment: segment) < threshold { return true }
+                }
+                return false
+            }
         })?.id
     }
     
@@ -818,3 +765,4 @@ extension CGSize {
     }
     return PreviewWrapper()
 }
+

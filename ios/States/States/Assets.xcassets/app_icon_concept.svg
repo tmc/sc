@@ -1,0 +1,82 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Definitions -->
+    <defs>
+        <!-- Background Gradient: Deep Indigo/Purple -->
+        <linearGradient id="bgGradient" x1="100" y1="100" x2="924" y2="924" gradientUnits="userSpaceOnUse">
+            <stop offset="0.0" stop-color="#3A1C71" /> <!-- Deep Purple -->
+            <stop offset="0.5" stop-color="#D76D77" /> <!-- Pink/Red -->
+            <stop offset="1.0" stop-color="#FFAF7B" /> <!-- Orange/Peach -->
+        </linearGradient>
+
+        <!-- Glass Effect Gradient for Nodes -->
+        <linearGradient id="glassGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="white" stop-opacity="0.4" />
+            <stop offset="1" stop-color="white" stop-opacity="0.1" />
+        </linearGradient>
+
+        <!-- Glow Filter -->
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+        </filter>
+
+        <!-- Drop Shadow -->
+        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="8" />
+            <feOffset dx="0" dy="6" result="offsetblur" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.3" /> <!-- Opacity 0.3 -->
+            </feComponentTransfer>
+            <feMerge> 
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        
+        <!-- Clip Path for Squircle (Approximate) -->
+         <path id="squircle" d="M 512,1024 C 229,1024 0,795 0,512 C 0,229 229,0 512,0 C 795,0 1024,229 1024,512 C 1024,795 795,1024 512,1024 Z" /> 
+         <!-- Actually iOS icon shape is complex, but rounded rect is fine for preview -->
+         <rect id="bgRect" x="0" y="0" width="1024" height="1024" rx="200" ry="200" />
+    </defs>
+
+    <!-- Background -->
+    <rect width="1024" height="1024" rx="200" fill="url(#bgGradient)" />
+
+    <!-- Content Group (Centered) -->
+    <g transform="translate(112, 112) scale(0.8)"> 
+        <!-- Style for graphical elements -->
+        <g stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            
+            <!-- Parent State (Outer Box) -->
+            <rect x="50" y="50" width="900" height="900" rx="60" fill="url(#glassGradient)" stroke-width="16" />
+            
+            <!-- Parent Label Line (Header) -->
+            <line x1="50" y1="180" x2="950" y2="180" stroke-width="8" stroke-opacity="0.5" />
+            
+            <!-- Child State A (Left) -->
+            <rect x="150" y="300" width="300" height="400" rx="40" fill="white" fill-opacity="0.15" filter="url(#shadow)" />
+            
+            <!-- Child State B (Right) -->
+            <rect x="550" y="300" width="300" height="400" rx="40" fill="white" fill-opacity="0.15" filter="url(#shadow)" />
+            
+            <!-- Initial State (Circle) -->
+            <circle cx="100" cy="115" r="20" fill="white" stroke="none" />
+            
+            <!-- Transition Arrow (State A to State B) -->
+            <path d="M 450,500 L 550,500" stroke-width="24" marker-end="url(#arrowhead)" />
+            
+            <!-- Arrow Head Definition inside usage or defs -->
+             <!-- Manual Arrow Head -->
+             <path d="M 520,470 L 550,500 L 520,530" stroke-width="24" />
+             
+             <!-- Self-Loop on State B? -->
+             <path d="M 700,700 C 650,850 850,850 800,700" stroke-width="16" stroke-opacity="0.8" />
+             
+        </g>
+    </g>
+    
+    <!-- Gloss / Shine -->
+    <path d="M 0,0 L 1024,0 L 1024,400 Q 512,600 0,400 Z" fill="white" fill-opacity="0.05" style="mix-blend-mode: overlay;" clip-path="url(#bgRectClip)"/>
+    
+</svg>

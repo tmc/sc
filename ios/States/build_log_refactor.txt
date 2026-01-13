@@ -1,0 +1,349 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme States -destination platform=macOS build
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  swift-numerics: https://github.com/apple/swift-numerics @ 1.1.1
+  SwiftProtobuf: https://github.com/apple/swift-protobuf.git @ 1.33.3
+  swift-transformers: https://github.com/huggingface/swift-transformers @ 1.1.6
+  Jinja: https://github.com/huggingface/swift-jinja.git @ 2.2.1
+  swift-collections: https://github.com/apple/swift-collections.git @ 1.3.0
+  mlx-swift-lm: https://github.com/ml-explore/mlx-swift-lm @ 2.29.2
+  mlx-swift: https://github.com/ml-explore/mlx-swift @ 0.29.1
+
+2026-01-06 12:28:10.201 xcodebuild[80844:2834224] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006041-000209E21A07001C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006041-000209E21A07001C, name:My Mac }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (41 targets)
+    Target 'States' in project 'States'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'SwiftProtobufPluginLibrary' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf_SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Transformers' in project 'swift-transformers'
+    Target 'SwiftProtobufPluginLibrary' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobufPluginLibrary' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf_SwiftProtobufPluginLibrary' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'SwiftProtobufPluginLibrary' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf_SwiftProtobufPluginLibrary' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'SwiftProtobuf' in project 'SwiftProtobuf'
+        ➜ Explicit dependency on target 'SwiftProtobuf_SwiftProtobuf' in project 'SwiftProtobuf'
+    Target 'SwiftProtobuf_SwiftProtobuf' in project 'SwiftProtobuf' (no dependencies)
+    Target 'SwiftProtobuf_SwiftProtobufPluginLibrary' in project 'SwiftProtobuf' (no dependencies)
+    Target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Transformers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+    Target 'MLXLLM' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Transformers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+    Target 'MLXLMCommon' in project 'mlx-swift-lm'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Transformers' in project 'swift-transformers'
+    Target 'Transformers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Tokenizers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Generation' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Models' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Hub' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Models' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Hub' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Tokenizers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Generation' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Generation' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Hub' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Tokenizers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Tokenizers' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Hub' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Hub' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'swift-transformers_Hub' in project 'swift-transformers'
+        ➜ Explicit dependency on target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'Jinja' in project 'Jinja'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+    Target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'OrderedCollections' in project 'swift-collections'
+        ➜ Explicit dependency on target 'InternalCollectionsUtilities' in project 'swift-collections'
+    Target 'InternalCollectionsUtilities' in project 'swift-collections' (no dependencies)
+    Target 'swift-transformers_Hub' in project 'swift-transformers' (no dependencies)
+    Target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXLinalg' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXOptimizers' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXNN' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXRandom' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLXFast' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'MLX' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+    Target 'Numerics' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'Numerics' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'RealModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'ComplexModule' in project 'swift-numerics'
+    Target 'Numerics' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'RealModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'ComplexModule' in project 'swift-numerics'
+    Target 'ComplexModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+        ➜ Explicit dependency on target 'RealModule' in project 'swift-numerics'
+    Target 'RealModule' in project 'swift-numerics'
+        ➜ Explicit dependency on target '_NumericsShims' in project 'swift-numerics'
+    Target '_NumericsShims' in project 'swift-numerics' (no dependencies)
+    Target 'Cmlx' in project 'mlx-swift'
+        ➜ Explicit dependency on target 'mlx-swift_Cmlx' in project 'mlx-swift'
+    Target 'mlx-swift_Cmlx' in project 'mlx-swift' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -x objective-c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -x c++ -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+Build description signature: 5a5016c5e663a4de5f4062727a667a86
+Build description path: /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/XCBuildData/5a5016c5e663a4de5f4062727a667a86.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk /Users/tmc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.2-25C57-3885c01c3e6b6a337905948deab2002e00fa09913b459cbbc988d1f6730289ae.sdkstatcache
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -o /Users/tmc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.2-25C57-3885c01c3e6b6a337905948deab2002e00fa09913b459cbbc988d1f6730289ae.sdkstatcache
+
+WriteAuxiliaryFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.SwiftFileList (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    write-file /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.SwiftFileList
+
+WriteAuxiliaryFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.LinkFileList (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    write-file /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.LinkFileList
+
+WriteAuxiliaryFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.SwiftConstValuesFileList (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    write-file /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States-OutputFileMap.json (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    write-file /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States-OutputFileMap.json
+
+ProcessInfoPlistFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/swift-transformers_Hub.bundle/Contents/Info.plist /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/swift-transformers.build/Debug/swift-transformers_Hub.build/empty-swift-transformers_Hub.plist (in target 'swift-transformers_Hub' from project 'swift-transformers')
+    cd /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/swift-transformers
+    builtin-infoPlistUtility /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/swift-transformers.build/Debug/swift-transformers_Hub.build/empty-swift-transformers_Hub.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/swift-transformers_Hub.bundle/Contents/Info.plist
+
+ProcessInfoPlistFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Info.plist /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/mlx-swift.build/Debug/mlx-swift_Cmlx.build/empty-mlx-swift_Cmlx.plist (in target 'mlx-swift_Cmlx' from project 'mlx-swift')
+    cd /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/mlx-swift
+    builtin-infoPlistUtility /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/mlx-swift.build/Debug/mlx-swift_Cmlx.build/empty-mlx-swift_Cmlx.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/mlx-swift_Cmlx.bundle/Contents/Info.plist
+
+ProcessInfoPlistFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/SwiftProtobuf_SwiftProtobufPluginLibrary.bundle/Contents/Info.plist /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/SwiftProtobuf.build/Debug/SwiftProtobuf_SwiftProtobufPluginLibrary.build/empty-SwiftProtobuf_SwiftProtobufPluginLibrary.plist (in target 'SwiftProtobuf_SwiftProtobufPluginLibrary' from project 'SwiftProtobuf')
+    cd /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/swift-protobuf
+    builtin-infoPlistUtility /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/SwiftProtobuf.build/Debug/SwiftProtobuf_SwiftProtobufPluginLibrary.build/empty-SwiftProtobuf_SwiftProtobufPluginLibrary.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/SwiftProtobuf_SwiftProtobufPluginLibrary.bundle/Contents/Info.plist
+
+ProcessInfoPlistFile /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/SwiftProtobuf_SwiftProtobuf.bundle/Contents/Info.plist /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/SwiftProtobuf.build/Debug/SwiftProtobuf_SwiftProtobuf.build/empty-SwiftProtobuf_SwiftProtobuf.plist (in target 'SwiftProtobuf_SwiftProtobuf' from project 'SwiftProtobuf')
+    cd /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/swift-protobuf
+    builtin-infoPlistUtility /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/SwiftProtobuf.build/Debug/SwiftProtobuf_SwiftProtobuf.build/empty-SwiftProtobuf_SwiftProtobuf.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/SwiftProtobuf_SwiftProtobuf.bundle/Contents/Info.plist
+
+SwiftDriver States normal arm64 com.apple.xcode.tools.swift.compiler (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name States -Onone -enforce-exclusivity\=checked @/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-macos26.2 -g -module-cache-path /Users/tmc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64 -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.2-25C57-3885c01c3e6b6a337905948deab2002e00fa09913b459cbbc988d1f6730289ae.sdkstatcache -output-file-map /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/tmc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/tmc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/tmc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States_const_extract_protocols.json -Xcc -iquote -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-generated-files.hmap -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-own-target-headers.hmap -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States-ba89dc43cea87a417a6598e72e146480-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-project-headers.hmap -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/include -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources-normal/arm64 -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources/arm64 -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States-Swift.h -working-directory /Volumes/tmc/go/src/github.com/tmc/sc/ios/States -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ FlowView+Drawing.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift (in target 'States' from project 'States')
+
+SwiftCompile normal arm64 /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:19:47: error: 'currentDragOffset' is inaccessible due to 'private' protection level
+            let totalOffsetX = offset.width + currentDragOffset.width
+                                              ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:21:24: note: 'currentDragOffset' declared here
+    @State private var currentDragOffset: CGSize = .zero
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:20:48: error: 'currentDragOffset' is inaccessible due to 'private' protection level
+            let totalOffsetY = offset.height + currentDragOffset.height
+                                               ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:21:24: note: 'currentDragOffset' declared here
+    @State private var currentDragOffset: CGSize = .zero
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:46:56: error: 'currentDragOffset' is inaccessible due to 'private' protection level
+        let originX = size.width / 2 + (offset.width + currentDragOffset.width)
+                                                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:21:24: note: 'currentDragOffset' declared here
+    @State private var currentDragOffset: CGSize = .zero
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:47:58: error: 'currentDragOffset' is inaccessible due to 'private' protection level
+        let originY = size.height / 2 + (offset.height + currentDragOffset.height)
+                                                         ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:21:24: note: 'currentDragOffset' declared here
+    @State private var currentDragOffset: CGSize = .zero
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:66:26: error: 'hoveredNodeID' is inaccessible due to 'private' protection level
+        let isHovered = (hoveredNodeID == node.id)
+                         ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:33:24: note: 'hoveredNodeID' declared here
+    @State private var hoveredNodeID: UUID? = nil
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:102:12: error: 'hoveredParentID' is inaccessible due to 'private' protection level
+        if hoveredParentID == node.id {
+           ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:32:24: note: 'hoveredParentID' declared here
+    @State private var hoveredParentID: UUID? = nil
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:190:13: error: 'connectingEdge' is inaccessible due to 'private' protection level
+        if (connectingEdge != nil || isSelected) && scale > 0.4 {
+            ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift:43:24: note: 'connectingEdge' declared here
+    @State private var connectingEdge: (source: UUID, currentPoint: CGPoint)? = nil
+                       ^
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:283:13: warning: initialization of immutable value 'tangent' was never used; consider replacing with assignment to '_' or removing it
+        let tangent = tan(theta)
+        ~~~~^~~~~~~
+        _
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:285:13: warning: variable 'x' was never used; consider replacing with '_' or removing it
+        var x: CGFloat = 0
+            ^
+            _
+/Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift:286:13: warning: variable 'y' was never used; consider replacing with '_' or removing it
+        var y: CGFloat = 0
+            ^
+            _
+
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Extensions/BlueprintRenderer.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Extensions/ExtensionManager.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Extensions/MinimalistRenderer.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Extensions/StateRendererProtocol.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowEdge.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowNode.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift -primary-file /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/extensions/v1/annotations.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/extensions/v1/common.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/extensions/v1/layout.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/extensions/v1/provenance.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/extensions/v1/simulation.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/extensions/v1/testing.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/google/rpc/status.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/statecharts/v1/evolution.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/statecharts/v1/execution.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/statecharts/v1/expressions.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/statecharts/v1/statecharts.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/validation/v1/validator.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Generated/xstate/v1/xstate.pb.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Logic/AnalysisEngine.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Logic/FocusedValues.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Logic/GuardEvaluator.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Logic/StatechartEngine.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Logic/SteeringService.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Models/SampleData.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Models/StatechartWrapper.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Models/Theme.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/ViewModels/AppViewModel.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/ViewModels/StandardStatechartDefinition.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/ViewModels/StatechartViewModel.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/Visualizer/Platform/ScrollEventView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/Visualizer/CommandBarView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/Visualizer/DesignToolbar.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/Visualizer/FlowBackground.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/Visualizer/SimulationToolbar.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/AnalysisView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/ContextInspectorView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/ExtensionBrowser.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/GenerationSheet.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/MachineListView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/PropertiesView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/SettingsView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/StatechartCommands.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/SteeringView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Views/VisualizerView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/ContentView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/Item.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/StatesApp.swift /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources/GeneratedAssetSymbols.swift -emit-dependencies-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/FlowView+Drawing.d -emit-const-values-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/FlowView+Drawing.swiftconstvalues -emit-reference-dependencies-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/FlowView+Drawing.swiftdeps -serialize-diagnostics-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/FlowView+Drawing.dia -emit-localized-strings -emit-localized-strings-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64 -target arm64-apple-macos26.2 -module-can-import-version AppKit 2685.30.107 2685.30.107 -module-can-import-version DeveloperToolsSupport 23.0.4 23.0.4 -module-can-import-version SwiftUI 7.2.5.1 7.2.5 -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins/libFoundationMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server\#FoundationMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins/libObservationMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server\#ObservationMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins/libPreviewsMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server\#PreviewsMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins/libSwiftDataMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server\#SwiftDataMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins/libSwiftMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server\#SwiftMacros -load-resolved-plugin /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib\#/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server\#SwiftUIMacros -disable-implicit-swift-modules -Xcc -fno-implicit-modules -Xcc -fno-implicit-module-maps -explicit-swift-module-map-file /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States-dependencies-1.json -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -I /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/PackageFrameworks -F /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug -no-color-diagnostics -Xcc -fno-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/States_const_extract_protocols.json -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/tmc/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Volumes/tmc/go/src/github.com/tmc/sc/ios/States -enable-anonymous-context-mangled-names -file-compilation-dir /Volumes/tmc/go/src/github.com/tmc/sc/ios/States -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -Xcc -ivfsstatcache -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx26.2-25C57-3885c01c3e6b6a337905948deab2002e00fa09913b459cbbc988d1f6730289ae.sdkstatcache -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-generated-files.hmap -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-own-target-headers.hmap -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States-ba89dc43cea87a417a6598e72e146480-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/States-project-headers.hmap -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/swift-numerics/Sources/_NumericsShims/include -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/SourcePackages/checkouts/mlx-swift/Source/Cmlx/include -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Products/Debug/include -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources-normal/arm64 -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources/arm64 -Xcc -I/Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/DerivedSources -Xcc -DDEBUG\=1 -no-auto-bridging-header-chaining -module-name States -frontend-parseable-output -disable-clang-spi -target-sdk-version 26.2 -target-sdk-name macosx26.2 -clang-target arm64-apple-macos26.2 -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -o /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Build/Intermediates.noindex/States.build/Debug/States.build/Objects-normal/arm64/FlowView+Drawing.o -index-unit-output-path /States.build/Debug/States.build/Objects-normal/arm64/FlowView+Drawing.o -index-store-path /Users/tmc/Library/Developer/Xcode/DerivedData/States-dtclwqyhqpfuwraosgtezbesesee/Index.noindex/DataStore -index-system-modules
+SwiftEmitModule normal arm64 Emitting\ module\ for\ States (in target 'States' from project 'States')
+EmitSwiftModule normal arm64 (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    
+
+SwiftCompile normal arm64 Compiling\ FlowView.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift (in target 'States' from project 'States')
+SwiftCompile normal arm64 /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView.swift (in target 'States' from project 'States')
+    cd /Volumes/tmc/go/src/github.com/tmc/sc/ios/States
+    
+
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftCompile normal arm64 /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift (in target 'States' from project 'States')
+	SwiftCompile normal arm64 Compiling\ FlowView+Drawing.swift /Volumes/tmc/go/src/github.com/tmc/sc/ios/States/States/FlowCanvas/FlowView+Drawing.swift (in target 'States' from project 'States')
+	Building project States with scheme States
+(3 failures)

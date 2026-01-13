@@ -2,6 +2,12 @@ import SwiftUI
 
 struct PropertiesView: View {
     @Bindable var viewModel: StatechartViewModel
+    var onGenerate: ((String, [Int: Double]) -> Void)?
+    
+    @State private var prompt: String = ""
+    @State private var robustness: Double = 0.0
+    @State private var complexity: Double = 0.0
+    @State private var isGenerating: Bool = false
     
     var body: some View {
         Form {
@@ -16,9 +22,7 @@ struct PropertiesView: View {
                         .padding(8)
                         .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
                 } header: {
-                    Text("NODE PROPERTIES")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
+                    Text("Node Properties")
                 }
                 
                 Section {
@@ -32,9 +36,7 @@ struct PropertiesView: View {
                     .pickerStyle(.menu)
                     .tint(Theme.Colors.accent)
                 } header: {
-                    Text("CONFIGURATION")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
+                    Text("Configuration")
                 }
                 
                 Section {
@@ -57,9 +59,7 @@ struct PropertiesView: View {
                             .font(Theme.Typography.caption)
                     }
                 } header: {
-                    Text("METADATA")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
+                    Text("Metadata")
                 }
                 
             } else if let selectedEdgeID = viewModel.selection.first,
@@ -68,30 +68,103 @@ struct PropertiesView: View {
                 // --- Edge Editing ---
                 Section {
                     TextField("Label", text: Binding(
-                        get: { viewModel.edges[index].label ?? "" },
-                        set: { viewModel.edges[index].label = $0.isEmpty ? nil : $0 }
+                        get: { viewModel.edges[index].event ?? "" },
+                        set: { viewModel.edges[index].event = $0.isEmpty ? nil : $0 }
                     ))
                     .textFieldStyle(.plain)
                     .font(Theme.Typography.body)
                     .padding(8)
                     .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
                 } header: {
-                    Text("TRANSITION")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
+                    Text("Transition")
+                }
+
+                Section {
+                    TextField("Guard (Condition)", text: Binding(
+                        get: { viewModel.edges[index].guardExpression ?? "" },
+                        set: { viewModel.edges[index].guardExpression = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.plain)
+                    .font(Theme.Typography.body.monospaced())
+                    .padding(8)
+                    .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                    
+                    TextField("Action", text: Binding(
+                        get: { viewModel.edges[index].action ?? "" },
+                        set: { viewModel.edges[index].action = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.plain)
+                    .font(Theme.Typography.body.monospaced())
+                    .padding(8)
+                    .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                } header: {
+                    Text("Logic")
                 }
                 
                 Section {
                     LabeledContent("Source", value: viewModel.nodes.first(where: { $0.id == viewModel.edges[index].source })?.label ?? "Unknown")
                     LabeledContent("Target", value: viewModel.nodes.first(where: { $0.id == viewModel.edges[index].target })?.label ?? "Unknown")
                 } header: {
-                    Text("CONNECTION")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
+                    Text("Connection")
                 }
                 
             } else {
                 // --- Global / Machine Inspection ---
+                
+                // MACHINE PROPERTIES
+                Section {
+                    TextField("Name", text: $viewModel.machine.name)
+                        .textFieldStyle(.plain)
+                        .font(Theme.Typography.body.bold())
+                        .padding(8)
+                        .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                } header: {
+                    Text("Machine Properties")
+                }
+                
+                // AI GENERATION
+                Section {
+                   DisclosureGroup("Generative AI") {
+                       VStack(alignment: .leading, spacing: 12) {
+                           Text("Describe the desired chart logic:")
+                               .font(.caption)
+                               .foregroundStyle(.secondary)
+                           
+                           TextField("Prompt e.g., 'Traffic Light'", text: $prompt)
+                               .textFieldStyle(.roundedBorder)
+                           
+                           VStack(alignment: .leading) {
+                               Text("Steering Features (SAE)")
+                                   .font(.caption2)
+                                   .foregroundStyle(.secondary)
+                               
+                               SteeringControl(label: "Robustness", value: $robustness)
+                               SteeringControl(label: "Complexity", value: $complexity)
+                           }
+                           
+                           Button(action: {
+                               let steering = [10: robustness, 28: complexity]
+                               onGenerate?(prompt, steering)
+                           }) {
+                               HStack {
+                                   Spacer()
+                                   if isGenerating {
+                                       ProgressView().controlSize(.small)
+                                   } else {
+                                       Label("Generate", systemImage: "sparkles")
+                                   }
+                                   Spacer()
+                               }
+                           }
+                           .buttonStyle(.borderedProminent)
+                           .disabled(prompt.isEmpty)
+                       }
+                       .padding(.vertical, 4)
+                   }
+                } header: {
+                    Text("Assistant")
+                }
+
                 Section {
                     if viewModel.simulationHistory.isEmpty {
                         HStack {
@@ -126,9 +199,7 @@ struct PropertiesView: View {
                         .frame(minHeight: 150)
                     }
                 } header: {
-                    Text("SIMULATION HISTORY")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(.secondary)
+                    Text("Simulation History")
                 }
                 
                 Section {
@@ -151,15 +222,13 @@ struct PropertiesView: View {
                     }
                 } header: {
                     HStack {
-                        Text("MACHINE CONTEXT")
+                        Text("Machine Context")
                         Spacer()
                         if let _ = viewModel.machine.jsonContent {
                             Label("JSON", systemImage: "curlybraces")
                                 .font(.caption2)
                         }
                     }
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(.secondary)
                 }
             }
         }
@@ -215,4 +284,27 @@ struct PropertiesView: View {
         }
     }
     return PreviewWrapper()
+}
+
+// MARK: - Helper Views
+
+struct SteeringControl: View {
+    let label: String
+    @Binding var value: Double
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(String(format: "%.1f", value))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: $value, in: -1...1)
+                .tint(Theme.Colors.accent)
+        }
+    }
 }

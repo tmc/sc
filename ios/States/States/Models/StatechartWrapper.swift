@@ -4,9 +4,9 @@ import SwiftProtobuf
 // NOTE: This assumes the generated protobuf files are added to the Xcode target.
 // You might need to add `import Statecharts` or similar if it's in a separate module.
 
-struct StatechartWrapper: Identifiable, Hashable {
+struct StatechartWrapper: Identifiable, Hashable, Codable {
     let id: UUID
-    let name: String
+    var name: String
     
     var jsonContent: String?
     

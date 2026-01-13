@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9A5483492F0D7E47003B481F /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 9A5483482F0D7E47003B481F /* MLXLLM */; };
+		9A54834B2F0D7E47003B481F /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 9A54834A2F0D7E47003B481F /* MLXLMCommon */; };
+		9A5485A02F0D8150003B481F /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 9A54859F2F0D8150003B481F /* MLX */; };
+		9A5485A22F0D8150003B481F /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = 9A5485A12F0D8150003B481F /* MLXFast */; };
+		9A5485A42F0D8150003B481F /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = 9A5485A32F0D8150003B481F /* MLXNN */; };
+		9A5485C72F0DD233003B481F /* states.icon in Resources */ = {isa = PBXBuildFile; fileRef = 9A5485C62F0DD233003B481F /* states.icon */; };
 		9A561AAB2EFE9B2600DBB27A /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 9A561AAA2EFE9B2600DBB27A /* SwiftProtobuf */; };
 		9A561AAD2EFE9B6500DBB27A /* SwiftProtobufPluginLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 9A561AAC2EFE9B6500DBB27A /* SwiftProtobufPluginLibrary */; };
 /* End PBXBuildFile section */
@@ -29,6 +35,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9A5485C62F0DD233003B481F /* states.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = states.icon; sourceTree = "<group>"; };
 		9A561A3F2EFE948500DBB27A /* States.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = States.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A561A502EFE948900DBB27A /* StatesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StatesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A561A5A2EFE948900DBB27A /* StatesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StatesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,7 +77,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A5485A22F0D8150003B481F /* MLXFast in Frameworks */,
+				9A5483492F0D7E47003B481F /* MLXLLM in Frameworks */,
 				9A561AAD2EFE9B6500DBB27A /* SwiftProtobufPluginLibrary in Frameworks */,
+				9A54834B2F0D7E47003B481F /* MLXLMCommon in Frameworks */,
+				9A5485A02F0D8150003B481F /* MLX in Frameworks */,
+				9A5485A42F0D8150003B481F /* MLXNN in Frameworks */,
 				9A561AAB2EFE9B2600DBB27A /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -99,6 +111,7 @@
 				9A561A532EFE948900DBB27A /* StatesTests */,
 				9A561A5D2EFE948900DBB27A /* StatesUITests */,
 				9A561A402EFE948500DBB27A /* Products */,
+				9A5485C62F0DD233003B481F /* states.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -134,6 +147,11 @@
 			packageProductDependencies = (
 				9A561AAA2EFE9B2600DBB27A /* SwiftProtobuf */,
 				9A561AAC2EFE9B6500DBB27A /* SwiftProtobufPluginLibrary */,
+				9A5483482F0D7E47003B481F /* MLXLLM */,
+				9A54834A2F0D7E47003B481F /* MLXLMCommon */,
+				9A54859F2F0D8150003B481F /* MLX */,
+				9A5485A12F0D8150003B481F /* MLXFast */,
+				9A5485A32F0D8150003B481F /* MLXNN */,
 			);
 			productName = States;
 			productReference = 9A561A3F2EFE948500DBB27A /* States.app */;
@@ -219,6 +237,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				9A561AA92EFE9B2600DBB27A /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+				9A5483472F0D7E47003B481F /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+				9A54859E2F0D8150003B481F /* XCRemoteSwiftPackageReference "mlx-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9A561A402EFE948500DBB27A /* Products */;
@@ -237,6 +257,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A5485C72F0DD233003B481F /* states.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,18 +318,30 @@
 		9A561A642EFE948900DBB27A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = states;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NH2V7S283A;
+				DEVELOPMENT_TEAM = LJ98655CHY;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				EX_ENABLE_EXTENSION_POINT_GENERATION = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = States/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -323,7 +356,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tmc.States;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -342,18 +375,30 @@
 		9A561A652EFE948900DBB27A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = states;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NH2V7S283A;
+				DEVELOPMENT_TEAM = LJ98655CHY;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				EX_ENABLE_EXTENSION_POINT_GENERATION = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = States/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -368,7 +413,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tmc.States;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -510,7 +555,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tmc.StatesTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -536,7 +581,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tmc.StatesTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -561,7 +606,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tmc.StatesUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -586,7 +631,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.tmc.StatesUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -644,6 +689,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		9A5483472F0D7E47003B481F /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.29.2;
+			};
+		};
+		9A54859E2F0D8150003B481F /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.29.1;
+			};
+		};
 		9A561AA92EFE9B2600DBB27A /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-protobuf.git";
@@ -655,6 +716,31 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		9A5483482F0D7E47003B481F /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A5483472F0D7E47003B481F /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
+		9A54834A2F0D7E47003B481F /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A5483472F0D7E47003B481F /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+		9A54859F2F0D8150003B481F /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A54859E2F0D8150003B481F /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		9A5485A12F0D8150003B481F /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A54859E2F0D8150003B481F /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		9A5485A32F0D8150003B481F /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A54859E2F0D8150003B481F /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
 		9A561AAA2EFE9B2600DBB27A /* SwiftProtobuf */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9A561AA92EFE9B2600DBB27A /* XCRemoteSwiftPackageReference "swift-protobuf" */;

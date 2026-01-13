@@ -1,6 +1,7 @@
 import SwiftUI
 import Observation
 import Foundation
+import OSLog
 
 @Observable
 class AppViewModel {
@@ -8,32 +9,26 @@ class AppViewModel {
     var selectedMachine: StatechartWrapper?
     
     init() {
-        // Mock Data
-        machines = []
-        // Load Sample Data
-        for (key, json) in SampleData.machines {
-            if key == "machines" {
-                // Parse the array of machines
-                if let data = json.data(using: .utf8) {
-                    do {
-                         let importedMachines = try JSONDecoder().decode([StatelyDocsMachine].self, from: data)
-                         for m in importedMachines {
-                             // Encode the definition back to JSON string for StatechartWrapper
-                             let defData = try JSONEncoder().encode(m.definition)
-                             let defString = String(data: defData, encoding: .utf8)
-                             machines.append(StatechartWrapper(name: m.name, jsonContent: defString))
-                         }
-                    } catch {
-                        print("Failed to parse machines array: \(error)")
-                    }
-                }
-            } else {
-                 machines.append(StatechartWrapper(name: key, jsonContent: json))
+        // Load from Persistence
+        machines = LibraryManager.shared.loadAll()
+        
+        if machines.isEmpty {
+            loadSampleData()
+            // Persist sample data on first run
+            for machine in machines {
+                LibraryManager.shared.save(machine)
             }
         }
         
         // Sort by name for consistency
         machines.sort { $0.name < $1.name }
+    }
+    
+    private func loadSampleData() {
+        // Load Sample Data (Simplified)
+        for (key, json) in SampleData.machines {
+             machines.append(StatechartWrapper(name: key, jsonContent: json))
+        }
     }
     
     func loadMachines(from folderURL: URL) {
@@ -47,7 +42,7 @@ class AppViewModel {
         let keys: [URLResourceKey] = [.isRegularFileKey]
         
         guard let enumerator = fileManager.enumerator(at: folderURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles]) else {
-            print("Failed to create file enumerator")
+            Logger.viewModels.error("Failed to create file enumerator")
             return
         }
         
@@ -64,14 +59,16 @@ class AppViewModel {
                     if !machines.contains(where: { $0.name == name }) {
                         let newMachine = StatechartWrapper(name: name, jsonContent: content)
                         machines.append(newMachine)
+                        LibraryManager.shared.save(newMachine)
                     } else {
                         // Update existing? Or skip? Let's update.
                          if let index = machines.firstIndex(where: { $0.name == name }) {
                              machines[index].jsonContent = content
+                             LibraryManager.shared.save(machines[index])
                          }
                     }
                 } catch {
-                    print("Failed to read JSON content from \(fileURL.lastPathComponent): \(error)")
+                    Logger.viewModels.error("Failed to read JSON content from \(fileURL.lastPathComponent): \(error.localizedDescription)")
                 }
             }
         }
@@ -80,152 +77,102 @@ class AppViewModel {
         machines.sort { $0.name < $1.name }
     }
     
-    func addMachine(name: String) {
+    @discardableResult
+    func addMachine(name: String) -> StatechartWrapper {
         let newMachine = StatechartWrapper(name: name)
         machines.insert(newMachine, at: 0)
+        selectedMachine = newMachine
+        LibraryManager.shared.save(newMachine)
+        return newMachine
     }
     
     func deleteMachine(at offsets: IndexSet) {
+        offsets.forEach { index in
+            let machine = machines[index]
+            LibraryManager.shared.delete(machine)
+        }
         machines.remove(atOffsets: offsets)
+    }
+    
+    func updateMachine(_ machine: StatechartWrapper) {
+        if let index = machines.firstIndex(where: { $0.id == machine.id }) {
+            machines[index] = machine
+            LibraryManager.shared.save(machine)
+        }
+    }
+    
+    func duplicateMachine(_ machine: StatechartWrapper) {
+        let newMachine = StatechartWrapper(name: "\(machine.name) Copy", jsonContent: machine.jsonContent)
+        machines.insert(newMachine, at: 0)
+        LibraryManager.shared.save(newMachine)
     }
     
     // MARK: - AI Generation (Mock)
     // MARK: - AI Generation (Mock)
     func generateMachine(prompt: String) {
-        let name = "Generated: \(prompt.prefix(15))..."
-        var machine = StatechartWrapper(name: name)
-        
-        let lowerPrompt = prompt.lowercased()
-        
-        if lowerPrompt.contains("traffic") {
-            let json = """
-            {
-              "name": "trafficLight",
-              "root_state": {
-                "label": "trafficLight",
-                "type": "OR",
-                "is_initial": true,
-                "children": [
-                  { "label": "green", "type": "BASIC", "is_initial": true },
-                  { "label": "yellow", "type": "BASIC" },
-                  { "label": "red", "type": "BASIC" }
-                ]
-              },
-              "transitions": [
-                { "from": ["green"], "to": ["yellow"], "event": "TIMER" },
-                { "from": ["yellow"], "to": ["red"], "event": "TIMER" },
-                { "from": ["red"], "to": ["green"], "event": "TIMER" }
-              ]
-            }
-            """
-            machine.jsonContent = json
-        } else if lowerPrompt.contains("login") || lowerPrompt.contains("auth") {
-             // Login Flow Mock
-             let json = """
-             {
-               "name": "loginFlow",
-               "root_state": {
-                 "label": "loginFlow",
-                 "type": "OR",
-                 "is_initial": true,
-                 "children": [
-                   { "label": "idle", "type": "BASIC", "is_initial": true },
-                   { "label": "authenticating", "type": "BASIC" },
-                   { "label": "loggedIn", "type": "BASIC" },
-                   { "label": "error", "type": "BASIC" }
-                 ]
-               },
-               "transitions": [
-                 { "from": ["idle"], "to": ["authenticating"], "event": "LOGIN" },
-                 { "from": ["authenticating"], "to": ["loggedIn"], "event": "SUCCESS" },
-                 { "from": ["authenticating"], "to": ["error"], "event": "FAILURE" },
-                 { "from": ["loggedIn"], "to": ["idle"], "event": "LOGOUT" },
-                 { "from": ["error"], "to": ["authenticating"], "event": "RETRY" },
-                 { "from": ["error"], "to": ["idle"], "event": "CANCEL" }
-               ]
-             }
-             """
-             machine.jsonContent = json
-        } else if lowerPrompt.contains("music") || lowerPrompt.contains("player") {
-             // Music Player Mock
-             let json = """
-             {
-               "name": "musicPlayer",
-               "root_state": {
-                 "label": "musicPlayer",
-                 "type": "OR",
-                 "is_initial": true,
-                 "children": [
-                   { "label": "stopped", "type": "BASIC", "is_initial": true },
-                   { "label": "playing", "type": "BASIC" },
-                   { "label": "paused", "type": "BASIC" }
-                 ]
-               },
-               "transitions": [
-                 { "from": ["stopped"], "to": ["playing"], "event": "PLAY" },
-                 { "from": ["playing"], "to": ["paused"], "event": "PAUSE" },
-                 { "from": ["playing"], "to": ["stopped"], "event": "STOP" },
-                 { "from": ["paused"], "to": ["playing"], "event": "PLAY" },
-                 { "from": ["paused"], "to": ["stopped"], "event": "STOP" }
-               ]
-             }
-             """
-             machine.jsonContent = json
-        } else if lowerPrompt.contains("toggle") || lowerPrompt.contains("switch") {
-             // Toggle Mock
-             let json = """
-             {
-               "name": "toggle",
-               "root_state": {
-                 "label": "toggle",
-                 "type": "OR",
-                 "is_initial": true,
-                 "children": [
-                   { "label": "inactive", "type": "BASIC", "is_initial": true },
-                   { "label": "active", "type": "BASIC" }
-                 ]
-               },
-               "transitions": [
-                 { "from": ["inactive"], "to": ["active"], "event": "TOGGLE" },
-                 { "from": ["active"], "to": ["inactive"], "event": "TOGGLE" }
-               ]
-             }
-             """
-             machine.jsonContent = json
-        } else {
-            // Generic Mock for unknown
-             let json = """
-             {
-               "name": "generic",
-               "root_state": {
-                 "label": "generic",
-                 "type": "OR",
-                 "is_initial": true,
-                 "children": [
-                   { "label": "start", "type": "BASIC", "is_initial": true },
-                   { "label": "process", "type": "BASIC" },
-                   { "label": "end", "type": "BASIC" },
-                   { "label": "fail", "type": "BASIC" }
-                 ]
-               },
-               "transitions": [
-                 { "from": ["start"], "to": ["process"], "event": "NEXT" },
-                 { "from": ["process"], "to": ["end"], "event": "COMPLETE" },
-                 { "from": ["process"], "to": ["fail"], "event": "ERROR" },
-                 { "from": ["fail"], "to": ["process"], "event": "RETRY" }
-               ]
-             }
-             """
-             machine.jsonContent = json
-        }
-        
+        let machine = SampleData.generateMachine(prompt: prompt)
         machines.insert(machine, at: 0)
-        machines.insert(machine, at: 0)
+        selectedMachine = machine
+        LibraryManager.shared.save(machine)
     }
 
     // MARK: - Remote Generation (SAE Steering)
     
+    // MARK: - Native & Remote Generation (SAE Steering)
+    
     func generateRemote(prompt: String, steering: [Int: Double]) {
+        // Phase 1: Try Native Service
+        Task {
+            if await SteeringService.shared.isModelLoaded == false {
+                 try? await SteeringService.shared.loadModel()
+            }
+            
+            // Map steering to native format (Mock vector for now)
+            for (k, v) in steering {
+                await SteeringService.shared.setSteering(featureID: k, strength: Float(v), vector: [1.0] /* Placeholder */)
+            }
+            
+            do {
+                let json = try await SteeringService.shared.generate(prompt: prompt)
+                if json != "{}" {
+                    await MainActor.run {
+                        self.handleGeneratedJSON(prompt: prompt, json: json)
+                    }
+                    return
+                }
+            } catch {
+                Logger.ai.error("Native Gen Failed: \(error.localizedDescription). Falling back to remote.")
+            }
+            
+            // Fallback to Remote
+            self.generateRemoteFallback(prompt: prompt, steering: steering)
+        }
+    }
+
+    private func handleGeneratedJSON(prompt: String, json: String) {
+        // Check if we are already viewing a steered version of this prompt
+        let expectedName = "Steered: \(prompt.prefix(10))"
+        
+        if var current = self.selectedMachine, current.name == expectedName {
+            // Update in place to preserve view state (if possible)
+            if current.jsonContent != json {
+                current.jsonContent = json
+                self.selectedMachine = current
+                if let index = self.machines.firstIndex(where: { $0.id == current.id }) {
+                    self.machines[index] = current
+                    LibraryManager.shared.save(current)
+                }
+            }
+        } else {
+            // Create new
+            let machine = StatechartWrapper(name: expectedName, jsonContent: json)
+            self.machines.insert(machine, at: 0)
+            self.selectedMachine = machine
+            LibraryManager.shared.save(machine)
+        }
+    }
+
+    private func generateRemoteFallback(prompt: String, steering: [Int: Double]) {
         guard let url = URL(string: "http://localhost:8000/generate") else { return }
         
         var request = URLRequest(url: url)
@@ -240,13 +187,13 @@ class AppViewModel {
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         } catch {
-            print("Failed to encode request: \(error)")
+            Logger.ai.error("Failed to encode request: \(error.localizedDescription)")
             return
         }
         
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             if let error = error {
-                print("Remote Gen Error: \(error)")
+                Logger.ai.error("Remote Gen Error: \(error.localizedDescription)")
                 return
             }
             
@@ -257,27 +204,11 @@ class AppViewModel {
                    let scJSON = jsonResponse["json"] as? String {
                    
                     DispatchQueue.main.async {
-                        guard let self = self else { return }
-                        
-                        // Check if we are already viewing a steered version of this prompt
-                        let expectedName = "Steered: \(prompt.prefix(10))"
-                        
-                        if let current = self.selectedMachine, current.name == expectedName {
-                            // Update in place to preserve view state (if possible)
-                            // StatechartWrapper's jsonContent is @Observation tracked, so this should trigger update
-                            if current.jsonContent != scJSON {
-                                current.jsonContent = scJSON
-                            }
-                        } else {
-                            // Create new
-                            let machine = StatechartWrapper(name: expectedName, jsonContent: scJSON)
-                            self.machines.insert(machine, at: 0)
-                            self.selectedMachine = machine
-                        }
+                        self?.handleGeneratedJSON(prompt: prompt, json: scJSON)
                     }
                 }
             } catch {
-               print("Failed to decode response: \(error)")
+               Logger.ai.error("Failed to decode response: \(error.localizedDescription)")
             }
         }
         task.resume()
@@ -286,12 +217,37 @@ class AppViewModel {
     // MARK: - Deep Linking & restoration
     
     func restore(from url: URL) {
-        // Mock restoration logic
-        // Scheme: states://machine/<ID> or <Name>
-        // For simplicity, we match by name if ID isn't found
-        let path = url.lastPathComponent
-        if let machine = machines.first(where: { $0.id.uuidString == path || $0.name == path }) {
-             selectedMachine = machine
+        if url.isFileURL {
+            // Handle file import
+            let secure = url.startAccessingSecurityScopedResource()
+            defer { if secure { url.stopAccessingSecurityScopedResource() } }
+            
+            do {
+                let content = try String(contentsOf: url, encoding: .utf8)
+                let name = url.deletingPathExtension().lastPathComponent
+                
+                // Check if already exists by name (naive) or ID?
+                if let index = machines.firstIndex(where: { $0.name == name }) {
+                    Logger.data.info("Updating existing machine from file: \(name)")
+                    machines[index].jsonContent = content
+                    LibraryManager.shared.save(machines[index])
+                    selectedMachine = machines[index]
+                } else {
+                    Logger.data.info("Importing new machine from file: \(name)")
+                    let newMachine = StatechartWrapper(name: name, jsonContent: content)
+                    machines.insert(newMachine, at: 0)
+                    LibraryManager.shared.save(newMachine)
+                    selectedMachine = newMachine
+                }
+            } catch {
+                Logger.data.error("Failed to restore from file URL: \(error.localizedDescription)")
+            }
+        } else {
+            // Handle Scheme: states://machine/<ID> or <Name>
+            let path = url.lastPathComponent
+            if let machine = machines.first(where: { $0.id.uuidString == path || $0.name == path }) {
+                 selectedMachine = machine
+            }
         }
     }
     

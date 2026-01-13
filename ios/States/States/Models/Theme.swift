@@ -27,21 +27,40 @@ enum Theme {
     // MARK: - Colors
     // Semantic definitions.
     
+    // MARK: - Colors
+    // Semantic definitions.
+    
     enum Colors {
         static let accent = Color.indigo
         
         // Backgrounds
-        #if os(macOS)
-        static let canvasBackground = Color(nsColor: .windowBackgroundColor)
-        static let sidebarBackground = Color(nsColor: .controlBackgroundColor).opacity(0.5) // Translucent
-        #else
-        static let canvasBackground = Color(uiColor: .systemGroupedBackground)
-        static let sidebarBackground = Color(uiColor: .secondarySystemBackground)
-        #endif
+        static let canvasBackground: Color = {
+            #if os(macOS)
+            return Color(nsColor: .windowBackgroundColor)
+            #else
+            return Color(uiColor: .systemGroupedBackground) 
+            #endif
+        }()
+        
+        static let sidebarBackground: Color = {
+             #if os(macOS)
+             return Color.clear // Use native vibrancy
+             #else
+             return Color(uiColor: .secondarySystemBackground)
+             #endif
+        }()
+        
+        static let separator: Color = {
+            #if os(macOS)
+            return Color(nsColor: .separatorColor)
+            #else
+            return Color(uiColor: .separator)
+            #endif
+        }()
         
         // Node Styling
         static let nodeBackground = Color.white
-        static let nodeBorder = Color.black.opacity(0.1)
+        static let nodeBorder = Color.primary.opacity(0.1) // Adaptive border
         static let activeNodeGlow = Color.green.opacity(0.6)
         static let activeNodeTint = Color.green.opacity(0.1)
         
@@ -62,8 +81,8 @@ enum Theme {
     enum Layout {
         static let cornerRadius: CGFloat = 12.0
         static let nodeCornerRadius: CGFloat = 8.0
-        static let shadowRadius: CGFloat = 8.0
-        static let shadowY: CGFloat = 4.0
+        static let shadowRadius: CGFloat = 12.0
+        static let shadowY: CGFloat = 6.0
         
         #if os(macOS)
         static let sidebarWidth: CGFloat = 260
@@ -71,12 +90,14 @@ enum Theme {
         
         // Animations
         static let breathingAnimation: Animation = .easeInOut(duration: 2.5).repeatForever(autoreverses: true)
+        static let springStart: Animation = .spring(response: 0.3, dampingFraction: 0.7)
+        static let springEnd: Animation = .spring(response: 0.4, dampingFraction: 0.6)
     }
     
     // MARK: - Haptics
     enum Haptics {
         enum FeedbackStyle {
-            case light, medium, heavy
+            case light, medium, heavy, rigid, soft
         }
         
         enum NotificationType {
@@ -87,16 +108,22 @@ enum Theme {
             #if os(iOS)
             let uiStyle: UIImpactFeedbackGenerator.FeedbackStyle
             switch style {
-            case .light:
-                uiStyle = .light
-            case .medium:
-                uiStyle = .medium
-            case .heavy:
-                uiStyle = .heavy
+            case .light: uiStyle = .light
+            case .medium: uiStyle = .medium
+            case .heavy: uiStyle = .heavy
+            case .rigid: uiStyle = .rigid
+            case .soft: uiStyle = .soft
             }
             let generator = UIImpactFeedbackGenerator(style: uiStyle)
             generator.prepare()
             generator.impactOccurred()
+            #elseif os(macOS)
+            let feedbackPattern: NSHapticFeedbackManager.FeedbackPattern
+            switch style {
+            case .light, .soft: feedbackPattern = .alignment
+            default: feedbackPattern = .levelChange
+            }
+            NSHapticFeedbackManager.defaultPerformer.perform(feedbackPattern, performanceTime: .default)
             #endif
         }
         
@@ -104,12 +131,9 @@ enum Theme {
             #if os(iOS)
             let uiType: UINotificationFeedbackGenerator.FeedbackType
             switch type {
-            case .success:
-                uiType = .success
-            case .warning:
-                uiType = .warning
-            case .error:
-                uiType = .error
+            case .success: uiType = .success
+            case .warning: uiType = .warning
+            case .error: uiType = .error
             }
             let generator = UINotificationFeedbackGenerator()
             generator.prepare()
@@ -122,6 +146,9 @@ enum Theme {
             let generator = UISelectionFeedbackGenerator()
             generator.prepare()
             generator.selectionChanged()
+            #elseif os(macOS)
+            // Subtle alignment click for selection
+            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .default)
             #endif
         }
     }
@@ -136,12 +163,26 @@ enum Theme {
 // MARK: - View Extensions
 
 extension View {
-    func ultraThinGlass() -> some View {
-        #if os(macOS)
-        self.background(.ultraThinMaterial)
-        #else
-        self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.Layout.cornerRadius))
-        #endif
+    /// Applies a standard ultra-thin material background with a corner radius.
+    /// Defaults to `Theme.Layout.cornerRadius`.
+    func ultraThinGlass(cornerRadius: CGFloat = Theme.Layout.cornerRadius) -> some View {
+        self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+             .overlay(
+                 RoundedRectangle(cornerRadius: cornerRadius)
+                     .strokeBorder(Theme.Colors.separator.opacity(0.3), lineWidth: 0.5)
+                     .blendMode(.overlay)
+             )
+    }
+    
+    /// Applies a "Premium" pill shape with glass effect, commonly used for floating toolbars.
+    func glassPill() -> some View {
+        self.background(.regularMaterial, in: Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
+                    .blendMode(.screen)
+            )
+            .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
     }
     
     /// Applies the standard "Premium" shadow style

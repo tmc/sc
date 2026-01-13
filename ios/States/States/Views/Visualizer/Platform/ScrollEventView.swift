@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 #if os(macOS)
@@ -6,6 +7,8 @@ import AppKit
 struct ScrollEventView: NSViewRepresentable {
     @Binding var offset: CGSize
     @Binding var scale: CGFloat
+    @Binding var nodes: [FlowNode] // Shared API
+
     
     func makeNSView(context: Context) -> ScrollEventHandlingView {
         let view = ScrollEventHandlingView()
@@ -22,29 +25,74 @@ struct ScrollEventView: NSViewRepresentable {
     class ScrollEventHandlingView: NSView {
         var offsetBinding: Binding<CGSize>?
         var scaleBinding: Binding<CGFloat>?
+        var monitor: Any?
         
-        override var acceptsFirstResponder: Bool { true }
-        
-        override func magnify(with event: NSEvent) {
-            handleZoom(delta: event.magnification, at: event.locationInWindow)
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            setupMonitor()
         }
         
-        override func scrollWheel(with event: NSEvent) {
-            if event.modifierFlags.contains(.command) {
-                // Zoom with Scroll (Mouse usually, or Trackpad with Cmd)
-                // Sensitivity factor
-                let factor: CGFloat = 0.01
-                handleZoom(delta: event.scrollingDeltaY * factor, at: event.locationInWindow)
-            } else {
-                // Pan
-                guard let offsetBinding = offsetBinding else { return }
-                let currentOffset = offsetBinding.wrappedValue
+        private func setupMonitor() {
+            if monitor != nil { NSEvent.removeMonitor(monitor!) }
+            
+            // Capture Scroll and Magnify globally in the window, but filter for our bounds
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel, .magnify]) { [weak self] event in
+                guard let self = self, self.window != nil else { return event }
                 
+                let locationInWindow = event.locationInWindow
+                let localPoint = self.convert(locationInWindow, from: nil)
+                
+                if self.bounds.contains(localPoint) {
+                    if event.type == .scrollWheel {
+                        self.handleScroll(event)
+                        return nil 
+                    } else if event.type == .magnify {
+                         self.handleZoom(delta: event.magnification, at: locationInWindow)
+                         return nil
+                    }
+                }
+                return event
+            }
+        }
+        
+        deinit {
+            if let monitor = monitor { NSEvent.removeMonitor(monitor) }
+        }
+        
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            return nil
+        }
+        
+        private func handleScroll(_ event: NSEvent) {
+            if event.modifierFlags.contains(.command) {
+                // Command + Scroll = Zoom
+                // Logarithmic stepping for natural feel
+                // Standard mouse wheel delta is usually around 0.1 to 10.0
+                // Trackpad delta is smaller.
+                let sensitivity: CGFloat = 0.01 
+                let delta = event.scrollingDeltaY * sensitivity
+                handleZoom(delta: delta, at: event.locationInWindow)
+            } else {
+                guard let offsetBinding = offsetBinding else { return }
+                
+                var multiplier: CGFloat = 1.0
+                if event.modifierFlags.contains(.option) {
+                    // Option + Scroll = Precision Panning (Smoother/Slower)
+                    multiplier = 0.2
+                }
+                
+                // Trackpad momentum is handled automatically by the system sending
+                // events with phase == .momentum or .ended.
+                // We just apply the deltas.
+                
+                let currentOffset = offsetBinding.wrappedValue
                 let newOffset = CGSize(
-                    width: currentOffset.width + event.scrollingDeltaX,
-                    height: currentOffset.height + event.scrollingDeltaY
+                    width: currentOffset.width + (event.scrollingDeltaX * multiplier),
+                    height: currentOffset.height + (event.scrollingDeltaY * multiplier)
                 )
                 
+                // Immediate update
+                // For 120Hz ProMotion, this needs to be fast.
                 offsetBinding.wrappedValue = newOffset
             }
         }
@@ -56,35 +104,45 @@ struct ScrollEventView: NSViewRepresentable {
             let currentScale = scaleBinding.wrappedValue
             let currentOffset = offsetBinding.wrappedValue
             
-            // Calculate new scale
-            // For pinch (magnify), delta is the change factor (e.g. 0.01).
-            // newScale = currentScale * (1 + delta) is typical for magnification events? 
-            // verifying: event.magnification is 0 if no change, +1 if doubled.
-            let newScaleRaw = currentScale + (currentScale * delta)
-            let newScale = min(max(newScaleRaw, 0.1), 5.0)
+            // Logarithmic / Exponential Zoom
+            // scale = oldScale * (1 + delta) is linear approximation of exp
+            // For true momentum feeling, we trust the delta curve.
             
-            // Calculate Ratio
+            let newScaleRaw = currentScale * (1 + delta)
+            let newScale = min(max(newScaleRaw, 0.1), 5.0) // Clamp 0.1x to 5.0x
+            
+            if newScale == currentScale { return }
+            
             let ratio = newScale / currentScale
             
-            // Convert window location to local view coordinates (which centers 0,0 typically? No, NSView coords).
-            // This view is an overlay filling the area. Midpoint of this view corresponds to the "center" used in drawing.
+            // Anchor at Cursor
             let localPoint = self.convert(locationInWindow, from: nil)
+            
+            // Convert local mouse point to "Canvas Space" relative to center (0,0) of view
+            // The canvas is centered at view center.
             let viewCenter = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
             
-            // Vector from center to cursor
-            let v = CGSize(width: localPoint.x - viewCenter.x, height: localPoint.y - viewCenter.y)
+            // P_screen = P_world * scale + offset + center
+            // P_world = (P_screen - center - offset) / scale
             
-            // Math: newOffset = v * (1 - ratio) + oldOffset * ratio
+            // We want P_world under cursor to remain constant.
+            // P_screen_new = P_world * newScale + newOffset + center
+            // P_screen_old = P_screen_new (cursor didn't move)
+            
+            // (P_s - c - o_old) / s_old = (P_s - c - o_new) / s_new
+            // Let V = P_s - c (vector from center to cursor)
+            // (V - o_old) / s_old = (V - o_new) / s_new
+            // (V - o_old) * (s_new/s_old) = V - o_new
+            // o_new = V - (V - o_old) * ratio
+            
+            let v = CGSize(width: localPoint.x - viewCenter.x, height: localPoint.y - viewCenter.y)
             let newOffset = CGSize(
-                width: v.width * (1 - ratio) + currentOffset.width * ratio,
-                height: v.height * (1 - ratio) + currentOffset.height * ratio
+                width: v.width - (v.width - currentOffset.width) * ratio,
+                height: v.height - (v.height - currentOffset.height) * ratio
             )
             
             scaleBinding.wrappedValue = newScale
-            // Only update offset if we actually scaled (bounds check)
-            if newScale != currentScale {
-                offsetBinding.wrappedValue = newOffset
-            }
+            offsetBinding.wrappedValue = newOffset
         }
     }
 }
@@ -94,124 +152,153 @@ import UIKit
 struct ScrollEventView: UIViewRepresentable {
     @Binding var offset: CGSize
     @Binding var scale: CGFloat
+    @Binding var nodes: [FlowNode] // Need nodes for hit testing
     
-    func makeUIView(context: Context) -> IOSScrollEventHandlingView {
-        let view = IOSScrollEventHandlingView()
-        view.offsetBinding = $offset
-        view.scaleBinding = $scale
-        return view
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
     }
     
-    func updateUIView(_ uiView: IOSScrollEventHandlingView, context: Context) {
-        uiView.offsetBinding = $offset
-        uiView.scaleBinding = $scale
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = PassThroughScrollView()
+        scrollView.parent = self // Link for hit testing
+        scrollView.delegate = context.coordinator
+        scrollView.minimumZoomScale = 0.1
+        scrollView.maximumZoomScale = 5.0
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.bounces = true
+        scrollView.decelerationRate = .normal
+        
+        // Massive content size
+        let keyspace: CGFloat = 200_000
+        scrollView.contentSize = CGSize(width: keyspace, height: keyspace)
+        
+        // Settings for pass-through
+        scrollView.delaysContentTouches = false
+        scrollView.canCancelContentTouches = true
+        
+        let zoomView = UIView()
+        zoomView.tag = 999
+        zoomView.frame = CGRect(origin: .zero, size: scrollView.contentSize)
+        zoomView.isUserInteractionEnabled = false 
+        scrollView.addSubview(zoomView)
+        
+        return scrollView
     }
     
-    class IOSScrollEventHandlingView: UIView, UIGestureRecognizerDelegate {
-        var offsetBinding: Binding<CGSize>?
-        var scaleBinding: Binding<CGFloat>?
-        
-        private var initialPinchScale: CGFloat = 1.0
-        private var lastPanLocation: CGPoint = .zero
-        
-        override init(frame: CGRect) {
-            super.init(frame: frame)
-            setupGestures()
+    func updateUIView(_ uiView: UIScrollView, context: Context) {
+        if let scrollView = uiView as? PassThroughScrollView {
+            scrollView.parent = self
+            // Note: Updating 'nodes' binding doesn't need to do anything to the view
+            // The hitTest uses the capture 'self' or updated via 'parent' ref
         }
         
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
+        // Sync Binding -> ScrollView
+        if uiView.isDragging || uiView.isDecelerating || uiView.isZooming { return }
+        
+        let keyspace: CGFloat = 200_000
+        let center = keyspace / 2
+        let viewSize = uiView.bounds.size
+        if viewSize.width == 0 { return }
+        
+        if abs(uiView.zoomScale - scale) > 0.001 {
+             uiView.setZoomScale(scale, animated: false)
         }
         
-        private func setupGestures() {
-            let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
-            pinch.delegate = self
-            self.addGestureRecognizer(pinch)
+        let targetX = center - offset.width - (viewSize.width / 2)
+        let targetY = center - offset.height - (viewSize.height / 2)
+        
+        let currentPos = uiView.contentOffset
+        if abs(currentPos.x - targetX) > 1.0 || abs(currentPos.y - targetY) > 1.0 {
+            uiView.setContentOffset(CGPoint(x: targetX, y: targetY), animated: false)
+        }
+    }
+    
+    // Custom ScrollView for Hit Testing
+    class PassThroughScrollView: UIScrollView {
+        var parent: ScrollEventView?
+        
+        override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+            // Check if we hit a node
+            // Point is in ScrollView bounds (screen coordinates mostly, since we are fullscreen)
+            // We need to map to Canvas Space
+            guard let parent = parent else { return super.hitTest(point, with: event) }
             
-            let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-            // Pan requires 2 touches to differentiate from drag-to-connect or node drag
-            // But if those are on nodes, maybe 2 fingers is good for canvas pan?
-            // "Trackpad style" usually implies 2 finger pan on iPad, but 1 finger pan for canvas is also common mobile UX.
-            // FlowView handles single finger drag. So we need 2 fingers here to avoid conflict.
-            pan.minimumNumberOfTouches = 2
-            pan.maximumNumberOfTouches = 2 
-            pan.delegate = self
-            self.addGestureRecognizer(pan)
-        }
-        
-        // Allow simultaneous gestures (Pan + Pinch)
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-            return true
-        }
-        
-        @objc private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-            guard let scaleBinding = scaleBinding,
-                  let offsetBinding = offsetBinding else { return }
+            // Transform point to Canvas Space
+            // Canvas Space (P_world)
+            // Screen Point (P_screen) = point
+            // center = size/2
+            // P_world = (P_screen - center - offset) / scale
             
-            switch gesture.state {
-            case .began:
-                initialPinchScale = scaleBinding.wrappedValue
-            case .changed:
-                let currentScale = scaleBinding.wrappedValue
-                let scaleDelta = gesture.scale
-                
-                // Calculate new scale
-                let newScaleRaw = initialPinchScale * scaleDelta
-                let newScale = min(max(newScaleRaw, 0.1), 5.0)
-                
-                // Zoom-to-point logic
-                let ratio = newScale / currentScale
-                
-                // Pinch center in view coordinates
-                let pinchCenter = gesture.location(in: self)
-                let viewCenter = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
-                
-                let v = CGSize(width: pinchCenter.x - viewCenter.x, height: pinchCenter.y - viewCenter.y)
-                
-                let currentOffset = offsetBinding.wrappedValue
-                let newOffset = CGSize(
-                    width: v.width * (1 - ratio) + currentOffset.width * ratio,
-                    height: v.height * (1 - ratio) + currentOffset.height * ratio
-                )
-                
-                scaleBinding.wrappedValue = newScale
-                if newScale != currentScale {
-                    offsetBinding.wrappedValue = newOffset
+            let center = CGPoint(x: bounds.width / 2, y: bounds.height / 2)
+            let offset = parent.offset
+            let scale = parent.scale
+            
+            let worldPoint = CGPoint(
+                x: (point.x - center.x - offset.width) / scale,
+                y: (point.y - center.y - offset.height) / scale
+            )
+            
+            // Check nodes (Iterate in reverse Z-order - top first)
+            // Since nodes array is usually drawn in order, last == top?
+            // FlowView sorts them by hierarchy. We should check roughly.
+            // A simple "contains" check is sufficient for pass-through.
+            
+            // Optimization: Only check if nodes count is reasonable
+            // For 1000 nodes, this linear scan in hitTest is fast enough (on CPU, native code)
+            
+            for node in parent.nodes.reversed() {
+                let nodeRect = CGRect(origin: node.position, size: node.size)
+                // Add padding for touch targets?
+                if nodeRect.contains(worldPoint) {
+                    return nil // Passthrough to SwiftUI views below
                 }
-                
-                // Reset scale to 1 to accumulate changes incrementally? 
-                // No, sticking with initialPinchScale * gesture.scale is standard for UIPinch
-                // But typically for granular updates we might reset:
-                // gesture.scale = 1.0
-                // initialPinchScale = newScale
-                // Let's try incremental to match standard patterns better if "initial" approach drifts.
-                // Resetting is safer for accumulation:
-                gesture.scale = 1.0
-                initialPinchScale = newScale
-                
-            default: break
             }
+            
+            return super.hitTest(point, with: event)
+        }
+    }
+    
+    class Coordinator: NSObject, UIScrollViewDelegate {
+        var parent: ScrollEventView
+        
+        init(_ parent: ScrollEventView) {
+            self.parent = parent
         }
         
-        @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
-            guard let offsetBinding = offsetBinding else { return }
+        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+            return scrollView.viewWithTag(999)
+        }
+        
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            updateBindings(scrollView)
+        }
+        
+        func scrollViewDidZoom(_ scrollView: UIScrollView) {
+             updateBindings(scrollView)
+        }
+        
+        private func updateBindings(_ scrollView: UIScrollView) {
+            let keyspace: CGFloat = 200_000
+            let center = keyspace / 2
+            let viewSize = scrollView.bounds.size
+            if viewSize.width == 0 { return }
             
-            switch gesture.state {
-            case .began:
-                lastPanLocation = gesture.translation(in: self)
-            case .changed:
-                let translation = gesture.translation(in: self)
-                let deltaX = translation.x - lastPanLocation.x
-                let deltaY = translation.y - lastPanLocation.y
-                
-                let currentOffset = offsetBinding.wrappedValue
-                offsetBinding.wrappedValue = CGSize(
-                    width: currentOffset.width + deltaX,
-                    height: currentOffset.height + deltaY
-                )
-                
-                lastPanLocation = translation
-            default: break
+            // Reverse logic:
+            // ContentOffset = KeyspaceCenter - offset - ViewSize/2
+            // offset = KeyspaceCenter - ContentOffset - ViewSize/2
+            
+            let ox = center - scrollView.contentOffset.x - (viewSize.width / 2)
+            let oy = center - scrollView.contentOffset.y - (viewSize.height / 2)
+            
+            // Publish
+            // We need to route this back to binding.
+            // CAUTION: This triggers State Update -> updateUIView.
+            // We added guards in updateUIView to active interaction.
+            
+            DispatchQueue.main.async {
+                self.parent.offset = CGSize(width: ox, height: oy)
+                self.parent.scale = scrollView.zoomScale
             }
         }
     }

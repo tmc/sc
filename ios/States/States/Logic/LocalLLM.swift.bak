@@ -1,0 +1,129 @@
+
+import Foundation
+import MLX
+import MLXNN
+import MLXRandom
+
+// Minimal Llama-style Transformer Implementation for On-Device Inference
+// Adapted for MLX-Swift
+
+public class LocalLLM: Module {
+    let args: ModelArgs
+    let vocabEmbedding: Embedding
+    let layers: [TransformerBlock]
+    let norm: RMSNorm
+    let output: Linear
+
+    public init(args: ModelArgs) {
+        self.args = args
+        self.vocabEmbedding = Embedding(embeddingCount: args.vocabSize, dims: args.hiddenSize)
+        self.layers = (0..<args.numLayers).map { _ in TransformerBlock(args: args) }
+        self.norm = RMSNorm(dims: args.hiddenSize, eps: args.rmsNormEps)
+        self.output = Linear(inputDims: args.hiddenSize, outputDims: args.vocabSize, bias: false)
+        super.init()
+    }
+
+    public override func callAsFunction(_ x: MLXArray) -> MLXArray {
+        var h = vocabEmbedding(x)
+        
+        // Pass through layers with potential steering
+        for (i, layer) in layers.enumerated() {
+            h = layer(h)
+            
+            // Steering Hook Point
+            // If steering vector is present for this layer/feature, add it
+            if let steering = SteeringContext.shared.getVector(layerIndex: i) {
+                h = h + steering
+            }
+        }
+        
+        h = norm(h)
+        return output(h)
+    }
+}
+
+public struct ModelArgs: Codable {
+    var hiddenSize: Int = 4096
+    var numLayers: Int = 32
+    var intermediateSize: Int = 11008
+    var numHeads: Int = 32
+    var numKVHeads: Int? = nil
+    var rmsNormEps: Float = 1e-6
+    var vocabSize: Int = 32000
+    var ropeTheta: Float = 10000.0
+}
+
+class TransformerBlock: Module {
+    let attention: Attention
+    let feedForward: FeedForward
+    let attentionNorm: RMSNorm
+    let feedForwardNorm: RMSNorm
+
+    init(args: ModelArgs) {
+        self.attention = Attention(args: args)
+        self.feedForward = FeedForward(args: args)
+        self.attentionNorm = RMSNorm(dims: args.hiddenSize, eps: args.rmsNormEps)
+        self.feedForwardNorm = RMSNorm(dims: args.hiddenSize, eps: args.rmsNormEps)
+        super.init()
+    }
+
+    override func callAsFunction(_ x: MLXArray) -> MLXArray {
+        let r = attention(attentionNorm(x))
+        let h = x + r
+        let ff = feedForward(feedForwardNorm(h))
+        return h + ff
+    }
+}
+
+class Attention: Module {
+    let headDim: Int
+    let scale: Float
+    let wq: Linear
+    let wk: Linear
+    let wv: Linear
+    let wo: Linear
+    let rope: RoPE
+
+    init(args: ModelArgs) {
+        let dim = args.hiddenSize
+        let heads = args.numHeads
+        self.headDim = dim / heads
+        self.scale = pow(Float(headDim), -0.5)
+        
+        self.wq = Linear(inputDims: dim, outputDims: dim, bias: false)
+        self.wk = Linear(inputDims: dim, outputDims: dim, bias: false)
+        self.wv = Linear(inputDims: dim, outputDims: dim, bias: false)
+        self.wo = Linear(inputDims: dim, outputDims: dim, bias: false)
+        self.rope = RoPE(dims: headDim, traditional: true, base: args.ropeTheta)
+        super.init()
+    }
+
+    override func callAsFunction(_ x: MLXArray) -> MLXArray {
+        var query = wq(x)
+        var key = wk(x)
+        var value = wv(x)
+        
+        // Reshape for heads ... (Simplification: assuming batch=1 for brevity in this single file impl)
+        // Full implementation requires reshaping [B, L, H, D]
+        // This is a stub proof-of-concept for architecture.
+        
+        return wo(query) // Placeholder for full attention mechanism
+    }
+}
+
+class FeedForward: Module {
+    let w1: Linear
+    let w2: Linear
+    let w3: Linear
+
+    init(args: ModelArgs) {
+        self.w1 = Linear(inputDims: args.hiddenSize, outputDims: args.intermediateSize, bias: false)
+        self.w2 = Linear(inputDims: args.intermediateSize, outputDims: args.hiddenSize, bias: false)
+        self.w3 = Linear(inputDims: args.hiddenSize, outputDims: args.intermediateSize, bias: false)
+        super.init()
+    }
+
+    override func callAsFunction(_ x: MLXArray) -> MLXArray {
+        return w2(silu(w1(x)) * w3(x))
+    }
+}

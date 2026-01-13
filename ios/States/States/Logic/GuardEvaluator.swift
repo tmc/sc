@@ -7,6 +7,7 @@
 
 import Foundation
 import JavaScriptCore
+import OSLog
 
 class GuardEvaluator {
     
@@ -28,7 +29,7 @@ class GuardEvaluator {
         
         // Error handling
         jsContext?.exceptionHandler = { context, exception in
-            print("[GuardEvaluator] JS Exception: \(String(describing: exception))")
+            Logger.statechart.error("[GuardEvaluator] JS Exception: \(String(describing: exception))")
         }
         
         // Evaluate
@@ -51,7 +52,7 @@ class GuardEvaluator {
          jsContext?.setObject(context, forKeyedSubscript: "context" as NSString)
          
          jsContext?.exceptionHandler = { context, exception in
-             print("[GuardEvaluator] Action Exception: \(String(describing: exception))")
+             Logger.statechart.error("[GuardEvaluator] Action Exception: \(String(describing: exception))")
          }
          
          _ = jsContext?.evaluateScript(trimmed)

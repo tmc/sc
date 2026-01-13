@@ -30,11 +30,13 @@ struct StandardState: Codable {
 struct StandardTransition: Codable {
     let from: [String]
     let to: [String]
+    let event: String?
     let guardDef: StandardGuard?
     
     enum CodingKeys: String, CodingKey {
         case from
         case to
+        case event
         case guardDef = "guard"
     }
 }

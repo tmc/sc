@@ -7,8 +7,11 @@ struct VisualizerView: View {
     @State private var showExtensions = false
     @State private var showCommandBar = false
     
-    init(machine: StatechartWrapper) {
+    var onGenerate: ((String, [Int: Double]) -> Void)?
+    
+    init(machine: StatechartWrapper, onGenerate: ((String, [Int: Double]) -> Void)? = nil) {
         self.machine = machine
+        self.onGenerate = onGenerate
         _viewModel = State(initialValue: StatechartViewModel(machine: machine))
     }
 
@@ -25,10 +28,15 @@ struct VisualizerView: View {
                     viewModel.zoomToFit(viewSize: geometry.size)
                 }
         }
-        .modifier(InspectorOrSheetModifier(viewModel: viewModel))
+        .modifier(InspectorOrSheetModifier(viewModel: viewModel, onGenerate: onGenerate))
         .userActivity("com.tmc.States.viewMachine") { activity in
             updateUserActivity(activity)
         }
+        .onDeleteCommand {
+            viewModel.selection.forEach { viewModel.deleteNode(id: $0) }
+            viewModel.selection.removeAll()
+        }
+        .focusedSceneValue(\.statechartViewModel, viewModel)
         .toolbar { makeToolbar() }
         .sheet(isPresented: $showExtensions) { extensionSheetContent }
         .onAppear { viewModel.undoManager = undoManager }
@@ -52,6 +60,16 @@ struct VisualizerView: View {
                 .presentationDetents([.medium, .large])
             }
         }
+        // Context Inspector moved to Native Inspector on macOS
+        // On iOS, it might need a sheet if not handled by Modifier.
+        // Actually, let's keep it here for iOS ONLY if Modifier doesn't handle it?
+        // Reuse InspectorOrSheetModifier logic.
+        // If we remove this sheet, how does iOS show Context?
+        // InspectorOrSheetModifier handles PropertiesView only currently.
+        // I will add ContextInspector logic to Modifier for iOS too?
+        // Or keep this sheet for iOS?
+        // Let's keep this sheet for iOS logic, but wrap in #if os(iOS)
+        #if os(iOS)
         .sheet(isPresented: $viewModel.showContextInspector) {
             if let engine = viewModel.engine {
                 NavigationStack {
@@ -68,6 +86,7 @@ struct VisualizerView: View {
                     .padding()
             }
         }
+        #endif
         .overlay { commandBarOverlay }
         .background { commandBarToggle }
     }
@@ -77,14 +96,22 @@ struct VisualizerView: View {
     private func mainStack(geometry: GeometryProxy) -> some View {
         ZStack(alignment: .bottom) {
             flowCanvas
-            if viewModel.mode == StatechartViewModel.EditorMode.editing {
-                DesignToolbar(viewModel: viewModel)
-                    .padding(.bottom, 24)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            
+            if viewModel.isLoading {
+                ProgressView("Loading...")
+                    .controlSize(.large)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.ultraThinMaterial)
             } else {
-                SimulationToolbar(viewModel: viewModel)
-                    .padding(.bottom, 24)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                if viewModel.mode == StatechartViewModel.EditorMode.editing {
+                    DesignToolbar(viewModel: viewModel)
+                        .padding(.bottom, 24)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else {
+                    SimulationToolbar(viewModel: viewModel)
+                        .padding(.bottom, 24)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
         }
     }
@@ -98,6 +125,7 @@ struct VisualizerView: View {
             scale: $viewModel.scale,
             offset: $viewModel.offset,
             selection: $viewModel.selection,
+            selectionRect: $viewModel.selectionRect,
             onNodeMoveEnded: { oldPositions in
                 viewModel.registerMoveUndo(oldPositions: oldPositions)
             },
@@ -143,18 +171,37 @@ struct VisualizerView: View {
             }
         }
         ToolbarItem(placement: .primaryAction) {
+            /*
             Button(action: { showExtensions = true }) {
                 Label("Extensions", systemImage: "puzzlepiece.extension")
             }
             .keyboardShortcut("e", modifiers: [.command, .shift])
             .help("Browse extensions (⇧⌘E)")
+            */
         }
         ToolbarItem(placement: .primaryAction) {
             Button(action: { viewModel.analyze() }) {
                 Label("Analyze", systemImage: "chart.bar.doc.horizontal")
             }
             .help("Analyze Statechart")
+            .help("Analyze Statechart")
         }
+        
+        ToolbarItem(placement: .automatic) {
+            ControlGroup {
+                Button(action: { withAnimation { viewModel.scale = max(0.1, viewModel.scale - 0.25) } }) {
+                    Label("Zoom Out", systemImage: "minus.magnifyingglass")
+                }
+                Button(action: { withAnimation { viewModel.scale = 1.0; viewModel.offset = .zero } }) {
+                    Label("Actual Size", systemImage: "1.magnifyingglass")
+                }
+                Button(action: { withAnimation { viewModel.scale = min(4.0, viewModel.scale + 0.25) } }) {
+                    Label("Zoom In", systemImage: "plus.magnifyingglass")
+                }
+            }
+            .controlGroupStyle(.navigation) // Compact style
+        }
+        
         if viewModel.mode == .simulation {
             ToolbarItem(placement: .secondaryAction) {
                 Button(action: {
@@ -189,15 +236,17 @@ struct VisualizerView: View {
 
     // Platform-specific inspector/sheet extracted
     private func inspectorOrSheet(viewModel: StatechartViewModel) -> some ViewModifier {
-        return InspectorOrSheetModifier(viewModel: viewModel)
+        return InspectorOrSheetModifier(viewModel: viewModel, onGenerate: onGenerate)
     }
 
     private struct InspectorOrSheetModifier: ViewModifier {
         let viewModel: StatechartViewModel
+        let onGenerate: ((String, [Int: Double]) -> Void)?
+
         func body(content: Content) -> some View {
             #if os(iOS)
             content.sheet(isPresented: .constant(true)) {
-                PropertiesView(viewModel: viewModel)
+                PropertiesView(viewModel: viewModel, onGenerate: onGenerate)
                     .presentationDetents([.height(160), .medium, .large])
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                     .presentationDragIndicator(.visible)
@@ -205,8 +254,13 @@ struct VisualizerView: View {
             }
             #else
             content.inspector(isPresented: .constant(true)) {
-                PropertiesView(viewModel: viewModel)
-                    .inspectorColumnWidth(min: 220, ideal: 280, max: 350)
+                if viewModel.showContextInspector, let engine = viewModel.engine {
+                    ContextInspectorView(engine: engine)
+                        .inspectorColumnWidth(min: 220, ideal: 280, max: 350)
+                } else {
+                    PropertiesView(viewModel: viewModel, onGenerate: onGenerate)
+                        .inspectorColumnWidth(min: 220, ideal: 280, max: 350)
+                }
             }
             #endif
         }
@@ -244,6 +298,20 @@ struct VisualizerView: View {
         Button("") { showCommandBar.toggle() }
             .keyboardShortcut("k", modifiers: .command)
             .hidden()
+        
+        // Keyboard Shortcuts
+        Button("Duplicate") {
+            viewModel.selection.forEach { viewModel.duplicateNode(id: $0) }
+        }
+        .keyboardShortcut("d", modifiers: .command)
+        .hidden()
+        
+        Button("Delete") {
+            viewModel.selection.forEach { viewModel.deleteNode(id: $0) }
+            viewModel.selection.removeAll()
+        }
+        .keyboardShortcut(.delete, modifiers: [])
+        .hidden()
     }
 }
 

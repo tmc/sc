@@ -9,9 +9,9 @@ struct DesignToolbar: View {
     }
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 8) {
             // Tool Mode Selector
-            HStack(spacing: 4) {
+            HStack(spacing: 2) {
                 ToolButton(
                     icon: "cursorarrow",
                     isSelected: selectedTool == .select,
@@ -26,23 +26,31 @@ struct DesignToolbar: View {
                 )
                 .help("Pan tool (H)")
             }
-            .padding(4)
+            .padding(2)
             .background(Color.secondary.opacity(0.1), in: Capsule())
 
             Divider()
-                .frame(height: 24)
+                .frame(height: 20)
+                .padding(.horizontal, 4)
 
             // Add State
             Button(action: { viewModel.addState(at: .zero) }) {
                 Image(systemName: "plus.square.fill")
-                    .font(.title3)
+                    .font(.title2)
+                    .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(Theme.Colors.accent)
+                    .frame(width: 36, height: 36)
+                    .background(Theme.Colors.accent.opacity(0.1), in: Circle())
             }
             .buttonStyle(.plain)
             .help("Add State (⌘N)")
 
+            Divider()
+                .frame(height: 20)
+                .padding(.horizontal, 4)
+
             // Zoom Controls
-            HStack(spacing: 2) {
+            HStack(spacing: 0) {
                 Button(action: { 
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { 
                         viewModel.scale = max(viewModel.scale * 0.8, 0.1) 
@@ -50,14 +58,15 @@ struct DesignToolbar: View {
                 }) {
                     Image(systemName: "minus")
                         .font(.body.weight(.bold))
-                        .frame(width: 24, height: 24)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 
                 Text("\(Int(viewModel.scale * 100))%")
                     .font(.caption.monospacedDigit().weight(.medium))
                     .foregroundStyle(.secondary)
-                    .frame(minWidth: 44)
+                    .frame(width: 42)
                 
                 Button(action: { 
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { 
@@ -66,15 +75,17 @@ struct DesignToolbar: View {
                 }) {
                     Image(systemName: "plus")
                         .font(.body.weight(.bold))
-                        .frame(width: 24, height: 24)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
-            .padding(6)
+            .padding(2)
             .background(Color.secondary.opacity(0.05), in: Capsule())
 
             Divider()
-                .frame(height: 24)
+                .frame(height: 20)
+                .padding(.horizontal, 4)
 
             // Simulate Button
             Button(action: {
@@ -85,22 +96,21 @@ struct DesignToolbar: View {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 #endif
             }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "play.fill")
-                    Text("Simulate")
-                }
-                .font(.headline)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Theme.Colors.accent, in: Capsule())
+                Image(systemName: "play.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44) // Circular play button
+                    .background(Theme.Colors.accent, in: Circle())
+                    .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
-            .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 8, x: 0, y: 4)
+            .help("Start Simulation (⌘R)")
         }
-        .padding(12)
-        .ultraThinGlass() // Use Theme extension
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .glassPill()
         .padding(.horizontal)
+        .padding(.bottom, 8) 
     }
 }
 
@@ -113,11 +123,11 @@ struct ToolButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.body.weight(.medium))
-                .frame(width: 32, height: 32)
+                .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
         .background(isSelected ? Theme.Colors.accent.opacity(0.15) : Color.clear, in: Circle())
-        .foregroundStyle(isSelected ? Theme.Colors.accent : Color.primary)
+        .foregroundStyle(isSelected ? Theme.Colors.accent : Color.secondary)
     }
 }
 

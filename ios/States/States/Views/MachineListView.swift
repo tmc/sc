@@ -1,12 +1,14 @@
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 struct MachineListView: View {
     @Environment(AppViewModel.self) var viewModel
-    @State private var showingAddSheet = false
-    @State private var showingGenerationSheet = false
     @State private var isImporting = false
-    @State private var newMachineName = ""
     @State private var searchText = ""
     // @State private var selectedMachine: StatechartWrapper? // Moved to ViewModel for deep linking
 
@@ -44,15 +46,51 @@ struct MachineListView: View {
                     }
                     .tint(.indigo)
                 }
+                .contextMenu {
+                    Button {
+                        copyJSON(machine)
+                    } label: {
+                        Label("Copy JSON", systemImage: "doc.on.doc")
+                    }
+                    
+                    if let json = machine.jsonContent, !json.isEmpty {
+                        ShareLink(item: json, preview: SharePreview(machine.name)) {
+                            Label("Share...", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                    
+                    Button(role: .destructive) {
+                        delete(machine)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         #if os(iOS)
         .listStyle(.insetGrouped)
         #else
         .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
-        .background(Theme.Colors.sidebarBackground) // Custom translucent background
+        // Removing explicit background to allow native NSVisualEffectView vibrancy
         #endif
+        .overlay {
+            if filteredMachines.isEmpty {
+                if #available(iOS 17.0, macOS 14.0, *) {
+                    if !searchText.isEmpty {
+                        ContentUnavailableView.search(text: searchText)
+                    } else {
+                        ContentUnavailableView(
+                            "No Statecharts",
+                            systemImage: "tray",
+                            description: Text("Create a new statechart or import a folder to get started.")
+                        )
+                    }
+                } else {
+                    Text("No Statecharts found")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
         .searchable(text: $searchText, prompt: "Search machines")
         .navigationTitle("Statecharts")
 
@@ -62,46 +100,11 @@ struct MachineListView: View {
                     Button(action: { isImporting = true }) {
                         Label("Load Folder", systemImage: "folder")
                     }
-                    Button(action: { showingAddSheet = true }) {
-                        Label("Add Machine", systemImage: "plus")
+                    Button(action: { createMachine() }) {
+                        Label("New Chart", systemImage: "plus")
                     }
                 }
             }
-            
-            ToolbarItem(placement: .automatic) {
-                Button(action: { showingGenerationSheet = true }) {
-                    Label("Generate", systemImage: "wand.and.stars")
-                }
-                .help("Generate with AI")
-            }
-        }
-        .sheet(isPresented: $showingAddSheet) {
-            NavigationStack {
-                Form {
-                    TextField("Machine Name", text: $newMachineName)
-                        .onSubmit { createMachine() }
-                        .font(Theme.Typography.body)
-                }
-                .navigationTitle("New Machine")
-                #if os(iOS)
-                .navigationBarTitleDisplayMode(.inline)
-                #endif
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { showingAddSheet = false }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Create") { createMachine() }
-                        .disabled(newMachineName.isEmpty)
-                    }
-                }
-            }
-            #if os(macOS)
-            .frame(width: 320, height: 160)
-            #endif
-        }
-        .sheet(isPresented: $showingGenerationSheet) {
-            GenerationSheet()
         }
         .fileImporter(
             isPresented: $isImporting,
@@ -122,17 +125,25 @@ struct MachineListView: View {
     // MARK: - Actions
     
     private func createMachine() {
-        guard !newMachineName.isEmpty else { return }
-        viewModel.addMachine(name: newMachineName)
-        newMachineName = ""
-        showingAddSheet = false
+        viewModel.addMachine(name: "New Chart")
         hapticFeedback(.light)
     }
 
     private func duplicateMachine(_ machine: StatechartWrapper) {
-        let newMachine = StatechartWrapper(name: "\(machine.name) Copy", jsonContent: machine.jsonContent)
-        viewModel.machines.append(newMachine)
+        viewModel.duplicateMachine(machine)
         hapticFeedback(.light)
+    }
+    
+    private func copyJSON(_ machine: StatechartWrapper) {
+        let json = machine.jsonContent ?? ""
+        #if os(macOS)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(json, forType: .string)
+        #else
+        UIPasteboard.general.string = json
+        #endif
+        hapticFeedback(.medium)
     }
     
     private func delete(_ machine: StatechartWrapper) {
@@ -186,6 +197,7 @@ struct MachineRowView: View {
                 Image(systemName: machineIcon)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.Colors.accent)
+                    .accessibilityHidden(true)
             }
             
             // Text Content

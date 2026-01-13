@@ -1,0 +1,30 @@
+
+import Foundation
+import MLX
+
+// Thread-safe storage for steering config
+class SteeringContext: @unchecked Sendable {
+    static let shared = SteeringContext()
+    
+    // Using a simple lock for safety, or assume writes happen only between generations
+    private let lock = NSLock()
+    private var vectors: [Int: MLXArray] = [:] // Layer Index -> Vector
+    
+    func setVector(layerIndex: Int, vector: MLXArray) {
+        lock.lock()
+        vectors[layerIndex] = vector
+        lock.unlock()
+    }
+    
+    func getVector(layerIndex: Int) -> MLXArray? {
+        lock.lock()
+        defer { lock.unlock() }
+        return vectors[layerIndex]
+    }
+    
+    func clear() {
+        lock.lock()
+        vectors.removeAll()
+        lock.unlock()
+    }
+}
