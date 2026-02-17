@@ -9,7 +9,6 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "statecharts/v1/statecharts.proto";
-import "statecharts/v1/expressions.proto";
 
 // ===========================================================================
 // EXECUTION HISTORY, TRACING, AND STORAGE

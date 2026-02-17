@@ -4,7 +4,6 @@ package extensions.v1;
 
 option go_package = "github.com/tmc/sc/gen/extensions/v1;extensionspb";
 
-import "google/protobuf/timestamp.proto";
 import "extensions/v1/common.proto";
 
 // ===========================================================================

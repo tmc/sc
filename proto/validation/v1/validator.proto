@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package statecharts.validation.v1;
 
-import "google/protobuf/struct.proto";
 import "google/rpc/status.proto";
 import "statecharts/v1/statecharts.proto";
 

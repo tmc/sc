@@ -1,31 +1,33 @@
-version: v1
+version: v2
 managed:
   enabled: true
-  go_package_prefix:
-    default: github.com/tmc/sc
-    except:
-      - buf.build/googleapis/googleapis
 plugins:
-  - name: go
+  - local: protoc-gen-go
     out: ../gen
     opt: paths=source_relative
-  - name: go-grpc
+  - local: protoc-gen-go-grpc
     out: ../gen
     opt: paths=source_relative
-  - name: apidocs
+  - local: protoc-gen-apidocs
     out: ../docs
     opt: paths=source_relative
-  - name: prost
-    out: ../sdks/rust/src/generated
-    opt:
-      - bytes=.
-      - compile_well_known_types
-      - file_descriptor_set
-  - name: tonic
-    out: ../sdks/rust/src/generated
-    opt:
-      - compile_well_known_types
-  - name: python
-    out: ../sdks/python/statecharts/generated
-  - name: pyi
-    out: ../sdks/python/statecharts/generated
+#   - local: protoc-gen-prost
+#     out: ../sdks/rust/src/generated
+#     opt:
+#       - bytes=.
+#       - compile_well_known_types
+#       - file_descriptor_set
+#   - local: protoc-gen-tonic
+#     out: ../sdks/rust/src/generated
+#     opt:
+#       - compile_well_known_types
+#   - local: protoc-gen-python
+#     out: ../sdks/python/statecharts/generated
+#   - local: protoc-gen-pyi
+#     out: ../sdks/python/statecharts/generated
+  - local: ../cmd/web-visualizer/web/node_modules/.bin/protoc-gen-es
+    out: ../cmd/web-visualizer/web/gen
+    opt: target=js+dts,import_extension=js
+  - remote: buf.build/apple/swift
+    out: ../ios/States/States/Generated
+    opt: Visibility=Public

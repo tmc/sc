@@ -1,7 +1,17 @@
-version: v1
+version: v2
+modules:
+  - path: .
+    name: buf.build/tmc/sc
 deps:
   - buf.build/googleapis/googleapis
 lint:
   use:
-    - DEFAULT
-    - COMMENTS
+    - STANDARD
+  except:
+    - ENUM_VALUE_PREFIX
+    - SERVICE_SUFFIX
+    - PACKAGE_DIRECTORY_MATCH
+    - ENUM_NO_ALLOW_ALIAS
+breaking:
+  use:
+    - FILE
