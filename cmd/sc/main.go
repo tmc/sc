@@ -41,12 +41,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/tmc/sc"
-	"github.com/tmc/sc/internal/xstate"
+	"github.com/tmc/sc/bridges/stately"
 	"github.com/tmc/sc/semantics/v1"
 	"golang.org/x/tools/txtar"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -86,6 +87,30 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return cmdExport(args, stdin, stdout, stderr)
 	case "import":
 		return cmdImport(args, stdin, stdout, stderr)
+	// Analysis commands
+	case "transitions":
+		return cmdTransitions(args, stdin, stdout, stderr)
+	case "orphans":
+		return cmdOrphans(args, stdin, stdout, stderr)
+	case "sinks":
+		return cmdSinks(args, stdin, stdout, stderr)
+	case "disconnected":
+		return cmdDisconnected(args, stdin, stdout, stderr)
+	case "reachable":
+		return cmdReachable(args, stdin, stdout, stderr)
+	case "unreachable":
+		return cmdUnreachable(args, stdin, stdout, stderr)
+	case "path":
+		return cmdPath(args, stdin, stdout, stderr)
+	case "analyze":
+		return cmdAnalyze(args, stdin, stdout, stderr)
+	case "diff":
+		return cmdDiff(args, stdin, stdout, stderr)
+	case "evolution":
+		return cmdEvolution(args, stdin, stdout, stderr)
+	// Generation commands
+	case "simulate":
+		return cmdSimulate(args, stdin, stdout, stderr)
 	case "help", "-h", "--help":
 		return usage(stderr)
 	default:
@@ -99,15 +124,30 @@ func usage(w io.Writer) error {
 Usage: sc <command> [flags] [file]
 
 Commands:
-  validate  Check if statechart is well-formed
-  info      Show summary information
-  states    List all states (one per line)
-  events    List all events (one per line)
-  mermaid   Generate Mermaid diagram
-  step      Send events and output resulting configuration
-  dot       Generate Graphviz DOT format
-  export    Export in various formats (json, ct, xstate)
-  import    Import from external formats (xstate)
+  validate     Check if statechart is well-formed
+  info         Show summary information
+  states       List all states (one per line)
+  events       List all events (one per line)
+  mermaid      Generate Mermaid diagram
+  step         Send events and output resulting configuration
+  dot          Generate Graphviz DOT format
+  export       Export in various formats (json, ct, xstate)
+  import       Import from external formats (xstate)
+
+Analysis:
+  transitions  List transitions (--from, --to, --event filters)
+  orphans      States with no incoming transitions
+  sinks        States with no outgoing transitions
+  disconnected States with no transitions at all
+  reachable    States reachable from initial
+  unreachable  States not reachable from initial
+  path         Find path between states
+  analyze      Comprehensive analysis report
+  diff         Compare two statecharts
+  evolution    Derive evolution from chart series
+
+Generation:
+  simulate     Generate execution traces for ML training
 
 Input:
   - If no file specified, reads from stdin
@@ -119,9 +159,12 @@ Examples:
   cat chart.json | sc mermaid
   sc states chart.json | grep Error
   sc step -e POWER_ON -e ARM chart.json
-  sc info definition.txtar
-  sc import -format xstate machines.json
-  sc export -format xstate chart.json`)
+  sc transitions --from Red chart.json
+  sc orphans chart.json
+  sc path Off On chart.json
+  sc analyze chart.json
+  sc diff v1.json v2.json
+  sc evolution v1.json v2.json v3.json`)
 	return nil
 }
 
@@ -703,7 +746,7 @@ func cmdExport(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return exportCT(chart, *version, stdout)
 
 	case "xstate":
-		data, err := xstate.ExportJSON(chart)
+		data, err := stately.ExportJSON(chart)
 		if err != nil {
 			return fmt.Errorf("export xstate: %w", err)
 		}
@@ -743,7 +786,7 @@ func cmdImport(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	switch *format {
 	case "xstate":
 		if *all {
-			charts, err := xstate.ImportAll(data)
+			charts, err := stately.ImportAll(data)
 			if err != nil {
 				return fmt.Errorf("import xstate: %w", err)
 			}
@@ -767,7 +810,7 @@ func cmdImport(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			return nil
 		}
 
-		chart, err := xstate.Import(data, *machine)
+		chart, err := stately.Import(data, *machine)
 		if err != nil {
 			return fmt.Errorf("import xstate: %w", err)
 		}
@@ -1010,4 +1053,227 @@ func exportCT(chart *sc.Statechart, version string, w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(export)
+}
+
+// cmdSimulate generates execution traces for ML training
+// Output format aligns with statecharts/v1/execution.proto ExecutionTrace
+func cmdSimulate(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	fs := flag.NewFlagSet("simulate", flag.ContinueOnError)
+	numTraces := fs.Int("n", 10, "number of traces to generate")
+	traceLen := fs.Int("len", 20, "maximum steps per trace")
+	validRatio := fs.Float64("valid", 0.8, "ratio of valid transitions (0.0-1.0)")
+	seed := fs.Int64("seed", 0, "random seed (0 for time-based)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	_, chart, err := loadInput(fs.Args(), stdin)
+	if err != nil {
+		return err
+	}
+
+	// Initialize random source
+	var rng *rand.Rand
+	if *seed != 0 {
+		rng = rand.New(rand.NewSource(*seed))
+	} else {
+		rng = rand.New(rand.NewSource(rand.Int63()))
+	}
+
+	// Collect all states recursively
+	var allStates []*sc.State
+	var collectStates func(*sc.State)
+	collectStates = func(s *sc.State) {
+		if s == nil {
+			return
+		}
+		allStates = append(allStates, s)
+		for _, child := range s.Children {
+			collectStates(child)
+		}
+	}
+	collectStates(chart.RootState)
+
+	// Collect all events from transitions
+	eventSet := make(map[string]bool)
+	for _, t := range chart.Transitions {
+		if t.Event != "" {
+			eventSet[t.Event] = true
+		}
+	}
+	var allEvents []string
+	for e := range eventSet {
+		allEvents = append(allEvents, e)
+	}
+
+	// Build outgoing transitions map: state -> [(event, target)]
+	type transitionEdge struct {
+		event  string
+		target string
+	}
+	outgoing := make(map[string][]transitionEdge)
+	for _, t := range chart.Transitions {
+		for _, from := range t.From {
+			target := from // default: stay in place if no target
+			if len(t.To) > 0 {
+				target = t.To[0]
+			}
+			outgoing[from] = append(outgoing[from], transitionEdge{
+				event:  t.Event,
+				target: target,
+			})
+		}
+	}
+
+	// Find initial leaf state by following is_initial flags down the hierarchy
+	initialState := ""
+	var findInitialLeaf func(*sc.State) string
+	findInitialLeaf = func(s *sc.State) string {
+		if s == nil {
+			return ""
+		}
+		// Find the initial child at this level
+		var initialChild *sc.State
+		for _, child := range s.Children {
+			if child.IsInitial {
+				initialChild = child
+				break
+			}
+		}
+		// If no explicit initial, take the first child
+		if initialChild == nil && len(s.Children) > 0 {
+			initialChild = s.Children[0]
+		}
+		if initialChild == nil {
+			return ""
+		}
+		// If the initial child has children, descend further
+		if len(initialChild.Children) > 0 {
+			if leaf := findInitialLeaf(initialChild); leaf != "" {
+				return leaf
+			}
+		}
+		// Return this state if it's a leaf (no children) or has no initial child below
+		if initialChild.Label != "__root__" {
+			return initialChild.Label
+		}
+		return ""
+	}
+	initialState = findInitialLeaf(chart.RootState)
+	if initialState == "" && len(allStates) > 1 {
+		// Fallback: first non-root leaf state
+		for _, s := range allStates {
+			if s.Label != "__root__" && len(s.Children) == 0 {
+				initialState = s.Label
+				break
+			}
+		}
+	}
+
+	// Generate traces in proto-aligned format
+	output := SimulationOutput{
+		ChartName:   chart.Name,
+		ChartHash:   fmt.Sprintf("%x", sha256.Sum256([]byte(chart.String())))[:16],
+		TotalTraces: *numTraces,
+		Traces:      make([]ExecutionTraceOutput, 0, *numTraces),
+	}
+
+	for i := 0; i < *numTraces; i++ {
+		trace := ExecutionTraceOutput{
+			TraceID:       fmt.Sprintf("trace-%d", i),
+			InitialConfig: []string{initialState},
+			Entries:       make([]TransitionLogEntryOutput, 0, *traceLen),
+		}
+		currentState := initialState
+
+		for step := 0; step < *traceLen; step++ {
+			// Decide if this should be a valid or invalid transition
+			isValid := rng.Float64() < *validRatio
+
+			var event string
+			var nextState string
+			var stepValid bool
+
+			transitions := outgoing[currentState]
+			if isValid && len(transitions) > 0 {
+				// Pick a valid transition
+				t := transitions[rng.Intn(len(transitions))]
+				event = t.event
+				nextState = t.target
+				stepValid = true
+			} else {
+				// Generate invalid transition (random event)
+				if len(allEvents) > 0 {
+					event = allEvents[rng.Intn(len(allEvents))]
+				} else {
+					event = "INVALID_EVENT"
+				}
+				// Check if this event is actually valid from current state
+				stepValid = false
+				for _, t := range transitions {
+					if t.event == event {
+						nextState = t.target
+						stepValid = true
+						break
+					}
+				}
+				if !stepValid {
+					nextState = currentState // stays in same state
+				}
+			}
+
+			entry := TransitionLogEntryOutput{
+				Sequence:     uint64(step + 1),
+				TriggerEvent: event,
+				SourceConfig: []string{currentState},
+				TargetConfig: []string{nextState},
+				IsValid:      stepValid,
+			}
+			trace.Entries = append(trace.Entries, entry)
+
+			if stepValid {
+				currentState = nextState
+			}
+
+			// Stop if we hit a final state with no outgoing transitions
+			if len(outgoing[currentState]) == 0 {
+				break
+			}
+		}
+
+		trace.FinalConfig = []string{currentState}
+		output.Traces = append(output.Traces, trace)
+	}
+
+	enc := json.NewEncoder(stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(output)
+}
+
+// SimulationOutput is the top-level output format for simulate command
+// Aligns with statecharts/v1/execution.proto concepts
+type SimulationOutput struct {
+	ChartName   string                 `json:"chart_name"`
+	ChartHash   string                 `json:"chart_hash"`
+	TotalTraces int                    `json:"total_traces"`
+	Traces      []ExecutionTraceOutput `json:"traces"`
+}
+
+// ExecutionTraceOutput represents a single execution trace
+// Aligns with statecharts/v1/execution.proto ExecutionTrace
+type ExecutionTraceOutput struct {
+	TraceID       string                      `json:"trace_id"`
+	InitialConfig []string                    `json:"initial_config"`
+	Entries       []TransitionLogEntryOutput  `json:"entries"`
+	FinalConfig   []string                    `json:"final_config"`
+}
+
+// TransitionLogEntryOutput represents a single step in the trace
+// Aligns with statecharts/v1/execution.proto TransitionLogEntry
+type TransitionLogEntryOutput struct {
+	Sequence     uint64   `json:"sequence"`
+	TriggerEvent string   `json:"trigger_event"`
+	SourceConfig []string `json:"source_config"`
+	TargetConfig []string `json:"target_config"`
+	IsValid      bool     `json:"is_valid"`  // Extension for ML training
 }
