@@ -300,18 +300,68 @@ func loadJSON(data []byte) (*sc.Machine, *sc.Statechart, error) {
 
 // cmdValidate validates a statechart
 func cmdValidate(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-	_, chart, err := loadInput(args, stdin)
+	fs := flag.NewFlagSet("validate", flag.ContinueOnError)
+	strict := fs.Bool("strict", true, "run full semantic validation")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	_, chart, err := loadInput(fs.Args(), stdin)
 	if err != nil {
 		return err
+	}
+
+	if *strict {
+		return validateStrict(chart, stdout)
 	}
 
 	wrapper := semantics.NewStatechart(chart)
 	if err := wrapper.Validate(); err != nil {
 		fmt.Fprintf(stdout, "INVALID: %v\n", err)
-		return nil
+		return fmt.Errorf("validation failed")
 	}
 
 	fmt.Fprintln(stdout, "VALID")
+	return nil
+}
+
+func validateStrict(chart *sc.Statechart, stdout io.Writer) error {
+	wrapper := semantics.NewStatechart(chart)
+	if err := wrapper.Validate(); err != nil {
+		fmt.Fprintf(stdout, "INVALID: %v\n", err)
+		return fmt.Errorf("validation failed")
+	}
+
+	err := validateDeclaredEvents(chart)
+	if err != nil {
+		fmt.Fprintf(stdout, "INVALID: %v\n", err)
+		return fmt.Errorf("validation failed")
+	}
+
+	fmt.Fprintln(stdout, "VALID")
+	return nil
+}
+
+func validateDeclaredEvents(chart *sc.Statechart) error {
+	declared := make(map[string]bool)
+	for _, event := range chart.Events {
+		if event == nil {
+			continue
+		}
+		if event.Label == "" {
+			return fmt.Errorf("event has empty label")
+		}
+		declared[event.Label] = true
+	}
+
+	for i, transition := range chart.Transitions {
+		if transition == nil || transition.Event == "" {
+			continue
+		}
+		if !declared[transition.Event] {
+			return fmt.Errorf("transition %d references undeclared event %q", i, transition.Event)
+		}
+	}
 	return nil
 }
 
@@ -839,8 +889,8 @@ type CTExport struct {
 	Products       []CTProduct       `json:"products,omitempty"`
 	Coproducts     []CTCoproduct     `json:"coproducts,omitempty"`
 	Comonads       []CTComonad       `json:"comonads,omitempty"`
-	Initial        string            `json:"initial,omitempty"`         // Simple initial (non-parallel root)
-	Initials       map[string]string `json:"initials,omitempty"`        // Per-region initials (parallel)
+	Initial        string            `json:"initial,omitempty"`  // Simple initial (non-parallel root)
+	Initials       map[string]string `json:"initials,omitempty"` // Per-region initials (parallel)
 	Final          []string          `json:"final,omitempty"`
 	TraceCoalgebra *CTTraceCoalgebra `json:"trace_coalgebra,omitempty"`
 }
@@ -858,11 +908,11 @@ type CTObject struct {
 }
 
 type CTMorphism struct {
-	ID      string            `json:"id"`
-	Dom     string            `json:"dom"`
-	Cod     string            `json:"cod"`
-	Label   CTMorphismLabel   `json:"label"`
-	Actions []string          `json:"actions,omitempty"`
+	ID      string          `json:"id"`
+	Dom     string          `json:"dom"`
+	Cod     string          `json:"cod"`
+	Label   CTMorphismLabel `json:"label"`
+	Actions []string        `json:"actions,omitempty"`
 }
 
 type CTMorphismLabel struct {
@@ -1262,10 +1312,10 @@ type SimulationOutput struct {
 // ExecutionTraceOutput represents a single execution trace
 // Aligns with statecharts/v1/execution.proto ExecutionTrace
 type ExecutionTraceOutput struct {
-	TraceID       string                      `json:"trace_id"`
-	InitialConfig []string                    `json:"initial_config"`
-	Entries       []TransitionLogEntryOutput  `json:"entries"`
-	FinalConfig   []string                    `json:"final_config"`
+	TraceID       string                     `json:"trace_id"`
+	InitialConfig []string                   `json:"initial_config"`
+	Entries       []TransitionLogEntryOutput `json:"entries"`
+	FinalConfig   []string                   `json:"final_config"`
 }
 
 // TransitionLogEntryOutput represents a single step in the trace
@@ -1275,5 +1325,5 @@ type TransitionLogEntryOutput struct {
 	TriggerEvent string   `json:"trigger_event"`
 	SourceConfig []string `json:"source_config"`
 	TargetConfig []string `json:"target_config"`
-	IsValid      bool     `json:"is_valid"`  // Extension for ML training
+	IsValid      bool     `json:"is_valid"` // Extension for ML training
 }
