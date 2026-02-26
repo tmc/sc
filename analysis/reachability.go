@@ -1,6 +1,10 @@
 package analysis
 
-import "sort"
+import (
+	"sort"
+
+	sc "github.com/tmc/sc/gen/statecharts/v1"
+)
 
 // Reachable returns all states reachable from the given start states.
 // Uses BFS to traverse the transition graph.
@@ -12,15 +16,30 @@ func (g *StateGraph) Reachable(startStates []string) []string {
 	visited := make(map[string]bool)
 	queue := make([]string, 0, len(startStates))
 
-	// Initialize with start states
-	for _, s := range startStates {
-		if _, ok := g.States[s]; ok {
-			visited[s] = true
-			queue = append(queue, s)
+	// markState marks a state reachable and applies default-entry semantics.
+	var markState func(label string)
+	markState = func(label string) {
+		node, ok := g.States[label]
+		if !ok || visited[label] {
+			return
+		}
+		visited[label] = true
+		queue = append(queue, label)
+
+		// On entering composites:
+		// - OR states enter exactly one default child.
+		// - AND states enter all region children.
+		for _, child := range g.defaultEntryChildren(node) {
+			markState(child)
 		}
 	}
 
-	// BFS
+	// Initialize with start states.
+	for _, s := range startStates {
+		markState(s)
+	}
+
+	// BFS over transition graph.
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -30,27 +49,16 @@ func (g *StateGraph) Reachable(startStates []string) []string {
 			continue
 		}
 
-		// Follow outgoing transitions
+		// Follow outgoing transitions.
 		for _, edge := range node.Outgoing {
-			if !visited[edge.To] {
-				visited[edge.To] = true
-				queue = append(queue, edge.To)
-			}
-		}
-
-		// Also include children of composite states (default entries)
-		for _, child := range node.Children {
-			if !visited[child] {
-				visited[child] = true
-				queue = append(queue, child)
-			}
+			markState(edge.To)
 		}
 	}
 
-	// Convert to sorted slice
+	// Convert to sorted slice.
 	var result []string
 	for s := range visited {
-		if s != "__root__" {
+		if s != "__root__" && s != g.rootLabel {
 			result = append(result, s)
 		}
 	}
@@ -60,35 +68,19 @@ func (g *StateGraph) Reachable(startStates []string) []string {
 
 // ReachableFromInitial returns states reachable from the initial configuration.
 func (g *StateGraph) ReachableFromInitial() []string {
-	// Find all initial states (could be multiple in parallel regions)
-	var initials []string
-	for label, node := range g.States {
-		if node.IsInitial {
-			initials = append(initials, label)
+	// Enter from root so default-completion rules are applied hierarchically.
+	if g.rootLabel != "" {
+		if _, ok := g.States[g.rootLabel]; ok {
+			return g.Reachable([]string{g.rootLabel})
 		}
 	}
-
-	// If no explicit initial, use root's first child
-	if len(initials) == 0 && g.initialState != "" {
-		initials = []string{g.initialState}
+	if _, ok := g.States["__root__"]; ok {
+		return g.Reachable([]string{"__root__"})
 	}
-
-	// If still nothing, try to find it from root
-	if len(initials) == 0 {
-		if root, ok := g.States["__root__"]; ok {
-			for _, child := range root.Children {
-				if childNode, ok := g.States[child]; ok && childNode.IsInitial {
-					initials = append(initials, child)
-				}
-			}
-			// If no initial marked, take first child
-			if len(initials) == 0 && len(root.Children) > 0 {
-				initials = append(initials, root.Children[0])
-			}
-		}
+	if g.initialState != "" {
+		return g.Reachable([]string{g.initialState})
 	}
-
-	return g.Reachable(initials)
+	return nil
 }
 
 // Unreachable returns states not reachable from the initial configuration.
@@ -188,4 +180,37 @@ func (g *StateGraph) DeadEnds() []string {
 	}
 	sort.Strings(deadEnds)
 	return deadEnds
+}
+
+func (g *StateGraph) defaultEntryChildren(node *StateNode) []string {
+	if node == nil || len(node.Children) == 0 {
+		return nil
+	}
+	if node.Type == sc.StateType_STATE_TYPE_AND {
+		return g.existingChildren(node.Children)
+	}
+
+	// OR semantics: enter one initial child, else first child.
+	for _, child := range node.Children {
+		childNode, ok := g.States[child]
+		if ok && childNode.IsInitial {
+			return []string{child}
+		}
+	}
+	for _, child := range node.Children {
+		if _, ok := g.States[child]; ok {
+			return []string{child}
+		}
+	}
+	return nil
+}
+
+func (g *StateGraph) existingChildren(children []string) []string {
+	out := make([]string, 0, len(children))
+	for _, child := range children {
+		if _, ok := g.States[child]; ok {
+			out = append(out, child)
+		}
+	}
+	return out
 }

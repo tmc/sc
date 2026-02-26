@@ -16,6 +16,7 @@ type StateGraph struct {
 	Transitions []*TransitionEdge
 
 	// Quick lookups
+	rootLabel    string
 	leafStates   []string
 	initialState string
 	finalStates  []string
@@ -49,6 +50,9 @@ type TransitionEdge struct {
 func BuildGraph(chart *sc.Statechart) *StateGraph {
 	g := &StateGraph{
 		States: make(map[string]*StateNode),
+	}
+	if chart != nil && chart.RootState != nil {
+		g.rootLabel = chart.RootState.Label
 	}
 
 	// Collect all states via DFS
