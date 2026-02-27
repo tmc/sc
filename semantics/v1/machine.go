@@ -62,6 +62,9 @@ func NewMachine(statechart *Statechart, id string, initialContext *structpb.Stru
 
 // Start starts the machine and transitions it to the running state.
 func (m *MachineWrapper) Start() error {
+	if m == nil {
+		return fmt.Errorf("machine is nil")
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -88,6 +91,9 @@ func (m *MachineWrapper) Start() error {
 
 // Stop stops the machine and transitions it to the stopped state.
 func (m *MachineWrapper) Stop() error {
+	if m == nil {
+		return fmt.Errorf("machine is nil")
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -138,13 +144,13 @@ func (m *MachineWrapper) IsFinal() bool {
 func (m *MachineWrapper) GetCurrentConfiguration() *sc.Configuration {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	// Create a deep copy of the configuration
 	states := make([]*sc.StateRef, len(m.Configuration.States))
 	for i, state := range m.Configuration.States {
 		states[i] = &sc.StateRef{Label: state.Label}
 	}
-	
+
 	return &sc.Configuration{States: states}
 }
 
@@ -152,7 +158,7 @@ func (m *MachineWrapper) GetCurrentConfiguration() *sc.Configuration {
 func (m *MachineWrapper) GetContext() *structpb.Struct {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	return m.getContextUnsafe()
 }
 
@@ -162,7 +168,7 @@ func (m *MachineWrapper) getContextUnsafe() *structpb.Struct {
 	if m.Context == nil {
 		return &structpb.Struct{Fields: make(map[string]*structpb.Value)}
 	}
-	
+
 	// Create a shallow copy of the context
 	fields := make(map[string]*structpb.Value)
 	if m.Context.Fields != nil {
@@ -170,7 +176,7 @@ func (m *MachineWrapper) getContextUnsafe() *structpb.Struct {
 			fields[k] = v
 		}
 	}
-	
+
 	return &structpb.Struct{Fields: fields}
 }
 
@@ -178,7 +184,7 @@ func (m *MachineWrapper) getContextUnsafe() *structpb.Struct {
 func (m *MachineWrapper) GetErrors() []error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	errors := make([]error, len(m.errors))
 	copy(errors, m.errors)
 	return errors
@@ -195,7 +201,7 @@ func (m *MachineWrapper) ClearErrors() {
 func (m *MachineWrapper) GetStepHistory() []*sc.Step {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	history := make([]*sc.Step, len(m.StepHistory))
 	copy(history, m.StepHistory)
 	return history
@@ -239,11 +245,16 @@ func (m *MachineWrapper) Reset() error {
 // Step processes an event and executes transitions using run-to-completion semantics.
 // Returns true if any transitions were executed.
 func (m *MachineWrapper) Step(eventName string) (bool, error) {
+	if m == nil {
+		return false, fmt.Errorf("machine is nil")
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if m.State != sc.MachineStateRunning {
-		return false, fmt.Errorf("machine is not running")
+		err := fmt.Errorf("machine is not running")
+		m.addError(err)
+		return false, err
 	}
 
 	return m.step(eventName)
@@ -252,7 +263,7 @@ func (m *MachineWrapper) Step(eventName string) (bool, error) {
 // step performs the actual step execution (assumes lock is held).
 func (m *MachineWrapper) step(eventName string) (bool, error) {
 	initialConfig := m.cloneConfiguration(m.Configuration)
-	
+
 	// Find enabled transitions
 	enabledTransitions, err := m.findEnabledTransitions(eventName)
 	if err != nil {
@@ -353,9 +364,9 @@ func (m *MachineWrapper) resolveConflicts(enabled []*sc.Transition) ([]*sc.Trans
 	// 1. Group transitions by their source states
 	// 2. Select the transition from the deepest state
 	// 3. Remove conflicting transitions
-	
+
 	selected := make(map[string]*sc.Transition)
-	
+
 	for _, transition := range enabled {
 		for _, sourceState := range transition.From {
 			// Get the depth of the source state
@@ -363,7 +374,7 @@ func (m *MachineWrapper) resolveConflicts(enabled []*sc.Transition) ([]*sc.Trans
 			if err != nil {
 				return nil, fmt.Errorf("failed to get depth of state %s: %w", sourceState, err)
 			}
-			
+
 			// Check if we have a better transition for this source state
 			key := sourceState
 			if existing, exists := selected[key]; exists {
@@ -454,6 +465,16 @@ func (m *MachineWrapper) computeStateChanges(transitions []*sc.Transition) ([]st
 		}
 	}
 
+	// Resolve history states in target states
+	resolvedTargets, err := m.resolveTargetStates(statesToEnter)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to resolve target states: %w", err)
+	}
+	statesToEnter = make(map[string]bool)
+	for _, state := range resolvedTargets {
+		statesToEnter[state] = true
+	}
+
 	// Convert to slices
 	var exitList []string
 	for state := range statesToExit {
@@ -468,15 +489,155 @@ func (m *MachineWrapper) computeStateChanges(transitions []*sc.Transition) ([]st
 	return exitList, enterList, nil
 }
 
-// exitStates executes exit actions for the given states.
+// resolveTargetStates resolves history states and default entries in the target set.
+func (m *MachineWrapper) resolveTargetStates(targets map[string]bool) ([]string, error) {
+	var resolved []string
+
+	// Queue for processing states (handling cascading history/defaults)
+	queue := make([]string, 0, len(targets))
+	for state := range targets {
+		queue = append(queue, state)
+	}
+
+	processed := make(map[string]bool)
+
+	for len(queue) > 0 {
+		label := queue[0]
+		queue = queue[1:]
+
+		if processed[label] {
+			continue
+		}
+		processed[label] = true
+
+		state, err := m.statechart.findState(StateLabel(label))
+		if err != nil {
+			return nil, fmt.Errorf("state %s not found: %w", label, err)
+		}
+
+		if state.IsHistory {
+			// Resolve history
+			historyConfig := m.resolveHistory(state)
+			if len(historyConfig) > 0 {
+				for _, histState := range historyConfig {
+					if !processed[histState] {
+						queue = append(queue, histState)
+					}
+				}
+			} else {
+				// Default history behavior (if no history, follow default transition from history state)
+				// Note: The proto definition for History states might expect them to have outgoing transitions
+				// acting as defaults.
+				// For now, we assume if no history, we might fall back to initial state of parent or specific default.
+				// This implementation assumes strict history or nothing.
+			}
+		} else {
+			resolved = append(resolved, label)
+		}
+	}
+
+	return resolved, nil
+}
+
+// resolveHistory returns the stored configuration for a history state.
+func (m *MachineWrapper) resolveHistory(historyState *sc.State) []string {
+	// Find the parent composite state
+	parent, err := m.statechart.GetParent(StateLabel(historyState.Label))
+	if err != nil || parent == nil {
+		return nil
+	}
+
+	// Check if we have history for this parent
+	if m.Configuration.History == nil {
+		return nil
+	}
+
+	storedConfig, exists := m.Configuration.History[parent.Label]
+	if !exists {
+		return nil
+	}
+
+	var resolvedStates []string
+	for _, ref := range storedConfig.States {
+		if historyState.HistoryType == sc.HistoryType_HISTORY_TYPE_DEEP {
+			// Deep history: return all stored states
+			resolvedStates = append(resolvedStates, ref.Label)
+		} else {
+			// Shallow history: only return direct children of the parent
+			// We need to check if the stored state is a direct child of parent
+			storedState, err := m.statechart.findState(StateLabel(ref.Label))
+			if err == nil {
+				storedParent, _ := m.statechart.GetParent(StateLabel(storedState.Label))
+				if storedParent != nil && storedParent.Label == parent.Label {
+					resolvedStates = append(resolvedStates, ref.Label)
+				}
+			}
+		}
+	}
+	return resolvedStates
+}
+
+// exitStates executes exit actions and saves history.
 func (m *MachineWrapper) exitStates(states []string) error {
-	// TODO: Implement exit actions
+	for _, label := range states {
+		// Save history if we are exiting a composite state
+		state, err := m.statechart.findState(StateLabel(label))
+		if err == nil && (len(state.Children) > 0 || state.Type == sc.StateTypeParallel) {
+			m.saveHistory(state)
+		}
+
+		// Execute exit actions
+		// TODO: Implement actual exit action execution logic
+	}
 	return nil
+}
+
+// saveHistory saves the current configuration of a composite state into history.
+func (m *MachineWrapper) saveHistory(state *sc.State) {
+	if m.Configuration.History == nil {
+		m.Configuration.History = make(map[string]*sc.Configuration)
+	}
+
+	// Find all active descendants of this state
+	var activeDescendants []*sc.StateRef
+	for _, activeRef := range m.Configuration.States {
+		activeState, err := m.statechart.findState(StateLabel(activeRef.Label))
+		if err != nil {
+			continue
+		}
+
+		// Check if activeState is a descendant of state
+		if m.isDescendant(activeState, state) {
+			activeDescendants = append(activeDescendants, activeRef)
+		}
+	}
+
+	if len(activeDescendants) > 0 {
+		m.Configuration.History[state.Label] = &sc.Configuration{
+			States: activeDescendants,
+		}
+	}
+}
+
+// isDescendant checks if child is a descendant of parent
+func (m *MachineWrapper) isDescendant(child, parent *sc.State) bool {
+	curr := child
+	for curr != nil {
+		p, err := m.statechart.GetParent(StateLabel(curr.Label))
+		if err != nil || p == nil {
+			return false
+		}
+		if p.Label == parent.Label {
+			return true
+		}
+		curr = p
+	}
+	return false
 }
 
 // enterStates executes entry actions for the given states.
 func (m *MachineWrapper) enterStates(states []string) error {
-	// TODO: Implement entry actions  
+	// TODO: Implement entry actions
 	return nil
 }
 
@@ -493,6 +654,11 @@ func (m *MachineWrapper) updateConfiguration(newStates []string) {
 	if err != nil {
 		m.addError(fmt.Errorf("failed to compute default completion: %w", err))
 		return
+	}
+
+	// Preserve history from previous configuration
+	if m.Configuration != nil && m.Configuration.History != nil {
+		completedConfig.History = m.Configuration.History
 	}
 
 	m.Configuration = completedConfig
