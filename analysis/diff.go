@@ -17,8 +17,8 @@ type DiffResult struct {
 	StatesModified []StateMod
 
 	// Transition changes
-	TransitionsAdded   []*TransitionEdge
-	TransitionsRemoved []*TransitionEdge
+	TransitionsAdded    []*TransitionEdge
+	TransitionsRemoved  []*TransitionEdge
 	TransitionsModified []TransitionMod
 
 	// Event changes
@@ -26,7 +26,7 @@ type DiffResult struct {
 	EventsRemoved []string
 
 	// Summary
-	IsCompatible   bool
+	IsCompatible    bool
 	BreakingChanges []string
 }
 
@@ -108,51 +108,78 @@ func Diff(chart1, chart2 *sc.Statechart) *DiffResult {
 	}
 
 	// Compare transitions
-	trans1 := make(map[string]*TransitionEdge)
-	trans2 := make(map[string]*TransitionEdge)
+	buckets1 := bucketTransitionsByBase(g1.Transitions)
+	buckets2 := bucketTransitionsByBase(g2.Transitions)
+	consumed1 := make(map[*TransitionEdge]bool)
+	consumed2 := make(map[*TransitionEdge]bool)
 
-	for _, t := range g1.Transitions {
-		key := t.From + "->" + t.To + "[" + t.Event + "]"
-		trans1[key] = t
+	// Detect true one-to-one guard edits as modifications.
+	baseKeys := make(map[string]bool)
+	for key := range buckets1 {
+		baseKeys[key] = true
 	}
-	for _, t := range g2.Transitions {
-		key := t.From + "->" + t.To + "[" + t.Event + "]"
-		trans2[key] = t
+	for key := range buckets2 {
+		baseKeys[key] = true
 	}
-
-	for key, t := range trans2 {
-		if _, exists := trans1[key]; !exists {
-			result.TransitionsAdded = append(result.TransitionsAdded, t)
+	for key := range baseKeys {
+		list1 := buckets1[key]
+		list2 := buckets2[key]
+		if len(list1) != 1 || len(list2) != 1 {
+			continue
 		}
-	}
-	for key, t1 := range trans1 {
-		if t2, exists := trans2[key]; !exists {
-			result.TransitionsRemoved = append(result.TransitionsRemoved, t1)
+		t1 := list1[0]
+		t2 := list2[0]
+		if t1.Guard == t2.Guard {
+			continue
+		}
+		consumed1[t1] = true
+		consumed2[t2] = true
+
+		mod := TransitionMod{
+			From:         t1.From,
+			To:           t1.To,
+			Event:        t1.Event,
+			GuardChanged: true,
+			OldGuard:     t1.Guard,
+			NewGuard:     t2.Guard,
+		}
+		if t1.Guard == "" && t2.Guard != "" {
+			mod.Changes = append(mod.Changes, "guard added: "+t2.Guard)
 			result.IsCompatible = false
 			result.BreakingChanges = append(result.BreakingChanges,
-				"Transition removed: "+key)
+				"Guard added to transition: "+transitionDisplayKey(t1))
+		} else if t1.Guard != "" && t2.Guard == "" {
+			mod.Changes = append(mod.Changes, "guard removed")
 		} else {
-			// Check for guard changes
-			if t1.Guard != t2.Guard {
-				mod := TransitionMod{
-					From:         t1.From,
-					To:           t1.To,
-					Event:        t1.Event,
-					GuardChanged: true,
-					OldGuard:     t1.Guard,
-					NewGuard:     t2.Guard,
-				}
-				if t1.Guard == "" && t2.Guard != "" {
-					mod.Changes = append(mod.Changes, "guard added: "+t2.Guard)
-					result.IsCompatible = false
-					result.BreakingChanges = append(result.BreakingChanges,
-						"Guard added to transition: "+key)
-				} else if t1.Guard != "" && t2.Guard == "" {
-					mod.Changes = append(mod.Changes, "guard removed")
-				} else {
-					mod.Changes = append(mod.Changes, "guard changed: "+t1.Guard+" -> "+t2.Guard)
-				}
-				result.TransitionsModified = append(result.TransitionsModified, mod)
+			mod.Changes = append(mod.Changes, "guard changed: "+t1.Guard+" -> "+t2.Guard)
+		}
+		result.TransitionsModified = append(result.TransitionsModified, mod)
+	}
+
+	counts1, sample1 := countTransitionMultiset(g1.Transitions, consumed1)
+	counts2, sample2 := countTransitionMultiset(g2.Transitions, consumed2)
+	allTransitionKeys := make(map[string]bool)
+	for key := range counts1 {
+		allTransitionKeys[key] = true
+	}
+	for key := range counts2 {
+		allTransitionKeys[key] = true
+	}
+	for key := range allTransitionKeys {
+		c1 := counts1[key]
+		c2 := counts2[key]
+		if c2 > c1 {
+			for i := 0; i < c2-c1; i++ {
+				result.TransitionsAdded = append(result.TransitionsAdded, sample2[key])
+			}
+		}
+		if c1 > c2 {
+			for i := 0; i < c1-c2; i++ {
+				t := sample1[key]
+				result.TransitionsRemoved = append(result.TransitionsRemoved, t)
+				result.IsCompatible = false
+				result.BreakingChanges = append(result.BreakingChanges,
+					"Transition removed: "+transitionDisplayKey(t))
 			}
 		}
 	}
@@ -192,8 +219,81 @@ func Diff(chart1, chart2 *sc.Statechart) *DiffResult {
 	sort.Strings(result.EventsAdded)
 	sort.Strings(result.EventsRemoved)
 	sort.Strings(result.BreakingChanges)
+	sortTransitionEdges(result.TransitionsAdded)
+	sortTransitionEdges(result.TransitionsRemoved)
+	sortTransitionMods(result.TransitionsModified)
 
 	return result
+}
+
+func bucketTransitionsByBase(transitions []*TransitionEdge) map[string][]*TransitionEdge {
+	buckets := make(map[string][]*TransitionEdge)
+	for _, t := range transitions {
+		key := transitionBaseKey(t)
+		buckets[key] = append(buckets[key], t)
+	}
+	return buckets
+}
+
+func countTransitionMultiset(transitions []*TransitionEdge, consumed map[*TransitionEdge]bool) (map[string]int, map[string]*TransitionEdge) {
+	counts := make(map[string]int)
+	sample := make(map[string]*TransitionEdge)
+	for _, t := range transitions {
+		if consumed[t] {
+			continue
+		}
+		key := transitionFullKey(t)
+		counts[key]++
+		if sample[key] == nil {
+			sample[key] = t
+		}
+	}
+	return counts, sample
+}
+
+func transitionBaseKey(t *TransitionEdge) string {
+	if t == nil {
+		return ""
+	}
+	return t.From + "->" + t.To + "[" + t.Event + "]#" + t.Label
+}
+
+func transitionFullKey(t *TransitionEdge) string {
+	if t == nil {
+		return ""
+	}
+	return transitionBaseKey(t) + "{" + t.Guard + "}"
+}
+
+func transitionDisplayKey(t *TransitionEdge) string {
+	if t == nil {
+		return ""
+	}
+	return t.From + "->" + t.To + "[" + t.Event + "]"
+}
+
+func sortTransitionEdges(edges []*TransitionEdge) {
+	sort.Slice(edges, func(i, j int) bool {
+		return transitionFullKey(edges[i]) < transitionFullKey(edges[j])
+	})
+}
+
+func sortTransitionMods(mods []TransitionMod) {
+	sort.Slice(mods, func(i, j int) bool {
+		if mods[i].From != mods[j].From {
+			return mods[i].From < mods[j].From
+		}
+		if mods[i].To != mods[j].To {
+			return mods[i].To < mods[j].To
+		}
+		if mods[i].Event != mods[j].Event {
+			return mods[i].Event < mods[j].Event
+		}
+		if mods[i].OldGuard != mods[j].OldGuard {
+			return mods[i].OldGuard < mods[j].OldGuard
+		}
+		return mods[i].NewGuard < mods[j].NewGuard
+	})
 }
 
 func compareStates(n1, n2 *StateNode) StateMod {
