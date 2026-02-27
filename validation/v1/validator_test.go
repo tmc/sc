@@ -228,6 +228,18 @@ func TestValidateTrace(t *testing.T) {
 		{
 			Id:    "m1",
 			State: pb.MachineState_MACHINE_STATE_RUNNING,
+			StepHistory: []*pb.Step{
+				{
+					Transitions: []*pb.Transition{
+						{
+							Label: "t1",
+							From:  []string{"A"},
+							To:    []string{"B"},
+							Event: "e1",
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -338,6 +350,112 @@ func TestValidateTrace_RejectsUnknownStateInConfiguration(t *testing.T) {
 		t.Fatal("ValidateTrace() got 0 violations, want > 0")
 	}
 
+	s := status.FromProto(resp.Status)
+	if s.Code() != codes.FailedPrecondition {
+		t.Fatalf("ValidateTrace() status code = %v, want %v", s.Code(), codes.FailedPrecondition)
+	}
+}
+
+func TestValidateTrace_RejectsTransitionNotInChart(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "e1"},
+		},
+		Events: []*pb.Event{
+			{Label: "e1"},
+			{Label: "e2"},
+		},
+	}
+
+	trace := []*pb.Machine{
+		{
+			StepHistory: []*pb.Step{
+				{
+					Transitions: []*pb.Transition{
+						{
+							From:  []string{"A"},
+							To:    []string{"B"},
+							Event: "e2",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := validator.ValidateTrace(context.Background(), &validationv1.ValidateTraceRequest{
+		Chart: chart,
+		Trace: trace,
+	})
+	if err != nil {
+		t.Fatalf("ValidateTrace() error = %v", err)
+	}
+	if len(resp.Violations) == 0 {
+		t.Fatal("ValidateTrace() got 0 violations, want > 0")
+	}
+	s := status.FromProto(resp.Status)
+	if s.Code() != codes.FailedPrecondition {
+		t.Fatalf("ValidateTrace() status code = %v, want %v", s.Code(), codes.FailedPrecondition)
+	}
+}
+
+func TestValidateTrace_RejectsMismatchedTransitionLabel(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "e1"},
+		},
+		Events: []*pb.Event{
+			{Label: "e1"},
+		},
+	}
+
+	trace := []*pb.Machine{
+		{
+			StepHistory: []*pb.Step{
+				{
+					Transitions: []*pb.Transition{
+						{
+							Label: "t2",
+							From:  []string{"A"},
+							To:    []string{"B"},
+							Event: "e1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := validator.ValidateTrace(context.Background(), &validationv1.ValidateTraceRequest{
+		Chart: chart,
+		Trace: trace,
+	})
+	if err != nil {
+		t.Fatalf("ValidateTrace() error = %v", err)
+	}
+	if len(resp.Violations) == 0 {
+		t.Fatal("ValidateTrace() got 0 violations, want > 0")
+	}
 	s := status.FromProto(resp.Status)
 	if s.Code() != codes.FailedPrecondition {
 		t.Fatalf("ValidateTrace() status code = %v, want %v", s.Code(), codes.FailedPrecondition)

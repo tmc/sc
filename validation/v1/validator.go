@@ -4,6 +4,8 @@ package validation
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -137,6 +139,18 @@ func (s *SemanticValidator) validateTrace(trace []*sc.Machine, statechart *sc.St
 	}
 	collectStates(statechart.RootState)
 
+	validTransitionsByStructure := make(map[string]bool)
+	validTransitionsByLabel := make(map[string]bool)
+	for _, transition := range statechart.Transitions {
+		if transition == nil {
+			continue
+		}
+		validTransitionsByStructure[transitionStructureKey(transition)] = true
+		if transition.Label != "" {
+			validTransitionsByLabel[transitionLabelKey(transition)] = true
+		}
+	}
+
 	validateConfig := func(machineIndex int, where string, cfg *sc.Configuration) {
 		if cfg == nil {
 			return
@@ -212,11 +226,44 @@ func (s *SemanticValidator) validateTrace(trace []*sc.Machine, statechart *sc.St
 						})
 					}
 				}
+
+				if transition.Label != "" {
+					if !validTransitionsByLabel[transitionLabelKey(transition)] {
+						violations = append(violations, &validationv1.Violation{
+							Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+							Severity: validationv1.Severity_ERROR,
+							Message:  fmt.Sprintf("trace machine %d step %d transition %q does not exist in chart", machineIndex, stepIndex, transition.Label),
+						})
+					}
+					continue
+				}
+				if !validTransitionsByStructure[transitionStructureKey(transition)] {
+					violations = append(violations, &validationv1.Violation{
+						Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+						Severity: validationv1.Severity_ERROR,
+						Message:  fmt.Sprintf("trace machine %d step %d transition does not exist in chart (event=%q from=%v to=%v)", machineIndex, stepIndex, transition.Event, transition.From, transition.To),
+					})
+				}
 			}
 		}
 	}
 
 	return violations
+}
+
+func transitionStructureKey(t *sc.Transition) string {
+	return strings.Join(sortedCopy(t.From), ",") + "->" +
+		strings.Join(sortedCopy(t.To), ",") + "[" + t.Event + "]"
+}
+
+func transitionLabelKey(t *sc.Transition) string {
+	return t.Label + "|" + transitionStructureKey(t)
+}
+
+func sortedCopy(items []string) []string {
+	out := append([]string(nil), items...)
+	sort.Strings(out)
+	return out
 }
 
 // validateChart applies all validation rules to a statechart.
