@@ -83,8 +83,9 @@ func (s *SemanticValidator) ValidateTrace(ctx context.Context, req *validationv1
 	// Run validation rules
 	violations := s.validateChart(statechart, ignoreRules)
 
-	// Additional validation for the trace would go here
-	// For now we just validate the chart
+	// Validate trace semantics against the chart.
+	traceViolations := s.validateTrace(req.GetTrace(), statechart, ignoreRules)
+	violations = append(violations, traceViolations...)
 
 	// Convert response
 	resp := &validationv1.ValidateTraceResponse{
@@ -105,6 +106,117 @@ func (s *SemanticValidator) ValidateTrace(ctx context.Context, req *validationv1
 	}
 
 	return resp, nil
+}
+
+func (s *SemanticValidator) validateTrace(trace []*sc.Machine, statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool) []*validationv1.Violation {
+	var violations []*validationv1.Violation
+
+	// Backward compatibility: allow callers to skip unspecified extra checks.
+	if ignoreRules[validationv1.RuleId_RULE_UNSPECIFIED] {
+		return violations
+	}
+
+	declaredEvents := make(map[string]bool)
+	for _, e := range statechart.Events {
+		if e == nil || e.Label == "" {
+			continue
+		}
+		declaredEvents[e.Label] = true
+	}
+
+	stateNames := make(map[string]bool)
+	var collectStates func(*sc.State)
+	collectStates = func(state *sc.State) {
+		if state == nil {
+			return
+		}
+		stateNames[state.Label] = true
+		for _, child := range state.Children {
+			collectStates(child)
+		}
+	}
+	collectStates(statechart.RootState)
+
+	validateConfig := func(machineIndex int, where string, cfg *sc.Configuration) {
+		if cfg == nil {
+			return
+		}
+		for _, ref := range cfg.States {
+			if ref == nil || ref.Label == "" {
+				continue
+			}
+			if !stateNames[ref.Label] {
+				violations = append(violations, &validationv1.Violation{
+					Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+					Severity: validationv1.Severity_ERROR,
+					Message:  fmt.Sprintf("trace machine %d %s references unknown state %q", machineIndex, where, ref.Label),
+				})
+			}
+		}
+	}
+
+	for machineIndex, machine := range trace {
+		if machine == nil {
+			continue
+		}
+
+		validateConfig(machineIndex, "configuration", machine.Configuration)
+
+		for stepIndex, step := range machine.StepHistory {
+			if step == nil {
+				continue
+			}
+
+			for _, event := range step.Events {
+				if event == nil || event.Label == "" {
+					continue
+				}
+				if !declaredEvents[event.Label] {
+					violations = append(violations, &validationv1.Violation{
+						Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+						Severity: validationv1.Severity_ERROR,
+						Message:  fmt.Sprintf("trace machine %d step %d uses undeclared event %q", machineIndex, stepIndex, event.Label),
+					})
+				}
+			}
+
+			validateConfig(machineIndex, fmt.Sprintf("step %d starting_configuration", stepIndex), step.StartingConfiguration)
+			validateConfig(machineIndex, fmt.Sprintf("step %d resulting_configuration", stepIndex), step.ResultingConfiguration)
+
+			for _, transition := range step.Transitions {
+				if transition == nil {
+					continue
+				}
+				if transition.Event != "" && !declaredEvents[transition.Event] {
+					violations = append(violations, &validationv1.Violation{
+						Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+						Severity: validationv1.Severity_ERROR,
+						Message:  fmt.Sprintf("trace machine %d step %d transition uses undeclared event %q", machineIndex, stepIndex, transition.Event),
+					})
+				}
+				for _, from := range transition.From {
+					if from != "" && !stateNames[from] {
+						violations = append(violations, &validationv1.Violation{
+							Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+							Severity: validationv1.Severity_ERROR,
+							Message:  fmt.Sprintf("trace machine %d step %d transition source references unknown state %q", machineIndex, stepIndex, from),
+						})
+					}
+				}
+				for _, to := range transition.To {
+					if to != "" && !stateNames[to] {
+						violations = append(violations, &validationv1.Violation{
+							Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+							Severity: validationv1.Severity_ERROR,
+							Message:  fmt.Sprintf("trace machine %d step %d transition target references unknown state %q", machineIndex, stepIndex, to),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	return violations
 }
 
 // validateChart applies all validation rules to a statechart.
@@ -162,15 +274,15 @@ func (s *SemanticValidator) validateChart(statechart *sc.Statechart, ignoreRules
 // validateHarelRules applies comprehensive formal validation rules based on Harel's semantics
 func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool) []*validationv1.Violation {
 	var violations []*validationv1.Violation
-	
+
 	// Skip Harel rules if RULE_UNSPECIFIED is being ignored (for backward compatibility)
 	if ignoreRules[validationv1.RuleId_RULE_UNSPECIFIED] {
 		return violations
 	}
-	
+
 	// Get selected Harel validation rules that don't duplicate existing functionality
 	harelRules := GetHarelValidationRules()
-	
+
 	// Filter rules to avoid duplication with existing basic rules
 	rulesToApply := []HarelValidationRule{}
 	for _, rule := range harelRules {
@@ -189,7 +301,7 @@ func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignore
 			rulesToApply = append(rulesToApply, rule)
 		}
 	}
-	
+
 	// Apply filtered rules
 	for _, rule := range rulesToApply {
 		if err := rule.Validator(statechart); err != nil {
@@ -200,7 +312,7 @@ func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignore
 			})
 		}
 	}
-	
+
 	return violations
 }
 

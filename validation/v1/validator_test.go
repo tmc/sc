@@ -241,7 +241,7 @@ func TestValidateTrace(t *testing.T) {
 		t.Fatalf("ValidateTrace() error = %v", err)
 	}
 
-	// For now, we're just validating the chart, so we expect the same 
+	// For now, we're just validating the chart, so we expect the same
 	// results as a chart validation
 	if len(resp.Violations) != 0 {
 		t.Errorf("ValidateTrace() got %d violations, want 0", len(resp.Violations))
@@ -250,5 +250,96 @@ func TestValidateTrace(t *testing.T) {
 	s := status.FromProto(resp.Status)
 	if s.Code() != codes.OK {
 		t.Errorf("ValidateTrace() got status code %v, want %v", s.Code(), codes.OK)
+	}
+}
+
+func TestValidateTrace_RejectsUndeclaredEventInStep(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "e1"},
+		},
+		Events: []*pb.Event{
+			{Label: "e1"},
+		},
+	}
+
+	trace := []*pb.Machine{
+		{
+			StepHistory: []*pb.Step{
+				{
+					Events: []*pb.Event{
+						{Label: "unknown"},
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := validator.ValidateTrace(context.Background(), &validationv1.ValidateTraceRequest{
+		Chart: chart,
+		Trace: trace,
+	})
+	if err != nil {
+		t.Fatalf("ValidateTrace() error = %v", err)
+	}
+
+	if len(resp.Violations) == 0 {
+		t.Fatal("ValidateTrace() got 0 violations, want > 0")
+	}
+
+	s := status.FromProto(resp.Status)
+	if s.Code() != codes.FailedPrecondition {
+		t.Fatalf("ValidateTrace() status code = %v, want %v", s.Code(), codes.FailedPrecondition)
+	}
+}
+
+func TestValidateTrace_RejectsUnknownStateInConfiguration(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+			},
+		},
+	}
+
+	trace := []*pb.Machine{
+		{
+			Configuration: &pb.Configuration{
+				States: []*pb.StateRef{
+					{Label: "UNKNOWN"},
+				},
+			},
+		},
+	}
+
+	resp, err := validator.ValidateTrace(context.Background(), &validationv1.ValidateTraceRequest{
+		Chart: chart,
+		Trace: trace,
+	})
+	if err != nil {
+		t.Fatalf("ValidateTrace() error = %v", err)
+	}
+
+	if len(resp.Violations) == 0 {
+		t.Fatal("ValidateTrace() got 0 violations, want > 0")
+	}
+
+	s := status.FromProto(resp.Status)
+	if s.Code() != codes.FailedPrecondition {
+		t.Fatalf("ValidateTrace() status code = %v, want %v", s.Code(), codes.FailedPrecondition)
 	}
 }
