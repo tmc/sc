@@ -305,8 +305,9 @@ func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignore
 	// Apply filtered rules
 	for _, rule := range rulesToApply {
 		if err := rule.Validator(statechart); err != nil {
+			ruleID := harelRuleToRuleID(rule.Name)
 			violations = append(violations, &validationv1.Violation{
-				Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+				Rule:     ruleID,
 				Severity: validationv1.Severity_ERROR,
 				Message:  fmt.Sprintf("Harel Rule %s: %s", rule.Name, err.Error()),
 			})
@@ -314,6 +315,19 @@ func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignore
 	}
 
 	return violations
+}
+
+func harelRuleToRuleID(name string) validationv1.RuleId {
+	switch name {
+	case "EventConsistency":
+		return validationv1.RuleId_EVENT_PARAMETERS_CONSISTENT
+	case "HistoryStateProperties":
+		return validationv1.RuleId_HISTORY_STATES_WELL_FORMED
+	case "TransitionWellFormedness":
+		return validationv1.RuleId_GUARD_EXPRESSIONS_VALID
+	default:
+		return validationv1.RuleId_RULE_UNSPECIFIED
+	}
 }
 
 // convertProtoToStatechart converts a proto statechart to a native statechart.

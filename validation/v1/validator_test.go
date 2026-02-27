@@ -343,3 +343,42 @@ func TestValidateTrace_RejectsUnknownStateInConfiguration(t *testing.T) {
 		t.Fatalf("ValidateTrace() status code = %v, want %v", s.Code(), codes.FailedPrecondition)
 	}
 }
+
+func TestValidateChart_MapsEventConsistencyRuleID(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "UNKNOWN"},
+		},
+		Events: []*pb.Event{
+			{Label: "KNOWN"},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	found := false
+	for _, v := range resp.Violations {
+		if v.Rule == validationv1.RuleId_EVENT_PARAMETERS_CONSISTENT {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected at least one violation with rule %v, got %+v", validationv1.RuleId_EVENT_PARAMETERS_CONSISTENT, resp.Violations)
+	}
+}
