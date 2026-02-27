@@ -18,13 +18,13 @@ type LargeStatechartMemoryOptimizer struct {
 	// String interning for labels
 	stringIntern     map[string]string
 	stringInternLock sync.RWMutex
-	
+
 	// Shared empty slices to reduce allocations
 	emptyStrings     []string
 	emptyStates      []*sc.State
 	emptyTransitions []*sc.Transition
 	emptyActions     []*sc.Action
-	
+
 	// Statistics
 	stats OptimizationStats
 }
@@ -55,25 +55,25 @@ func NewLargeStatechartMemoryOptimizer() *LargeStatechartMemoryOptimizer {
 func (lsmo *LargeStatechartMemoryOptimizer) OptimizeLargeStatechart(statechart *sc.Statechart) (*sc.Statechart, OptimizationReport) {
 	start := time.Now()
 	beforeSize := lsmo.estimateStatechartSize(statechart)
-	
+
 	// Create optimized copy
 	optimized := &sc.Statechart{
 		RootState:   lsmo.optimizeStateDeep(statechart.RootState),
 		Transitions: lsmo.optimizeTransitionsDeep(statechart.Transitions),
 		Events:      lsmo.optimizeEventsDeep(statechart.Events),
 	}
-	
+
 	afterSize := lsmo.estimateStatechartSize(optimized)
-	
+
 	report := OptimizationReport{
-		Duration:        time.Since(start),
-		OriginalSize:    beforeSize,
-		OptimizedSize:   afterSize,
-		SizeReduction:   beforeSize - afterSize,
+		Duration:         time.Since(start),
+		OriginalSize:     beforeSize,
+		OptimizedSize:    afterSize,
+		SizeReduction:    beforeSize - afterSize,
 		ReductionPercent: float64(beforeSize-afterSize) / float64(beforeSize) * 100,
-		Stats:           lsmo.stats,
+		Stats:            lsmo.stats,
 	}
-	
+
 	return optimized, report
 }
 
@@ -82,16 +82,16 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeStateDeep(state *sc.State) *
 	if state == nil {
 		return nil
 	}
-	
+
 	atomic.AddInt64(&lsmo.stats.StatesOptimized, 1)
-	
+
 	optimized := &sc.State{
 		Label:     lsmo.internString(state.Label),
 		Type:      state.Type,
 		IsInitial: state.IsInitial,
 		IsFinal:   state.IsFinal,
 	}
-	
+
 	// Optimize children
 	if len(state.Children) > 0 {
 		// Pre-allocate exact size
@@ -99,7 +99,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeStateDeep(state *sc.State) *
 		for _, child := range state.Children {
 			optimized.Children = append(optimized.Children, lsmo.optimizeStateDeep(child))
 		}
-		
+
 		// Trim excess capacity
 		if cap(optimized.Children) > len(optimized.Children) {
 			newChildren := make([]*sc.State, len(optimized.Children))
@@ -111,7 +111,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeStateDeep(state *sc.State) *
 		// Use shared empty slice
 		optimized.Children = lsmo.emptyStates
 	}
-	
+
 	return optimized
 }
 
@@ -120,19 +120,19 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeTransitionsDeep(transitions 
 	if len(transitions) == 0 {
 		return lsmo.emptyTransitions
 	}
-	
+
 	// Pre-allocate exact size
 	optimized := make([]*sc.Transition, 0, len(transitions))
-	
+
 	for _, t := range transitions {
 		atomic.AddInt64(&lsmo.stats.TransitionsOptimized, 1)
-		
+
 		opt := &sc.Transition{
 			Label: lsmo.internString(t.Label),
 			Event: lsmo.internString(t.Event),
 			Guard: t.Guard, // Guards are typically unique, so we don't intern
 		}
-		
+
 		// Optimize From slice
 		if len(t.From) > 0 {
 			opt.From = make([]string, 0, len(t.From))
@@ -148,7 +148,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeTransitionsDeep(transitions 
 		} else {
 			opt.From = lsmo.emptyStrings
 		}
-		
+
 		// Optimize To slice
 		if len(t.To) > 0 {
 			opt.To = make([]string, 0, len(t.To))
@@ -164,7 +164,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeTransitionsDeep(transitions 
 		} else {
 			opt.To = lsmo.emptyStrings
 		}
-		
+
 		// Optimize Actions
 		if len(t.Actions) > 0 {
 			opt.Actions = make([]*sc.Action, 0, len(t.Actions))
@@ -176,10 +176,10 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeTransitionsDeep(transitions 
 		} else {
 			opt.Actions = lsmo.emptyActions
 		}
-		
+
 		optimized = append(optimized, opt)
 	}
-	
+
 	return optimized
 }
 
@@ -188,7 +188,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeEventsDeep(events []*sc.Even
 	if len(events) == 0 {
 		return nil
 	}
-	
+
 	optimized := make([]*sc.Event, 0, len(events))
 	for _, event := range events {
 		opt := &sc.Event{
@@ -197,7 +197,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) optimizeEventsDeep(events []*sc.Even
 		}
 		optimized = append(optimized, opt)
 	}
-	
+
 	return optimized
 }
 
@@ -206,29 +206,29 @@ func (lsmo *LargeStatechartMemoryOptimizer) internString(s string) string {
 	if s == "" {
 		return ""
 	}
-	
+
 	lsmo.stringInternLock.RLock()
 	if interned, exists := lsmo.stringIntern[s]; exists {
 		lsmo.stringInternLock.RUnlock()
 		return interned
 	}
 	lsmo.stringInternLock.RUnlock()
-	
+
 	lsmo.stringInternLock.Lock()
 	defer lsmo.stringInternLock.Unlock()
-	
+
 	// Double-check after acquiring write lock
 	if interned, exists := lsmo.stringIntern[s]; exists {
 		return interned
 	}
-	
+
 	// Intern the string
 	lsmo.stringIntern[s] = s
 	atomic.AddInt64(&lsmo.stats.StringsInterned, 1)
-	
+
 	// Estimate bytes saved (assuming average duplication factor of 3)
 	atomic.AddInt64(&lsmo.stats.BytesSavedStrings, int64(len(s)*2))
-	
+
 	return s
 }
 
@@ -237,18 +237,18 @@ func (lsmo *LargeStatechartMemoryOptimizer) estimateStatechartSize(statechart *s
 	if statechart == nil {
 		return 0
 	}
-	
+
 	size := int64(unsafe.Sizeof(*statechart))
 	size += lsmo.estimateStateSize(statechart.RootState)
-	
+
 	for _, t := range statechart.Transitions {
 		size += lsmo.estimateTransitionSize(t)
 	}
-	
+
 	for _, e := range statechart.Events {
 		size += lsmo.estimateEventSize(e)
 	}
-	
+
 	return size
 }
 
@@ -257,18 +257,18 @@ func (lsmo *LargeStatechartMemoryOptimizer) estimateStateSize(state *sc.State) i
 	if state == nil {
 		return 0
 	}
-	
+
 	size := int64(unsafe.Sizeof(*state))
 	size += int64(len(state.Label))
-	
+
 	// Slice overhead
 	size += int64(cap(state.Children)) * int64(unsafe.Sizeof(&sc.State{}))
-	
+
 	// Recursively count children
 	for _, child := range state.Children {
 		size += lsmo.estimateStateSize(child)
 	}
-	
+
 	return size
 }
 
@@ -277,22 +277,22 @@ func (lsmo *LargeStatechartMemoryOptimizer) estimateTransitionSize(t *sc.Transit
 	if t == nil {
 		return 0
 	}
-	
+
 	size := int64(unsafe.Sizeof(*t))
 	size += int64(len(t.Label))
 	size += int64(len(t.Event))
-	
+
 	// From/To slices
 	size += int64(cap(t.From)) * int64(unsafe.Sizeof(""))
 	for _, s := range t.From {
 		size += int64(len(s))
 	}
-	
+
 	size += int64(cap(t.To)) * int64(unsafe.Sizeof(""))
 	for _, s := range t.To {
 		size += int64(len(s))
 	}
-	
+
 	// Actions
 	size += int64(cap(t.Actions)) * int64(unsafe.Sizeof(&sc.Action{}))
 	for _, a := range t.Actions {
@@ -300,7 +300,7 @@ func (lsmo *LargeStatechartMemoryOptimizer) estimateTransitionSize(t *sc.Transit
 			size += int64(unsafe.Sizeof(*a)) + int64(len(a.Label))
 		}
 	}
-	
+
 	return size
 }
 
@@ -309,15 +309,15 @@ func (lsmo *LargeStatechartMemoryOptimizer) estimateEventSize(e *sc.Event) int64
 	if e == nil {
 		return 0
 	}
-	
+
 	size := int64(unsafe.Sizeof(*e))
 	size += int64(len(e.Label))
-	
+
 	// Parameters size (simplified estimation)
 	if e.Parameters != nil {
 		size += 100 // Rough estimate for structpb overhead
 	}
-	
+
 	return size
 }
 
@@ -365,13 +365,13 @@ type StateChartMemoryIndex struct {
 	stateDepths      []uint8 // Most statecharts won't exceed 255 levels
 	stateChildCounts []uint16
 	stateFirstChild  []int32
-	
+
 	// Transition index
 	transitionFromIndices []int32
 	transitionToIndices   []int32
 	transitionEvents      []string
 	transitionCount       int32
-	
+
 	// Memory stats
 	totalMemory int64
 }
@@ -381,26 +381,26 @@ func BuildMemoryEfficientIndex(statechart *sc.Statechart) *StateChartMemoryIndex
 	index := &StateChartMemoryIndex{
 		stateIndices: make(map[string]int32),
 	}
-	
+
 	// First pass: count states
 	stateCount := countStates(statechart.RootState)
-	
+
 	// Pre-allocate arrays
 	index.stateLabels = make([]string, 0, stateCount)
 	index.stateParents = make([]int32, 0, stateCount)
 	index.stateDepths = make([]uint8, 0, stateCount)
 	index.stateChildCounts = make([]uint16, 0, stateCount)
 	index.stateFirstChild = make([]int32, 0, stateCount)
-	
+
 	// Build state index
 	index.indexStateCompact(statechart.RootState, -1, 0)
-	
+
 	// Build transition index
 	index.indexTransitionsCompact(statechart.Transitions)
-	
+
 	// Calculate memory usage
 	index.calculateMemoryUsage()
-	
+
 	return index
 }
 
@@ -409,29 +409,29 @@ func (index *StateChartMemoryIndex) indexStateCompact(state *sc.State, parentIdx
 	if state == nil {
 		return -1
 	}
-	
+
 	// Add state to arrays
 	stateIdx := int32(len(index.stateLabels))
 	index.stateLabels = append(index.stateLabels, state.Label)
 	index.stateParents = append(index.stateParents, parentIdx)
 	index.stateDepths = append(index.stateDepths, depth)
 	index.stateChildCounts = append(index.stateChildCounts, uint16(len(state.Children)))
-	
+
 	// Map label to index
 	index.stateIndices[state.Label] = stateIdx
-	
+
 	// Record first child index
 	if len(state.Children) > 0 {
 		index.stateFirstChild = append(index.stateFirstChild, int32(len(index.stateLabels)))
 	} else {
 		index.stateFirstChild = append(index.stateFirstChild, -1)
 	}
-	
+
 	// Index children
 	for _, child := range state.Children {
 		index.indexStateCompact(child, stateIdx, depth+1)
 	}
-	
+
 	return stateIdx
 }
 
@@ -442,11 +442,11 @@ func (index *StateChartMemoryIndex) indexTransitionsCompact(transitions []*sc.Tr
 	for _, t := range transitions {
 		totalTransitions += len(t.From) * len(t.To)
 	}
-	
+
 	index.transitionFromIndices = make([]int32, 0, totalTransitions)
 	index.transitionToIndices = make([]int32, 0, totalTransitions)
 	index.transitionEvents = make([]string, 0, totalTransitions)
-	
+
 	// Build index
 	for _, t := range transitions {
 		for _, from := range t.From {
@@ -454,13 +454,13 @@ func (index *StateChartMemoryIndex) indexTransitionsCompact(transitions []*sc.Tr
 			if !exists {
 				continue
 			}
-			
+
 			for _, to := range t.To {
 				toIdx, exists := index.stateIndices[to]
 				if !exists {
 					continue
 				}
-				
+
 				index.transitionFromIndices = append(index.transitionFromIndices, fromIdx)
 				index.transitionToIndices = append(index.transitionToIndices, toIdx)
 				index.transitionEvents = append(index.transitionEvents, t.Event)
@@ -476,12 +476,12 @@ func (index *StateChartMemoryIndex) GetStateInfo(label string) (parentLabel stri
 	if !exists {
 		return "", 0, 0, false
 	}
-	
+
 	parentIdx := index.stateParents[idx]
 	if parentIdx >= 0 {
 		parentLabel = index.stateLabels[parentIdx]
 	}
-	
+
 	return parentLabel, index.stateDepths[idx], index.stateChildCounts[idx], true
 }
 
@@ -491,7 +491,7 @@ func (index *StateChartMemoryIndex) GetTransitionsFrom(label string) []Transitio
 	if !exists {
 		return nil
 	}
-	
+
 	var transitions []TransitionInfo
 	for i := int32(0); i < index.transitionCount; i++ {
 		if index.transitionFromIndices[i] == fromIdx {
@@ -503,7 +503,7 @@ func (index *StateChartMemoryIndex) GetTransitionsFrom(label string) []Transitio
 			})
 		}
 	}
-	
+
 	return transitions
 }
 
@@ -517,21 +517,21 @@ type TransitionInfo struct {
 // calculateMemoryUsage calculates the total memory used by the index.
 func (index *StateChartMemoryIndex) calculateMemoryUsage() {
 	index.totalMemory = 0
-	
+
 	// State arrays
 	index.totalMemory += int64(len(index.stateLabels)) * int64(unsafe.Sizeof(""))
 	for _, label := range index.stateLabels {
 		index.totalMemory += int64(len(label))
 	}
-	
-	index.totalMemory += int64(len(index.stateParents)) * 4    // int32
-	index.totalMemory += int64(len(index.stateDepths)) * 1     // uint8
+
+	index.totalMemory += int64(len(index.stateParents)) * 4     // int32
+	index.totalMemory += int64(len(index.stateDepths)) * 1      // uint8
 	index.totalMemory += int64(len(index.stateChildCounts)) * 2 // uint16
 	index.totalMemory += int64(len(index.stateFirstChild)) * 4  // int32
-	
+
 	// State index map
 	index.totalMemory += int64(len(index.stateIndices)) * (int64(unsafe.Sizeof("")) + 4)
-	
+
 	// Transition arrays
 	index.totalMemory += int64(len(index.transitionFromIndices)) * 4
 	index.totalMemory += int64(len(index.transitionToIndices)) * 4
@@ -551,12 +551,12 @@ func countStates(state *sc.State) int {
 	if state == nil {
 		return 0
 	}
-	
+
 	count := 1
 	for _, child := range state.Children {
 		count += countStates(child)
 	}
-	
+
 	return count
 }
 
@@ -579,36 +579,36 @@ func NewLargeStatechartValidator() *LargeStatechartValidator {
 func (lsv *LargeStatechartValidator) ValidateEfficiently(statechart *sc.Statechart) error {
 	// Build compact index
 	lsv.index = BuildMemoryEfficientIndex(statechart)
-	
+
 	// Perform validation using the index
 	// This avoids traversing the full statechart multiple times
-	
+
 	// Check for duplicate state labels efficiently
 	if err := lsv.checkDuplicateStates(); err != nil {
 		return err
 	}
-	
+
 	// Validate transitions efficiently
 	if err := lsv.validateTransitionsEfficiently(statechart.Transitions); err != nil {
 		return err
 	}
-	
+
 	// Additional validations...
-	
+
 	return nil
 }
 
 // checkDuplicateStates checks for duplicate state labels using the index.
 func (lsv *LargeStatechartValidator) checkDuplicateStates() error {
 	seen := make(map[string]bool, len(lsv.index.stateLabels))
-	
+
 	for _, label := range lsv.index.stateLabels {
 		if seen[label] {
 			return fmt.Errorf("duplicate state label: %s", label)
 		}
 		seen[label] = true
 	}
-	
+
 	return nil
 }
 
@@ -621,7 +621,7 @@ func (lsv *LargeStatechartValidator) validateTransitionsEfficiently(transitions 
 				return fmt.Errorf("transition source state not found: %s", from)
 			}
 		}
-		
+
 		// Check that all target states exist
 		for _, to := range t.To {
 			if _, exists := lsv.index.stateIndices[to]; !exists {
@@ -629,7 +629,7 @@ func (lsv *LargeStatechartValidator) validateTransitionsEfficiently(transitions 
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -645,7 +645,7 @@ func NewConcurrentStatechartOptimizer(workers int) *ConcurrentStatechartOptimize
 	if workers <= 0 {
 		workers = runtime.NumCPU()
 	}
-	
+
 	return &ConcurrentStatechartOptimizer{
 		workers:   workers,
 		optimizer: NewLargeStatechartMemoryOptimizer(),
@@ -656,15 +656,15 @@ func NewConcurrentStatechartOptimizer(workers int) *ConcurrentStatechartOptimize
 // OptimizeConcurrently performs concurrent optimization of large statecharts.
 func (cso *ConcurrentStatechartOptimizer) OptimizeConcurrently(statechart *sc.Statechart) (*sc.Statechart, OptimizationReport) {
 	start := time.Now()
-	
+
 	// For very large statecharts, parallelize the optimization
 	optimized := &sc.Statechart{}
-	
+
 	var wg sync.WaitGroup
-	
+
 	// Optimize root state in main goroutine
 	optimized.RootState = cso.optimizer.optimizeStateDeep(statechart.RootState)
-	
+
 	// Optimize transitions concurrently
 	if len(statechart.Transitions) > 100 {
 		// Split transitions into chunks
@@ -672,7 +672,7 @@ func (cso *ConcurrentStatechartOptimizer) OptimizeConcurrently(statechart *sc.St
 		if chunkSize < 10 {
 			chunkSize = 10
 		}
-		
+
 		transitionChunks := make([][]*sc.Transition, 0)
 		for i := 0; i < len(statechart.Transitions); i += chunkSize {
 			end := i + chunkSize
@@ -681,7 +681,7 @@ func (cso *ConcurrentStatechartOptimizer) OptimizeConcurrently(statechart *sc.St
 			}
 			transitionChunks = append(transitionChunks, statechart.Transitions[i:end])
 		}
-		
+
 		// Process chunks concurrently
 		results := make([][]*sc.Transition, len(transitionChunks))
 		for i, chunk := range transitionChunks {
@@ -691,9 +691,9 @@ func (cso *ConcurrentStatechartOptimizer) OptimizeConcurrently(statechart *sc.St
 				results[idx] = cso.optimizer.optimizeTransitionsDeep(transitions)
 			}(i, chunk)
 		}
-		
+
 		wg.Wait()
-		
+
 		// Merge results
 		optimized.Transitions = make([]*sc.Transition, 0, len(statechart.Transitions))
 		for _, result := range results {
@@ -702,25 +702,25 @@ func (cso *ConcurrentStatechartOptimizer) OptimizeConcurrently(statechart *sc.St
 	} else {
 		optimized.Transitions = cso.optimizer.optimizeTransitionsDeep(statechart.Transitions)
 	}
-	
+
 	// Optimize events
 	optimized.Events = cso.optimizer.optimizeEventsDeep(statechart.Events)
-	
+
 	report := OptimizationReport{
 		Duration: time.Since(start),
 		Stats:    cso.optimizer.stats,
 	}
-	
+
 	return optimized, report
 }
 
 // MemoryBudgetManager manages memory usage within specified budgets.
 type MemoryBudgetManager struct {
-	maxMemory      uint64
+	maxMemory        uint64
 	warningThreshold uint64
-	currentUsage   uint64
-	mu             sync.RWMutex
-	callbacks      []MemoryBudgetCallback
+	currentUsage     uint64
+	mu               sync.RWMutex
+	callbacks        []MemoryBudgetCallback
 }
 
 // MemoryBudgetCallback is called when memory usage changes.
@@ -739,31 +739,35 @@ func NewMemoryBudgetManager(maxMemory uint64) *MemoryBudgetManager {
 func (mbm *MemoryBudgetManager) CheckBudget(estimatedSize uint64) (bool, uint64) {
 	mbm.mu.RLock()
 	defer mbm.mu.RUnlock()
-	
+
 	if mbm.currentUsage+estimatedSize > mbm.maxMemory {
 		return false, mbm.maxMemory - mbm.currentUsage
 	}
-	
+
 	return true, 0
 }
 
 // AllocateMemory records memory allocation.
 func (mbm *MemoryBudgetManager) AllocateMemory(size uint64) error {
 	mbm.mu.Lock()
-	defer mbm.mu.Unlock()
-	
+
 	if mbm.currentUsage+size > mbm.maxMemory {
+		mbm.mu.Unlock()
 		return fmt.Errorf("memory budget exceeded: requested %d, available %d", size, mbm.maxMemory-mbm.currentUsage)
 	}
-	
+
 	mbm.currentUsage += size
-	
-	// Notify callbacks
-	exceeded := mbm.currentUsage > mbm.warningThreshold
-	for _, cb := range mbm.callbacks {
-		go cb(mbm.currentUsage, mbm.maxMemory, exceeded)
+	currentUsage := mbm.currentUsage
+	maxMemory := mbm.maxMemory
+	exceeded := mbm.currentUsage >= mbm.warningThreshold
+	callbacks := append([]MemoryBudgetCallback(nil), mbm.callbacks...)
+	mbm.mu.Unlock()
+
+	// Notify callbacks synchronously to provide deterministic behavior.
+	for _, cb := range callbacks {
+		cb(currentUsage, maxMemory, exceeded)
 	}
-	
+
 	return nil
 }
 
@@ -771,7 +775,7 @@ func (mbm *MemoryBudgetManager) AllocateMemory(size uint64) error {
 func (mbm *MemoryBudgetManager) ReleaseMemory(size uint64) {
 	mbm.mu.Lock()
 	defer mbm.mu.Unlock()
-	
+
 	if size > mbm.currentUsage {
 		mbm.currentUsage = 0
 	} else {
@@ -803,9 +807,9 @@ type StatechartSizeEstimator struct {
 // NewStatechartSizeEstimator creates a new size estimator.
 func NewStatechartSizeEstimator() *StatechartSizeEstimator {
 	return &StatechartSizeEstimator{
-		averageStateSize:      200,  // bytes
-		averageTransitionSize: 150,  // bytes
-		averageEventSize:      50,   // bytes
+		averageStateSize:      200, // bytes
+		averageTransitionSize: 150, // bytes
+		averageEventSize:      50,  // bytes
 	}
 }
 
@@ -815,10 +819,10 @@ func (sse *StatechartSizeEstimator) EstimateStatechartMemory(stateCount, transit
 	estimate += uint64(stateCount) * sse.averageStateSize
 	estimate += uint64(transitionCount) * sse.averageTransitionSize
 	estimate += uint64(eventCount) * sse.averageEventSize
-	
+
 	// Add overhead for internal structures (20%)
 	estimate = uint64(float64(estimate) * 1.2)
-	
+
 	return estimate
 }
 
@@ -827,16 +831,16 @@ func (sse *StatechartSizeEstimator) EstimateMachineMemory(statechart *sc.Statech
 	// Base statechart size
 	stateCount := countStates(statechart.RootState)
 	estimate := sse.EstimateStatechartMemory(stateCount, len(statechart.Transitions), len(statechart.Events))
-	
+
 	// Configuration overhead
 	estimate += uint64(stateCount) * 50 // State references in configuration
-	
+
 	// History overhead
 	estimate += uint64(historySize) * 500 // Approximate step size
-	
+
 	// Context and runtime overhead
 	estimate += 10 * 1024 // 10KB baseline
-	
+
 	return estimate
 }
 
@@ -866,23 +870,23 @@ func (mpmf *MemoryPooledMachineFactory) CreateOptimizedMachine(statechart *sc.St
 	// Estimate memory requirements
 	stateCount := countStates(statechart.RootState)
 	estimatedSize := mpmf.sizeEstimator.EstimateMachineMemory(statechart, historyLimit)
-	
+
 	// Check budget
 	if ok, available := mpmf.budgetManager.CheckBudget(estimatedSize); !ok {
 		return nil, fmt.Errorf("insufficient memory budget: need %d bytes, only %d available", estimatedSize, available)
 	}
-	
+
 	// Check if we have a pre-optimized version
 	cacheKey := fmt.Sprintf("%p", statechart) // Simple pointer-based cache key
-	
+
 	mpmf.cacheMu.RLock()
 	optimized, exists := mpmf.preOptimizedCache[cacheKey]
 	mpmf.cacheMu.RUnlock()
-	
+
 	if !exists {
 		// Optimize the statechart
 		optimized, _ = mpmf.optimizer.OptimizeLargeStatechart(statechart)
-		
+
 		// Cache if it's large enough
 		if stateCount > 100 {
 			mpmf.cacheMu.Lock()
@@ -890,18 +894,18 @@ func (mpmf *MemoryPooledMachineFactory) CreateOptimizedMachine(statechart *sc.St
 			mpmf.cacheMu.Unlock()
 		}
 	}
-	
+
 	// Create the machine
 	machine, err := semantics.NewMachine(semantics.NewStatechart(optimized), id, nil)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Allocate memory budget
 	if err := mpmf.budgetManager.AllocateMemory(estimatedSize); err != nil {
 		return nil, err
 	}
-	
+
 	// Wrap with optimization
 	wrapped := &OptimizedMachineWrapper{
 		MachineWrapper: machine,
@@ -909,7 +913,7 @@ func (mpmf *MemoryPooledMachineFactory) CreateOptimizedMachine(statechart *sc.St
 		historyLimit:   historyLimit,
 		compactFreq:    max(10, historyLimit/10),
 	}
-	
+
 	return wrapped.MachineWrapper, nil
 }
 
@@ -917,7 +921,7 @@ func (mpmf *MemoryPooledMachineFactory) CreateOptimizedMachine(statechart *sc.St
 func (mpmf *MemoryPooledMachineFactory) ReleaseMachine(machine *semantics.MachineWrapper, estimatedSize uint64) {
 	// Release memory budget
 	mpmf.budgetManager.ReleaseMemory(estimatedSize)
-	
+
 	// Machine cleanup would go here
 }
 
@@ -967,17 +971,17 @@ type MemoryProfiledStatechart struct {
 func NewMemoryProfiledStatechart(statechart *sc.Statechart, optimize bool) *MemoryProfiledStatechart {
 	profiler := NewStatechartProfiler()
 	wrapped := semantics.NewStatechart(statechart)
-	
+
 	estimator := NewLargeStatechartMemoryOptimizer()
 	originalSize := estimator.estimateStatechartSize(statechart)
-	
+
 	optimizedSize := originalSize
 	if optimize {
 		optimized, report := estimator.OptimizeLargeStatechart(statechart)
 		wrapped = semantics.NewStatechart(optimized)
 		optimizedSize = report.OptimizedSize
 	}
-	
+
 	return &MemoryProfiledStatechart{
 		Statechart:    wrapped,
 		profiler:      profiler,
@@ -1039,69 +1043,69 @@ func NewLargeStatechartBenchmarkSuite() *LargeStatechartBenchmarkSuite {
 // createDeepStatechart creates a deep hierarchical statechart for testing.
 func createDeepStatechart(targetStates, targetTransitions, maxDepth int) *sc.Statechart {
 	builder := testing.NewStatechartBuilder()
-	
+
 	// Create a balanced tree structure
 	statesPerLevel := make([]int, maxDepth)
 	totalStates := 1 // root
-	
+
 	// Calculate states per level to reach target
 	for level := 1; level < maxDepth && totalStates < targetStates; level++ {
 		statesAtLevel := min(targetStates-totalStates, int(float64(targetStates-totalStates)/float64(maxDepth-level)))
 		statesPerLevel[level] = statesAtLevel
 		totalStates += statesAtLevel
 	}
-	
+
 	// Build the state tree
 	rootState := createStateTree("root", 0, maxDepth, statesPerLevel, &totalStates, targetStates)
 	builder.WithRootState(rootState)
-	
+
 	// Add transitions
 	allStates := collectAllStates(rootState)
 	transitionsAdded := 0
-	
+
 	for i := 0; i < len(allStates)-1 && transitionsAdded < targetTransitions; i++ {
 		fromState := allStates[i]
 		toState := allStates[(i+1)%len(allStates)]
-		
+
 		transition := testing.NewTransitionBuilder(fmt.Sprintf("t_%d", transitionsAdded)).
 			From(fromState.Label).
 			To(toState.Label).
 			OnEvent(fmt.Sprintf("event_%d", transitionsAdded%100)).
 			Build()
-		
+
 		builder.WithTransition(transition)
 		transitionsAdded++
 	}
-	
+
 	return builder.Build()
 }
 
 // createStateTree recursively creates a state tree.
 func createStateTree(prefix string, currentDepth, maxDepth int, statesPerLevel []int, totalStates *int, targetStates int) *sc.State {
 	stateBuilder := testing.NewStateBuilder(prefix)
-	
+
 	if currentDepth < maxDepth-1 && *totalStates < targetStates && currentDepth+1 < len(statesPerLevel) {
 		statesAtNextLevel := statesPerLevel[currentDepth+1]
 		if statesAtNextLevel > 0 {
 			stateBuilder.WithType(sc.StateTypeNormal)
-			
+
 			childrenPerNode := max(1, statesAtNextLevel/max(1, statesPerLevel[currentDepth]))
 			children := make([]*sc.State, 0, childrenPerNode)
-			
+
 			for i := 0; i < childrenPerNode && *totalStates < targetStates; i++ {
 				childPrefix := fmt.Sprintf("%s_%d", prefix, i)
 				child := createStateTree(childPrefix, currentDepth+1, maxDepth, statesPerLevel, totalStates, targetStates)
 				children = append(children, child)
 				(*totalStates)++
 			}
-			
+
 			if len(children) > 0 {
 				children[0].IsInitial = true
 				stateBuilder.WithChildren(children...)
 			}
 		}
 	}
-	
+
 	return stateBuilder.Build()
 }
 
@@ -1110,12 +1114,12 @@ func collectAllStates(state *sc.State) []*sc.State {
 	if state == nil {
 		return nil
 	}
-	
+
 	states := []*sc.State{state}
 	for _, child := range state.Children {
 		states = append(states, collectAllStates(child)...)
 	}
-	
+
 	return states
 }
 
@@ -1162,17 +1166,17 @@ func NewMemoryEfficientStatechartCache(maxSize int, maxMemory uint64) *MemoryEff
 func (cache *MemoryEfficientStatechartCache) Get(key string) (*sc.Statechart, bool) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
-	
+
 	entry, exists := cache.entries[key]
 	if !exists {
 		return nil, false
 	}
-	
+
 	// Update access time and move to front
 	entry.lastAccess = time.Now()
 	entry.hitCount++
 	cache.lru.moveToFront(entry)
-	
+
 	return entry.statechart, true
 }
 
@@ -1180,16 +1184,16 @@ func (cache *MemoryEfficientStatechartCache) Get(key string) (*sc.Statechart, bo
 func (cache *MemoryEfficientStatechartCache) Put(key string, statechart *sc.Statechart) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
-	
+
 	// Estimate size
 	stateCount := countStates(statechart.RootState)
 	size := cache.estimator.EstimateStatechartMemory(stateCount, len(statechart.Transitions), len(statechart.Events))
-	
+
 	// Check if we need to evict entries
 	for (len(cache.entries) >= cache.maxSize || cache.currentMemory+size > cache.maxMemory) && cache.lru.tail != nil {
 		cache.evictLRU()
 	}
-	
+
 	// Add new entry
 	entry := &CacheEntry{
 		key:        key,
@@ -1197,7 +1201,7 @@ func (cache *MemoryEfficientStatechartCache) Put(key string, statechart *sc.Stat
 		size:       size,
 		lastAccess: time.Now(),
 	}
-	
+
 	cache.entries[key] = entry
 	cache.lru.addToFront(entry)
 	cache.currentMemory += size
@@ -1208,7 +1212,7 @@ func (cache *MemoryEfficientStatechartCache) evictLRU() {
 	if cache.lru.tail == nil {
 		return
 	}
-	
+
 	entry := cache.lru.tail
 	cache.lru.remove(entry)
 	delete(cache.entries, entry.key)
@@ -1228,13 +1232,13 @@ func (lru *LRUList) remove(entry *CacheEntry) {
 	} else {
 		lru.head = entry.next
 	}
-	
+
 	if entry.next != nil {
 		entry.next.prev = entry.prev
 	} else {
 		lru.tail = entry.prev
 	}
-	
+
 	entry.prev = nil
 	entry.next = nil
 }
@@ -1243,13 +1247,13 @@ func (lru *LRUList) remove(entry *CacheEntry) {
 func (lru *LRUList) addToFront(entry *CacheEntry) {
 	entry.prev = nil
 	entry.next = lru.head
-	
+
 	if lru.head != nil {
 		lru.head.prev = entry
 	}
-	
+
 	lru.head = entry
-	
+
 	if lru.tail == nil {
 		lru.tail = entry
 	}
@@ -1259,17 +1263,17 @@ func (lru *LRUList) addToFront(entry *CacheEntry) {
 func (cache *MemoryEfficientStatechartCache) GetStats() CacheStats {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
-	
+
 	totalHits := int64(0)
 	for _, entry := range cache.entries {
 		totalHits += entry.hitCount
 	}
-	
+
 	return CacheStats{
-		Size:          len(cache.entries),
-		MemoryUsage:   cache.currentMemory,
-		MaxMemory:     cache.maxMemory,
-		TotalHits:     totalHits,
+		Size:           len(cache.entries),
+		MemoryUsage:    cache.currentMemory,
+		MaxMemory:      cache.maxMemory,
+		TotalHits:      totalHits,
 		UtilizationPct: float64(cache.currentMemory) / float64(cache.maxMemory) * 100,
 	}
 }

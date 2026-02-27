@@ -15,14 +15,14 @@ import (
 // MemorySnapshot represents a point-in-time memory usage measurement.
 type MemorySnapshot struct {
 	Timestamp   time.Time
-	Alloc       uint64 // Current heap allocations in bytes
-	TotalAlloc  uint64 // Cumulative heap allocations in bytes
-	Sys         uint64 // Total system memory obtained from OS
-	NumGC       uint32 // Number of completed GC cycles
-	HeapObjects uint64 // Number of allocated heap objects
-	StackInUse  uint64 // Stack memory in use
+	Alloc       uint64           // Current heap allocations in bytes
+	TotalAlloc  uint64           // Cumulative heap allocations in bytes
+	Sys         uint64           // Total system memory obtained from OS
+	NumGC       uint32           // Number of completed GC cycles
+	HeapObjects uint64           // Number of allocated heap objects
+	StackInUse  uint64           // Stack memory in use
 	MemStats    runtime.MemStats // Complete memory statistics
-	Label       string // Description of this snapshot
+	Label       string           // Description of this snapshot
 }
 
 // MemoryProfiler tracks memory usage during statechart operations.
@@ -59,11 +59,11 @@ func (mp *MemoryProfiler) Disable() {
 func (mp *MemoryProfiler) SetBaseline(label string) {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
-	
+
 	if !mp.enabled {
 		return
 	}
-	
+
 	baseline := mp.takeSnapshotUnsafe(label)
 	mp.baseline = &baseline
 }
@@ -72,13 +72,13 @@ func (mp *MemoryProfiler) SetBaseline(label string) {
 func (mp *MemoryProfiler) TakeSnapshot(label string) MemorySnapshot {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
-	
+
 	snapshot := mp.takeSnapshotUnsafe(label)
-	
+
 	if mp.enabled {
 		mp.snapshots = append(mp.snapshots, snapshot)
 	}
-	
+
 	return snapshot
 }
 
@@ -86,7 +86,7 @@ func (mp *MemoryProfiler) TakeSnapshot(label string) MemorySnapshot {
 func (mp *MemoryProfiler) takeSnapshotUnsafe(label string) MemorySnapshot {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	return MemorySnapshot{
 		Timestamp:   time.Now(),
 		Alloc:       m.Alloc,
@@ -104,7 +104,7 @@ func (mp *MemoryProfiler) takeSnapshotUnsafe(label string) MemorySnapshot {
 func (mp *MemoryProfiler) GetSnapshots() []MemorySnapshot {
 	mp.mu.RLock()
 	defer mp.mu.RUnlock()
-	
+
 	snapshots := make([]MemorySnapshot, len(mp.snapshots))
 	copy(snapshots, mp.snapshots)
 	return snapshots
@@ -114,11 +114,11 @@ func (mp *MemoryProfiler) GetSnapshots() []MemorySnapshot {
 func (mp *MemoryProfiler) GetBaseline() *MemorySnapshot {
 	mp.mu.RLock()
 	defer mp.mu.RUnlock()
-	
+
 	if mp.baseline == nil {
 		return nil
 	}
-	
+
 	baseline := *mp.baseline
 	return &baseline
 }
@@ -127,7 +127,7 @@ func (mp *MemoryProfiler) GetBaseline() *MemorySnapshot {
 func (mp *MemoryProfiler) Clear() {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
-	
+
 	mp.snapshots = mp.snapshots[:0]
 	mp.baseline = nil
 }
@@ -193,16 +193,16 @@ type MemoryLeakInfo struct {
 func (mp *MemoryProfiler) GenerateReport() MemoryReport {
 	mp.mu.RLock()
 	defer mp.mu.RUnlock()
-	
+
 	if len(mp.snapshots) == 0 {
 		return MemoryReport{
 			Recommendations: []string{"No memory snapshots available for analysis"},
 		}
 	}
-	
+
 	start := mp.snapshots[0]
 	end := mp.snapshots[len(mp.snapshots)-1]
-	
+
 	// Find peak allocation
 	peakAlloc := uint64(0)
 	peakLabel := ""
@@ -212,7 +212,7 @@ func (mp *MemoryProfiler) GenerateReport() MemoryReport {
 			peakLabel = snapshot.Label
 		}
 	}
-	
+
 	report := MemoryReport{
 		StartTime:       start.Timestamp,
 		EndTime:         end.Timestamp,
@@ -225,7 +225,7 @@ func (mp *MemoryProfiler) GenerateReport() MemoryReport {
 		MemoryLeaks:     mp.detectLeaksBasic(),
 		Recommendations: mp.generateRecommendations(),
 	}
-	
+
 	return report
 }
 
@@ -234,27 +234,27 @@ func (mp *MemoryProfiler) detectLeaksBasic() []DetectedLeak {
 	if len(mp.snapshots) < 3 {
 		return nil
 	}
-	
+
 	var leaks []DetectedLeak
-	
+
 	// Look for sustained memory growth patterns
 	windowSize := 5
 	if len(mp.snapshots) < windowSize {
 		windowSize = len(mp.snapshots)
 	}
-	
+
 	for i := 0; i <= len(mp.snapshots)-windowSize; i++ {
 		start := mp.snapshots[i]
 		end := mp.snapshots[i+windowSize-1]
-		
+
 		duration := end.Timestamp.Sub(start.Timestamp).Seconds()
 		if duration <= 0 {
 			continue
 		}
-		
+
 		allocGrowth := int64(end.Alloc) - int64(start.Alloc)
 		leakRate := float64(allocGrowth) / duration
-		
+
 		// Detect significant memory growth without GC reclaiming it
 		if allocGrowth > 1024*1024 && leakRate > 1024 { // > 1MB growth at > 1KB/sec
 			severityLevel := Low
@@ -263,7 +263,7 @@ func (mp *MemoryProfiler) detectLeaksBasic() []DetectedLeak {
 			} else if leakRate > 100*1024 { // > 100KB/sec
 				severityLevel = Medium
 			}
-			
+
 			// Convert MemorySnapshot to MemorySample
 			samples := []MemorySample{
 				{
@@ -285,7 +285,7 @@ func (mp *MemoryProfiler) detectLeaksBasic() []DetectedLeak {
 					Label:          end.Label,
 				},
 			}
-			
+
 			leak := DetectedLeak{
 				Type:        MemoryLeak,
 				Severity:    severityLevel,
@@ -300,7 +300,7 @@ func (mp *MemoryProfiler) detectLeaksBasic() []DetectedLeak {
 			leaks = append(leaks, leak)
 		}
 	}
-	
+
 	return leaks
 }
 
@@ -309,45 +309,45 @@ func (mp *MemoryProfiler) generateRecommendations() []string {
 	if len(mp.snapshots) < 2 {
 		return []string{"Need more snapshots for meaningful recommendations"}
 	}
-	
+
 	var recommendations []string
-	
+
 	start := mp.snapshots[0]
 	end := mp.snapshots[len(mp.snapshots)-1]
-	
+
 	// Check for excessive allocations
 	totalAlloc := end.TotalAlloc - start.TotalAlloc
 	duration := end.Timestamp.Sub(start.Timestamp).Seconds()
-	
+
 	if duration > 0 {
 		allocRate := float64(totalAlloc) / duration
 		if allocRate > 50*1024*1024 { // > 50MB/sec
 			recommendations = append(recommendations, "High allocation rate detected. Consider object pooling or reducing temporary allocations.")
 		}
 	}
-	
+
 	// Check GC pressure
 	gcCount := end.NumGC - start.NumGC
 	if duration > 0 && float64(gcCount)/duration > 10 { // > 10 GC/sec
 		recommendations = append(recommendations, "High GC frequency. Consider reducing allocation pressure or tuning GC parameters.")
 	}
-	
+
 	// Check for memory growth
 	memGrowth := int64(end.Alloc) - int64(start.Alloc)
 	if memGrowth > 100*1024*1024 { // > 100MB growth
 		recommendations = append(recommendations, "Significant memory growth detected. Check for memory leaks or excessive caching.")
 	}
-	
+
 	// Check object count growth
 	objGrowth := int64(end.HeapObjects) - int64(start.HeapObjects)
 	if objGrowth > 1000000 { // > 1M objects
 		recommendations = append(recommendations, "Large increase in heap objects. Consider object reuse or more efficient data structures.")
 	}
-	
+
 	if len(recommendations) == 0 {
 		recommendations = append(recommendations, "Memory usage patterns appear normal.")
 	}
-	
+
 	return recommendations
 }
 
@@ -370,9 +370,9 @@ func (sp *StatechartProfiler) ProfileValidation(statechart *semantics.Statechart
 	if !sp.enabled {
 		return func() MemoryDelta { return MemoryDelta{} }, nil
 	}
-	
+
 	before := sp.mp.TakeSnapshot("validation_start")
-	
+
 	return func() MemoryDelta {
 		after := sp.mp.TakeSnapshot("validation_end")
 		return ComputeDelta(before, after)
@@ -386,11 +386,11 @@ func (sp *StatechartProfiler) ProfileMachineCreation(statechart *semantics.State
 		machine, err := semantics.NewMachine(statechart, id, nil)
 		return func() MemoryDelta { return MemoryDelta{} }, machine, err
 	}
-	
+
 	before := sp.mp.TakeSnapshot("machine_creation_start")
 	machine, err := semantics.NewMachine(statechart, id, nil)
 	after := sp.mp.TakeSnapshot("machine_creation_end")
-	
+
 	delta := ComputeDelta(before, after)
 	return func() MemoryDelta { return delta }, machine, err
 }
@@ -401,11 +401,11 @@ func (sp *StatechartProfiler) ProfileEventProcessing(machine *semantics.MachineW
 		stepped, err := machine.Step(eventName)
 		return func() MemoryDelta { return MemoryDelta{} }, stepped, err
 	}
-	
+
 	before := sp.mp.TakeSnapshot(fmt.Sprintf("event_%s_start", eventName))
 	stepped, err := machine.Step(eventName)
 	after := sp.mp.TakeSnapshot(fmt.Sprintf("event_%s_end", eventName))
-	
+
 	delta := ComputeDelta(before, after)
 	return func() MemoryDelta { return delta }, stepped, err
 }
@@ -415,51 +415,51 @@ func (sp *StatechartProfiler) ProfileStatechartLifecycle(statechartFunc func() *
 	if !sp.enabled {
 		return &LifecycleProfile{}, nil
 	}
-	
+
 	profile := &LifecycleProfile{
 		Operations: make(map[string]MemoryDelta),
 		StartTime:  time.Now(),
 	}
-	
+
 	// Baseline
 	sp.mp.SetBaseline("lifecycle_baseline")
-	
+
 	// Create statechart
 	before := sp.mp.TakeSnapshot("statechart_creation_start")
 	statechart := semantics.NewStatechart(statechartFunc())
 	after := sp.mp.TakeSnapshot("statechart_creation_end")
 	profile.Operations["statechart_creation"] = ComputeDelta(before, after)
-	
+
 	// Validation
 	before = sp.mp.TakeSnapshot("validation_start")
 	err := statechart.Validate()
 	after = sp.mp.TakeSnapshot("validation_end")
 	profile.Operations["validation"] = ComputeDelta(before, after)
-	
+
 	if err != nil {
 		return profile, fmt.Errorf("validation failed: %w", err)
 	}
-	
+
 	// Machine creation
 	before = sp.mp.TakeSnapshot("machine_creation_start")
 	machine, err := semantics.NewMachine(statechart, "profile_machine", nil)
 	after = sp.mp.TakeSnapshot("machine_creation_end")
 	profile.Operations["machine_creation"] = ComputeDelta(before, after)
-	
+
 	if err != nil {
 		return profile, fmt.Errorf("machine creation failed: %w", err)
 	}
-	
+
 	// Start machine
 	before = sp.mp.TakeSnapshot("machine_start_start")
 	err = machine.Start()
 	after = sp.mp.TakeSnapshot("machine_start_end")
 	profile.Operations["machine_start"] = ComputeDelta(before, after)
-	
+
 	if err != nil {
 		return profile, fmt.Errorf("machine start failed: %w", err)
 	}
-	
+
 	// Process events
 	for i, operation := range operations {
 		label := fmt.Sprintf("operation_%d_%s", i, operation)
@@ -468,16 +468,16 @@ func (sp *StatechartProfiler) ProfileStatechartLifecycle(statechartFunc func() *
 		after = sp.mp.TakeSnapshot(label + "_end")
 		profile.Operations[label] = ComputeDelta(before, after)
 	}
-	
+
 	// Stop machine
 	before = sp.mp.TakeSnapshot("machine_stop_start")
 	_ = machine.Stop()
 	after = sp.mp.TakeSnapshot("machine_stop_end")
 	profile.Operations["machine_stop"] = ComputeDelta(before, after)
-	
+
 	profile.EndTime = time.Now()
 	profile.TotalDuration = profile.EndTime.Sub(profile.StartTime)
-	
+
 	return profile, nil
 }
 
@@ -530,18 +530,18 @@ func (ma *MemoryAnalyzer) AddProfile(profile LifecycleProfile) {
 func (ma *MemoryAnalyzer) AnalyzePatterns() MemoryPatternAnalysis {
 	ma.mu.RLock()
 	defer ma.mu.RUnlock()
-	
+
 	if len(ma.profiles) == 0 {
 		return MemoryPatternAnalysis{
 			Issues: []string{"No profiles available for analysis"},
 		}
 	}
-	
+
 	analysis := MemoryPatternAnalysis{
 		ProfileCount: len(ma.profiles),
 		Operations:   make(map[string]OperationStats),
 	}
-	
+
 	// Aggregate statistics by operation type
 	for _, profile := range ma.profiles {
 		for opName, delta := range profile.Operations {
@@ -549,18 +549,18 @@ func (ma *MemoryAnalyzer) AnalyzePatterns() MemoryPatternAnalysis {
 			stats.Count++
 			stats.TotalAlloc += delta.DeltaAlloc
 			stats.TotalObjects += delta.DeltaHeapObjects
-			
+
 			if delta.DeltaAlloc > stats.MaxAlloc {
 				stats.MaxAlloc = delta.DeltaAlloc
 			}
 			if stats.MinAlloc == 0 || delta.DeltaAlloc < stats.MinAlloc {
 				stats.MinAlloc = delta.DeltaAlloc
 			}
-			
+
 			analysis.Operations[opName] = stats
 		}
 	}
-	
+
 	// Calculate averages and identify issues
 	for opName, stats := range analysis.Operations {
 		if stats.Count > 0 {
@@ -568,21 +568,21 @@ func (ma *MemoryAnalyzer) AnalyzePatterns() MemoryPatternAnalysis {
 			stats.AvgObjects = stats.TotalObjects / int64(stats.Count)
 			analysis.Operations[opName] = stats
 		}
-		
+
 		// Identify potential issues
 		if stats.AvgAlloc > 10*1024*1024 { // > 10MB average
 			analysis.Issues = append(analysis.Issues, fmt.Sprintf("Operation '%s' has high average allocation: %d bytes", opName, stats.AvgAlloc))
 		}
-		
+
 		if stats.MaxAlloc > 100*1024*1024 { // > 100MB peak
 			analysis.Issues = append(analysis.Issues, fmt.Sprintf("Operation '%s' has very high peak allocation: %d bytes", opName, stats.MaxAlloc))
 		}
 	}
-	
+
 	if len(analysis.Issues) == 0 {
 		analysis.Issues = append(analysis.Issues, "No significant memory issues detected")
 	}
-	
+
 	return analysis
 }
 
@@ -623,7 +623,7 @@ func (po *ProfiledOperation) Execute(operation func() error) (MemoryDelta, error
 	before := po.profiler.mp.TakeSnapshot(po.name + "_start")
 	err := operation()
 	after := po.profiler.mp.TakeSnapshot(po.name + "_end")
-	
+
 	return ComputeDelta(before, after), err
 }
 
@@ -637,18 +637,22 @@ type MemoryConstraint struct {
 
 // Check verifies if a memory delta satisfies the constraint.
 func (mc MemoryConstraint) Check(delta MemoryDelta) error {
-	if mc.MaxAllocation > 0 && delta.DeltaAlloc > mc.MaxAllocation {
-		return fmt.Errorf("constraint '%s' violated: allocation %d exceeds limit %d", mc.Name, delta.DeltaAlloc, mc.MaxAllocation)
+	alloc := delta.DeltaAlloc
+	if delta.DeltaTotalAlloc > alloc {
+		alloc = delta.DeltaTotalAlloc
 	}
-	
+	if mc.MaxAllocation > 0 && alloc > mc.MaxAllocation {
+		return fmt.Errorf("constraint '%s' violated: allocation %d exceeds limit %d", mc.Name, alloc, mc.MaxAllocation)
+	}
+
 	if mc.MaxObjects > 0 && delta.DeltaHeapObjects > mc.MaxObjects {
 		return fmt.Errorf("constraint '%s' violated: object count %d exceeds limit %d", mc.Name, delta.DeltaHeapObjects, mc.MaxObjects)
 	}
-	
+
 	if mc.MaxDuration > 0 && delta.Duration > mc.MaxDuration {
 		return fmt.Errorf("constraint '%s' violated: duration %v exceeds limit %v", mc.Name, delta.Duration, mc.MaxDuration)
 	}
-	
+
 	return nil
 }
 
@@ -670,18 +674,18 @@ func NewConstrainedProfiler(constraints []MemoryConstraint) *ConstrainedProfiler
 func (cp *ConstrainedProfiler) ProfileWithConstraints(name string, operation func() error) (MemoryDelta, error) {
 	profOp := NewProfiledOperation(cp.profiler, name)
 	delta, err := profOp.Execute(operation)
-	
+
 	if err != nil {
 		return delta, err
 	}
-	
+
 	// Check constraints
 	for _, constraint := range cp.constraints {
 		if constraintErr := constraint.Check(delta); constraintErr != nil {
 			return delta, constraintErr
 		}
 	}
-	
+
 	return delta, nil
 }
 
@@ -711,13 +715,13 @@ func NewBatchProfiler() *BatchProfiler {
 // ProfileSequential profiles operations run in sequence.
 func (bp *BatchProfiler) ProfileSequential(operations map[string]func() error) []BatchResult {
 	results := make([]BatchResult, 0, len(operations))
-	
+
 	for name, operation := range operations {
 		start := time.Now()
 		profOp := NewProfiledOperation(bp.profiler, name)
 		delta, err := profOp.Execute(operation)
 		duration := time.Since(start)
-		
+
 		result := BatchResult{
 			Name:     name,
 			Delta:    delta,
@@ -726,11 +730,11 @@ func (bp *BatchProfiler) ProfileSequential(operations map[string]func() error) [
 		}
 		results = append(results, result)
 	}
-	
+
 	bp.mu.Lock()
 	bp.results = append(bp.results, results...)
 	bp.mu.Unlock()
-	
+
 	return results
 }
 
@@ -738,17 +742,17 @@ func (bp *BatchProfiler) ProfileSequential(operations map[string]func() error) [
 func (bp *BatchProfiler) ProfileParallel(operations map[string]func() error) []BatchResult {
 	var wg sync.WaitGroup
 	resultChan := make(chan BatchResult, len(operations))
-	
+
 	for name, operation := range operations {
 		wg.Add(1)
 		go func(opName string, op func() error) {
 			defer wg.Done()
-			
+
 			start := time.Now()
 			profOp := NewProfiledOperation(bp.profiler, opName)
 			delta, err := profOp.Execute(op)
 			duration := time.Since(start)
-			
+
 			resultChan <- BatchResult{
 				Name:     opName,
 				Delta:    delta,
@@ -757,19 +761,19 @@ func (bp *BatchProfiler) ProfileParallel(operations map[string]func() error) []B
 			}
 		}(name, operation)
 	}
-	
+
 	wg.Wait()
 	close(resultChan)
-	
+
 	results := make([]BatchResult, 0, len(operations))
 	for result := range resultChan {
 		results = append(results, result)
 	}
-	
+
 	bp.mu.Lock()
 	bp.results = append(bp.results, results...)
 	bp.mu.Unlock()
-	
+
 	return results
 }
 
@@ -777,7 +781,7 @@ func (bp *BatchProfiler) ProfileParallel(operations map[string]func() error) []B
 func (bp *BatchProfiler) GetAllResults() []BatchResult {
 	bp.mu.Lock()
 	defer bp.mu.Unlock()
-	
+
 	results := make([]BatchResult, len(bp.results))
 	copy(results, bp.results)
 	return results
@@ -805,14 +809,14 @@ func NewContinuousProfiler(interval time.Duration) *ContinuousProfiler {
 func (cp *ContinuousProfiler) Start() {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
-	
+
 	if cp.running {
 		return
 	}
-	
+
 	cp.ctx, cp.cancel = context.WithCancel(context.Background())
 	cp.running = true
-	
+
 	go cp.run()
 }
 
@@ -820,11 +824,11 @@ func (cp *ContinuousProfiler) Start() {
 func (cp *ContinuousProfiler) Stop() {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
-	
+
 	if !cp.running {
 		return
 	}
-	
+
 	cp.cancel()
 	cp.running = false
 }
@@ -833,7 +837,7 @@ func (cp *ContinuousProfiler) Stop() {
 func (cp *ContinuousProfiler) run() {
 	ticker := time.NewTicker(cp.interval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-cp.ctx.Done():
