@@ -161,7 +161,7 @@ func TestBuildClassification(t *testing.T) {
 			wantFam: "flat",
 		},
 		{
-			name: "parallel",
+			name: "orthogonal",
 			chart: &sc.Statechart{
 				Name: "par",
 				RootState: &sc.State{
@@ -176,7 +176,7 @@ func TestBuildClassification(t *testing.T) {
 					},
 				},
 			},
-			wantFam: "parallel",
+			wantFam: "orthogonal",
 			wantPar: true,
 		},
 	}

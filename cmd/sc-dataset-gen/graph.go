@@ -8,9 +8,13 @@ import (
 	"github.com/tmc/sc/analysis"
 )
 
+// maxMatrixSize is the threshold above which adjacency and reachability
+// matrices are omitted to avoid multi-megabyte output.
+const maxMatrixSize = 200
+
 type graphFeatures struct {
-	AdjacencyMatrix    [][]int `json:"adjacency_matrix"`
-	ReachabilityMatrix [][]int `json:"reachability_matrix"`
+	AdjacencyMatrix    [][]int `json:"adjacency_matrix,omitempty"`
+	ReachabilityMatrix [][]int `json:"reachability_matrix,omitempty"`
 	StateCount         int     `json:"state_count"`
 	TransitionCount    int     `json:"transition_count"`
 	MaxDepth           int     `json:"max_depth"`
@@ -31,27 +35,29 @@ func buildGraphFeatures(chart *sc.Statechart) *graphFeatures {
 	}
 	n := len(states)
 
-	// Build adjacency matrix.
-	adj := make([][]int, n)
-	for i := range adj {
-		adj[i] = make([]int, n)
-	}
-	for _, t := range g.Transitions {
-		fi, fok := idx[t.From]
-		ti, tok := idx[t.To]
-		if fok && tok {
-			adj[fi][ti] = 1
+	// Only build dense matrices for reasonably-sized charts.
+	var adj, reach [][]int
+	if n <= maxMatrixSize {
+		adj = make([][]int, n)
+		for i := range adj {
+			adj[i] = make([]int, n)
 		}
-	}
+		for _, t := range g.Transitions {
+			fi, fok := idx[t.From]
+			ti, tok := idx[t.To]
+			if fok && tok {
+				adj[fi][ti] = 1
+			}
+		}
 
-	// Build reachability matrix via BFS from each state.
-	reach := make([][]int, n)
-	for i := range reach {
-		reach[i] = make([]int, n)
-		reachable := g.Reachable([]string{states[i]})
-		for _, r := range reachable {
-			if j, ok := idx[r]; ok {
-				reach[i][j] = 1
+		reach = make([][]int, n)
+		for i := range reach {
+			reach[i] = make([]int, n)
+			reachable := g.Reachable([]string{states[i]})
+			for _, r := range reachable {
+				if j, ok := idx[r]; ok {
+					reach[i][j] = 1
+				}
 			}
 		}
 	}
@@ -81,13 +87,18 @@ func buildGraphFeatures(chart *sc.Statechart) *graphFeatures {
 		}
 	}
 
-	// Has cycles: check diagonal of reachability matrix (self-reachable).
+	// Has cycles: either from reachability diagonal or via DFS for large charts.
 	hasCycles := false
-	for i := 0; i < n; i++ {
-		if reach[i][i] == 1 {
-			hasCycles = true
-			break
+	if reach != nil {
+		for i := range n {
+			if reach[i][i] == 1 {
+				hasCycles = true
+				break
+			}
 		}
+	} else {
+		// For large charts, detect cycles via DFS.
+		hasCycles = detectCycles(g, states)
 	}
 
 	return &graphFeatures{
@@ -100,4 +111,44 @@ func buildGraphFeatures(chart *sc.Statechart) *graphFeatures {
 		HasCycles:          hasCycles,
 		HasDeadEnds:        len(g.DeadEnds()) > 0,
 	}
+}
+
+// detectCycles checks for cycles using DFS with a coloring scheme.
+func detectCycles(g *analysis.StateGraph, states []string) bool {
+	const (
+		white = 0 // unvisited
+		gray  = 1 // in current DFS path
+		black = 2 // fully explored
+	)
+	color := make(map[string]int, len(states))
+	for _, s := range states {
+		color[s] = white
+	}
+
+	var dfs func(string) bool
+	dfs = func(s string) bool {
+		color[s] = gray
+		node := g.States[s]
+		if node != nil {
+			for _, edge := range node.Outgoing {
+				switch color[edge.To] {
+				case gray:
+					return true // back edge = cycle
+				case white:
+					if dfs(edge.To) {
+						return true
+					}
+				}
+			}
+		}
+		color[s] = black
+		return false
+	}
+
+	for _, s := range states {
+		if color[s] == white && dfs(s) {
+			return true
+		}
+	}
+	return false
 }

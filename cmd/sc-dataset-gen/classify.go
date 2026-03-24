@@ -9,6 +9,7 @@ type classification struct {
 	Depth         int      `json:"depth"`
 	HasParallel   bool     `json:"has_parallel"`
 	HasHistory    bool     `json:"has_history"`
+	HasGuards     bool     `json:"has_guards"`
 	HasInterLevel bool     `json:"has_inter_level"`
 }
 
@@ -38,28 +39,35 @@ func buildClassification(chart *sc.Statechart) *classification {
 	}
 	walk(chart.RootState, 0)
 
-	// Check transitions for inter-level.
+	// Check transitions for inter-level and guards.
 	for _, t := range chart.Transitions {
-		if t == nil || len(t.From) == 0 || len(t.To) == 0 {
+		if t == nil {
 			continue
 		}
-		srcDepth := depthMap[t.From[0]]
-		tgtDepth := depthMap[t.To[0]]
-		if srcDepth != tgtDepth {
-			c.HasInterLevel = true
-			break
+		if !c.HasInterLevel && len(t.From) > 0 && len(t.To) > 0 {
+			if depthMap[t.From[0]] != depthMap[t.To[0]] {
+				c.HasInterLevel = true
+			}
+		}
+		if !c.HasGuards && t.Guard != nil {
+			if (t.Guard.Expression != "" || (t.Guard.Condition != nil && t.Guard.Condition.Source != "")) {
+				c.HasGuards = true
+			}
 		}
 	}
 
-	// Assign families.
+	// Assign families aligned with corpus naming.
 	if c.Depth <= 2 {
 		c.Families = append(c.Families, "flat")
 	}
-	if c.Depth > 2 && !c.HasParallel {
-		c.Families = append(c.Families, "hierarchical")
+	if c.Depth == 3 {
+		c.Families = append(c.Families, "shallow_nested")
+	}
+	if c.Depth >= 4 {
+		c.Families = append(c.Families, "deep_nested")
 	}
 	if c.HasParallel {
-		c.Families = append(c.Families, "parallel")
+		c.Families = append(c.Families, "orthogonal")
 	}
 	if c.HasHistory {
 		c.Families = append(c.Families, "history")
