@@ -261,8 +261,8 @@ func processChartForCorpus(chartPath string, cfg corpusConfig) (*datasetRecord, 
 		Events:       events,
 	}
 
-	// Classification is always needed for family filtering.
-	if cfg.products.has("classification") || cfg.products.has("all") || len(cfg.families) > 0 {
+	// Classification is needed for family filtering and validation metadata.
+	if cfg.products.has("classification") || cfg.products.has("validation") || cfg.products.has("all") || len(cfg.families) > 0 {
 		record.Classification = buildClassification(chart)
 	}
 
@@ -318,6 +318,14 @@ func processChartForCorpus(chartPath string, cfg corpusConfig) (*datasetRecord, 
 
 	if (cfg.products.has("mutation") || cfg.products.has("all")) && len(chart.Transitions) > 0 {
 		record.MutationRows = generateMutations(chart, chartID, cfg.seed, cfg.mutations)
+	}
+
+	if cfg.products.has("validation") || cfg.products.has("all") {
+		var fams []string
+		if record.Classification != nil {
+			fams = record.Classification.Families
+		}
+		record.ValidationRows = buildValidationRows(chart, chartID, fams, cfg.seed, cfg.mutations)
 	}
 
 	// Remove traces from output if not explicitly requested.
