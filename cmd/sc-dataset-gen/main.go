@@ -28,7 +28,7 @@
 //	-events      Comma-separated event override.
 //	-seed        PRNG seed (default 1).
 //	-coverage    Enable coverage-driven trace generation.
-//	-mutations   Number of mutation variants per chart (default 3).
+//	-mutations   Number of mutation variants per chart (default 20).
 //	-split       Enable train/eval/test split assignment in corpus mode.
 //	-split-ratio Split percentages as train,eval,test (default "80,10,10").
 //	-families    Comma-separated family filter for corpus mode.
@@ -122,7 +122,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 	eventsOverride := fs.String("events", "", "comma-separated event override")
 	seed := fs.Int64("seed", 1, "PRNG seed")
 	coverageFlag := fs.Bool("coverage", false, "enable coverage-driven trace generation")
-	mutationCount := fs.Int("mutations", 3, "number of mutations per chart")
+	mutationCount := fs.Int("mutations", 20, "number of mutations per chart")
 	split := fs.Bool("split", false, "enable train/eval/test splits in corpus mode")
 	splitRatio := fs.String("split-ratio", "80,10,10", "train,eval,test percentages")
 	families := fs.String("families", "", "comma-separated family filter")

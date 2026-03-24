@@ -20,10 +20,15 @@ type validationRow struct {
 	ChartID         string           `json:"chart_id"`
 	ChartHash       string           `json:"chart_hash"`
 	IsMutated       bool             `json:"is_mutated"`
+	IsSynthetic     bool             `json:"is_synthetic,omitempty"`
 	MutationFamily  string           `json:"mutation_family,omitempty"`
 	MutationOp      string           `json:"mutation_op,omitempty"`
 	NStates         int              `json:"n_states"`
 	NTransitions    int              `json:"n_transitions"`
+	MaxDepth        int              `json:"max_depth"`
+	HasParallel     bool             `json:"has_parallel"`
+	HasHistory      bool             `json:"has_history"`
+	HasGuards       bool             `json:"has_guards"`
 	Families        []string         `json:"families"`
 	Violations      []violationEntry `json:"violations"`
 	ViolatedRuleIDs []int            `json:"violated_rule_ids"`
@@ -40,17 +45,25 @@ type violationEntry struct {
 
 // buildValidationRows runs the validator against the clean chart, targeted
 // mutations, and synthetic charts designed to trigger all 35 rule IDs.
+// It uses round-robin sampling to ensure all mutation operators are exercised
+// before repeating, and includes size-varied synthetic charts for diversity.
 func buildValidationRows(chart *sc.Statechart, chartID string, families []string, seed int64, mutationCount int) []validationRow {
 	var rows []validationRow
 
 	// Clean chart row.
 	rows = append(rows, runValidation(chart, chartID, families, false, "", ""))
 
-	// Targeted mutations that exercise specific rule violations.
+	// Targeted mutations: round-robin through all operators, then random.
 	rng := rand.New(rand.NewSource(seed))
 	mutators := targetedMutators()
+	perm := rng.Perm(len(mutators))
 	for i := 0; i < mutationCount; i++ {
-		m := mutators[rng.Intn(len(mutators))]
+		var m targetedMutator
+		if i < len(mutators) {
+			m = mutators[perm[i]]
+		} else {
+			m = mutators[rng.Intn(len(mutators))]
+		}
 		mutated := proto.Clone(chart).(*sc.Statechart)
 		op, ok := m.fn(mutated, rng)
 		if !ok {
@@ -63,7 +76,17 @@ func buildValidationRows(chart *sc.Statechart, chartID string, families []string
 	// other rules that require specific structural patterns.
 	for _, sc := range syntheticViolationCharts() {
 		id := fmt.Sprintf("%s__synthetic_%s", chartID, sc.family)
-		rows = append(rows, runValidation(sc.chart, id, families, true, sc.family, sc.op))
+		row := runValidation(sc.chart, id, families, true, sc.family, sc.op)
+		row.IsSynthetic = true
+		rows = append(rows, row)
+	}
+
+	// Scaled synthetic charts: size-varied versions of violations for diversity.
+	for _, sc := range scaledSyntheticCharts(rng) {
+		id := fmt.Sprintf("%s__scaled_%s", chartID, sc.family)
+		row := runValidation(sc.chart, id, families, true, sc.family, sc.op)
+		row.IsSynthetic = true
+		rows = append(rows, row)
 	}
 
 	return rows
@@ -81,6 +104,10 @@ func runValidation(chart *sc.Statechart, chartID string, families []string, isMu
 		MutationOp:     mutOp,
 		NStates:        countStates(chart.RootState),
 		NTransitions:   len(chart.Transitions),
+		MaxDepth:       maxDepth(chart.RootState, 0),
+		HasParallel:    hasStateType(chart.RootState, sc.StateTypeParallel),
+		HasHistory:     hasHistoryState(chart.RootState),
+		HasGuards:      hasGuards(chart),
 		Families:       families,
 		IsWellFormed:   true,
 	}
@@ -953,4 +980,341 @@ func findState(root *sc.State, label string) *sc.State {
 		}
 	}
 	return nil
+}
+
+// maxDepth returns the maximum nesting depth of the state tree.
+func maxDepth(s *sc.State, depth int) int {
+	if s == nil {
+		return depth
+	}
+	best := depth
+	for _, c := range s.Children {
+		if d := maxDepth(c, depth+1); d > best {
+			best = d
+		}
+	}
+	return best
+}
+
+// hasStateType checks if any state in the tree has the given type.
+func hasStateType(root *sc.State, typ sc.StateType) bool {
+	if root == nil {
+		return false
+	}
+	if root.Type == typ {
+		return true
+	}
+	for _, c := range root.Children {
+		if hasStateType(c, typ) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasHistoryState checks if any state has IsHistory set.
+func hasHistoryState(root *sc.State) bool {
+	if root == nil {
+		return false
+	}
+	if root.IsHistory {
+		return true
+	}
+	for _, c := range root.Children {
+		if hasHistoryState(c) {
+			return true
+		}
+	}
+	return false
+}
+
+// scaledSyntheticCharts generates size-varied charts that trigger each rule
+// band at different scales (small, medium, large) for training diversity.
+func scaledSyntheticCharts(rng *rand.Rand) []syntheticChart {
+	var charts []syntheticChart
+
+	// Band 1 scaled: structural rules at different sizes.
+	for _, size := range []int{5, 10, 20} {
+		charts = append(charts, scaledDuplicateLabel(size)...)
+		charts = append(charts, scaledExtraInitial(size)...)
+		charts = append(charts, scaledBasicWithChildren(size)...)
+		charts = append(charts, scaledCompoundNoChildren(size)...)
+	}
+
+	// Band 2 scaled: edge/pairwise rules at different sizes.
+	for _, size := range []int{5, 10, 15} {
+		charts = append(charts, scaledNondeterministic(size)...)
+		charts = append(charts, scaledInvalidGuard(size)...)
+	}
+
+	// Band 3 scaled: reconciled constraints with larger charts.
+	for _, size := range []int{4, 8, 12} {
+		charts = append(charts, scaledCompletionCycle(size)...)
+		charts = append(charts, scaledParallelConflict(size)...)
+	}
+
+	// Multi-violation charts: trigger 2-5 rules at once.
+	charts = append(charts, multiViolationCharts()...)
+
+	return charts
+}
+
+// --- Scaled chart generators ---
+
+// makeChain creates a chain of n basic states A0->A1->...->An-1 with transitions on event E.
+func makeChain(name string, n int) *sc.Statechart {
+	children := make([]*sc.State, n)
+	for i := 0; i < n; i++ {
+		children[i] = &sc.State{
+			Label:     fmt.Sprintf("S%d", i),
+			Type:      sc.StateTypeBasic,
+			IsInitial: i == 0,
+		}
+	}
+	transitions := make([]*sc.Transition, n-1)
+	for i := 0; i < n-1; i++ {
+		transitions[i] = &sc.Transition{
+			Label: fmt.Sprintf("t%d", i),
+			From:  []string{fmt.Sprintf("S%d", i)},
+			To:    []string{fmt.Sprintf("S%d", i+1)},
+			Event: "E",
+		}
+	}
+	return &sc.Statechart{
+		Name: name,
+		RootState: &sc.State{
+			Label:    "__root__",
+			Type:     sc.StateTypeOR,
+			Children: children,
+		},
+		Transitions: transitions,
+		Events:      []*sc.Event{{Label: "E"}},
+	}
+}
+
+func scaledDuplicateLabel(n int) []syntheticChart {
+	c := makeChain(fmt.Sprintf("dup_label_%d", n), n)
+	// Make last state duplicate the first label.
+	c.RootState.Children[n-1].Label = c.RootState.Children[0].Label
+	// Fix transition references.
+	c.Transitions[n-2].To = []string{c.RootState.Children[0].Label}
+	return []syntheticChart{{
+		family: fmt.Sprintf("duplicate_label_n%d", n),
+		op:     fmt.Sprintf("duplicate label in %d-state chain", n),
+		chart:  c,
+	}}
+}
+
+func scaledExtraInitial(n int) []syntheticChart {
+	c := makeChain(fmt.Sprintf("extra_init_%d", n), n)
+	// Mark two states as initial.
+	c.RootState.Children[n/2].IsInitial = true
+	return []syntheticChart{{
+		family: fmt.Sprintf("extra_initial_n%d", n),
+		op:     fmt.Sprintf("two initials in %d-state chain", n),
+		chart:  c,
+	}}
+}
+
+func scaledBasicWithChildren(n int) []syntheticChart {
+	c := makeChain(fmt.Sprintf("basic_child_%d", n), n)
+	// Add children to a basic state.
+	c.RootState.Children[n/2].Children = []*sc.State{
+		{Label: "illegal", Type: sc.StateTypeBasic, IsInitial: true},
+	}
+	return []syntheticChart{{
+		family: fmt.Sprintf("basic_with_children_n%d", n),
+		op:     fmt.Sprintf("basic state with children in %d-state chain", n),
+		chart:  c,
+	}}
+}
+
+func scaledCompoundNoChildren(n int) []syntheticChart {
+	c := makeChain(fmt.Sprintf("comp_empty_%d", n), n)
+	// Change a basic state to OR without adding children.
+	c.RootState.Children[n/2].Type = sc.StateTypeNormal
+	return []syntheticChart{{
+		family: fmt.Sprintf("compound_no_children_n%d", n),
+		op:     fmt.Sprintf("compound without children in %d-state chain", n),
+		chart:  c,
+	}}
+}
+
+func scaledNondeterministic(n int) []syntheticChart {
+	c := makeChain(fmt.Sprintf("nondet_%d", n), n)
+	// Add a duplicate transition from the same source on the same event.
+	c.Transitions = append(c.Transitions, &sc.Transition{
+		Label: "dup",
+		From:  []string{"S0"},
+		To:    []string{fmt.Sprintf("S%d", n-1)},
+		Event: "E",
+	})
+	return []syntheticChart{{
+		family: fmt.Sprintf("nondeterministic_n%d", n),
+		op:     fmt.Sprintf("duplicate transition in %d-state chain", n),
+		chart:  c,
+	}}
+}
+
+func scaledInvalidGuard(n int) []syntheticChart {
+	c := makeChain(fmt.Sprintf("bad_guard_%d", n), n)
+	c.Transitions[n/2].Guard = &sc.Guard{Expression: ";;invalid;;"}
+	return []syntheticChart{{
+		family: fmt.Sprintf("invalid_guard_n%d", n),
+		op:     fmt.Sprintf("invalid guard in %d-state chain", n),
+		chart:  c,
+	}}
+}
+
+func scaledCompletionCycle(regionSize int) []syntheticChart {
+	// Build a completion cycle of length regionSize.
+	children := make([]*sc.State, regionSize)
+	for i := 0; i < regionSize; i++ {
+		children[i] = &sc.State{
+			Label:     fmt.Sprintf("C%d", i),
+			Type:      sc.StateTypeBasic,
+			IsInitial: i == 0,
+		}
+	}
+	transitions := make([]*sc.Transition, regionSize)
+	for i := 0; i < regionSize; i++ {
+		transitions[i] = &sc.Transition{
+			Label: fmt.Sprintf("comp%d", i),
+			From:  []string{fmt.Sprintf("C%d", i)},
+			To:    []string{fmt.Sprintf("C%d", (i+1)%regionSize)},
+		}
+	}
+	return []syntheticChart{{
+		family: fmt.Sprintf("completion_cycle_n%d", regionSize),
+		op:     fmt.Sprintf("completion cycle of length %d", regionSize),
+		chart: &sc.Statechart{
+			Name: fmt.Sprintf("comp_cycle_%d", regionSize),
+			RootState: &sc.State{
+				Label:    "__root__",
+				Type:     sc.StateTypeOR,
+				Children: children,
+			},
+			Transitions: transitions,
+		},
+	}}
+}
+
+func scaledParallelConflict(nRegions int) []syntheticChart {
+	// Build a parallel state with nRegions/2 regions, each with conflicting transitions.
+	nR := nRegions / 2
+	if nR < 2 {
+		nR = 2
+	}
+	regions := make([]*sc.State, nR)
+	var transitions []*sc.Transition
+	for i := 0; i < nR; i++ {
+		rLabel := fmt.Sprintf("R%d", i)
+		aLabel := fmt.Sprintf("R%d_A", i)
+		bLabel := fmt.Sprintf("R%d_B", i)
+		regions[i] = &sc.State{
+			Label: rLabel,
+			Type:  sc.StateTypeOR,
+			Children: []*sc.State{
+				{Label: aLabel, Type: sc.StateTypeBasic, IsInitial: true},
+				{Label: bLabel, Type: sc.StateTypeBasic},
+			},
+		}
+		transitions = append(transitions, &sc.Transition{
+			Label:   fmt.Sprintf("t%d", i),
+			From:    []string{aLabel},
+			To:      []string{bLabel},
+			Event:   "E",
+			Actions: []*sc.Action{{Label: fmt.Sprintf("raise:I%d", i)}},
+		})
+	}
+	return []syntheticChart{{
+		family: fmt.Sprintf("parallel_conflict_n%d", nR),
+		op:     fmt.Sprintf("parallel conflict with %d regions", nR),
+		chart: &sc.Statechart{
+			Name: fmt.Sprintf("par_conflict_%d", nR),
+			RootState: &sc.State{
+				Label:    "__root__",
+				Type:     sc.StateTypeAND,
+				Children: regions,
+			},
+			Transitions: transitions,
+			Events:      []*sc.Event{{Label: "E"}},
+		},
+	}}
+}
+
+// multiViolationCharts generates charts that violate multiple rules at once.
+func multiViolationCharts() []syntheticChart {
+	return []syntheticChart{
+		// 2 violations: duplicate label + no initial
+		{
+			family: "multi_2v_dup_noinit",
+			op:     "duplicate label and no initial child",
+			chart: &sc.Statechart{
+				Name: "multi2",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic},
+					{Label: "A", Type: sc.StateTypeBasic},
+				}},
+			},
+		},
+		// 3 violations: basic with children + invalid guard + undeclared event
+		{
+			family: "multi_3v_basic_guard_event",
+			op:     "basic with children, invalid guard, undeclared event",
+			chart: &sc.Statechart{
+				Name: "multi3",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true, Children: []*sc.State{
+						{Label: "X", Type: sc.StateTypeBasic},
+					}},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "MISSING",
+						Guard: &sc.Guard{Expression: ";;bad;;"}},
+				},
+				Events: []*sc.Event{{Label: "KNOWN"}},
+			},
+		},
+		// 4+ violations: compound empty + nondeterministic + completion cycle + raise cycle
+		{
+			family: "multi_4v_compound_nondet_comp_raise",
+			op:     "compound empty, nondeterministic, completion cycle, raise cycle",
+			chart: &sc.Statechart{
+				Name: "multi4",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+					{Label: "P", Type: sc.StateTypeNormal}, // compound with no children
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{{Label: "raise:F"}}},
+					{Label: "t2", From: []string{"A"}, To: []string{"B"}, Event: "E"}, // nondeterministic
+					{Label: "comp", From: []string{"B"}, To: []string{"A"}},           // completion
+					{Label: "t3", From: []string{"B"}, To: []string{"A"}, Event: "F", Actions: []*sc.Action{{Label: "raise:E"}}},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "F"}},
+			},
+		},
+		// 5+ violations: parallel one region + dup label + history on basic + invalid guard + no event decl
+		{
+			family: "multi_5v_par_dup_hist_guard_event",
+			op:     "parallel one region, dup label, history on basic, invalid guard, undeclared event",
+			chart: &sc.Statechart{
+				Name: "multi5",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "X", Type: sc.StateTypeBasic, IsInitial: true, IsHistory: true, HistoryType: sc.HistoryType_HISTORY_TYPE_SHALLOW},
+						{Label: "X", Type: sc.StateTypeBasic}, // dup label
+					}},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"X"}, To: []string{"X"}, Event: "MISSING",
+						Guard: &sc.Guard{Expression: ";;bad;;"}},
+				},
+				Events: []*sc.Event{{Label: "KNOWN"}},
+			},
+		},
+	}
 }
