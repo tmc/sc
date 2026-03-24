@@ -17,23 +17,24 @@ import (
 
 // validationRow records the result of running the full validator against a chart.
 type validationRow struct {
-	ChartID         string           `json:"chart_id"`
-	ChartHash       string           `json:"chart_hash"`
-	IsMutated       bool             `json:"is_mutated"`
-	IsSynthetic     bool             `json:"is_synthetic,omitempty"`
-	MutationFamily  string           `json:"mutation_family,omitempty"`
-	MutationOp      string           `json:"mutation_op,omitempty"`
-	NStates         int              `json:"n_states"`
-	NTransitions    int              `json:"n_transitions"`
-	MaxDepth        int              `json:"max_depth"`
-	HasParallel     bool             `json:"has_parallel"`
-	HasHistory      bool             `json:"has_history"`
-	HasGuards       bool             `json:"has_guards"`
-	Families        []string         `json:"families"`
-	Violations      []violationEntry `json:"violations"`
-	ViolatedRuleIDs []int            `json:"violated_rule_ids"`
-	NViolations     int              `json:"n_violations"`
-	IsWellFormed    bool             `json:"is_well_formed"`
+	ChartID         string                `json:"chart_id"`
+	ChartHash       string                `json:"chart_hash"`
+	IsMutated       bool                  `json:"is_mutated"`
+	IsSynthetic     bool                  `json:"is_synthetic,omitempty"`
+	MutationFamily  string                `json:"mutation_family,omitempty"`
+	MutationOp      string                `json:"mutation_op,omitempty"`
+	NStates         int                   `json:"n_states"`
+	NTransitions    int                   `json:"n_transitions"`
+	MaxDepth        int                   `json:"max_depth"`
+	HasParallel     bool                  `json:"has_parallel"`
+	HasHistory      bool                  `json:"has_history"`
+	HasGuards       bool                  `json:"has_guards"`
+	Topology        *groundTruthTopology  `json:"topology"`
+	Families        []string              `json:"families"`
+	Violations      []violationEntry      `json:"violations"`
+	ViolatedRuleIDs []int                 `json:"violated_rule_ids"`
+	NViolations     int                   `json:"n_violations"`
+	IsWellFormed    bool                  `json:"is_well_formed"`
 }
 
 type violationEntry struct {
@@ -108,6 +109,7 @@ func runValidation(chart *sc.Statechart, chartID string, families []string, isMu
 		HasParallel:    hasStateType(chart.RootState, sc.StateTypeParallel),
 		HasHistory:     hasHistoryState(chart.RootState),
 		HasGuards:      hasGuards(chart),
+		Topology:       buildTopology(chart),
 		Families:       families,
 		IsWellFormed:   true,
 	}
