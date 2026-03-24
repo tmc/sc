@@ -1,0 +1,82 @@
+{
+  "rootState": {
+    "label": "flat_fanout_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "flat_fanout_hub",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "flat_fanout_alpha",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "flat_fanout_beta",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "flat_fanout_gamma",
+        "type": "STATE_TYPE_BASIC"
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "flat_fanout_hub"
+      ],
+      "to": [
+        "flat_fanout_alpha"
+      ],
+      "event": "PICK_ALPHA"
+    },
+    {
+      "from": [
+        "flat_fanout_hub"
+      ],
+      "to": [
+        "flat_fanout_beta"
+      ],
+      "event": "PICK_BETA"
+    },
+    {
+      "from": [
+        "flat_fanout_hub"
+      ],
+      "to": [
+        "flat_fanout_gamma"
+      ],
+      "event": "PICK_GAMMA"
+    },
+    {
+      "from": [
+        "flat_fanout_alpha"
+      ],
+      "to": [
+        "flat_fanout_hub"
+      ],
+      "event": "HOME"
+    },
+    {
+      "from": [
+        "flat_fanout_beta"
+      ],
+      "to": [
+        "flat_fanout_hub"
+      ],
+      "event": "HOME"
+    },
+    {
+      "from": [
+        "flat_fanout_gamma"
+      ],
+      "to": [
+        "flat_fanout_hub"
+      ],
+      "event": "HOME"
+    }
+  ],
+  "name": "flat_fanout"
+}

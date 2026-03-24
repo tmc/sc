@@ -1,0 +1,110 @@
+{
+  "rootState": {
+    "label": "orth_dual_root",
+    "type": "STATE_TYPE_AND",
+    "children": [
+      {
+        "label": "orth_dual_mode",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "orth_dual_manual",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "orth_dual_auto",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "orth_dual_power",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "orth_dual_standby",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "orth_dual_live",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "orth_dual_alarm",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "orth_dual_clear",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "orth_dual_ringing",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "orth_dual_manual"
+      ],
+      "to": [
+        "orth_dual_auto"
+      ],
+      "event": "TOGGLE_MODE"
+    },
+    {
+      "from": [
+        "orth_dual_auto"
+      ],
+      "to": [
+        "orth_dual_manual"
+      ],
+      "event": "TOGGLE_MODE"
+    },
+    {
+      "from": [
+        "orth_dual_standby"
+      ],
+      "to": [
+        "orth_dual_live"
+      ],
+      "event": "POWER_ON"
+    },
+    {
+      "from": [
+        "orth_dual_live"
+      ],
+      "to": [
+        "orth_dual_standby"
+      ],
+      "event": "POWER_OFF"
+    },
+    {
+      "from": [
+        "orth_dual_clear"
+      ],
+      "to": [
+        "orth_dual_ringing"
+      ],
+      "event": "FAULT"
+    },
+    {
+      "from": [
+        "orth_dual_ringing"
+      ],
+      "to": [
+        "orth_dual_clear"
+      ],
+      "event": "CLEAR"
+    }
+  ],
+  "name": "orthogonal_dual_loop"
+}

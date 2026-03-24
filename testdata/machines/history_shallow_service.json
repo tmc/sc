@@ -1,0 +1,95 @@
+{
+  "rootState": {
+    "label": "history_shallow_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "history_shallow_off",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "history_shallow_service",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "history_shallow_H",
+            "type": "STATE_TYPE_BASIC",
+            "isHistory": true,
+            "historyType": "HISTORY_TYPE_SHALLOW"
+          },
+          {
+            "label": "history_shallow_idle",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "history_shallow_run",
+            "type": "STATE_TYPE_BASIC"
+          },
+          {
+            "label": "history_shallow_pause",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "history_shallow_off"
+      ],
+      "to": [
+        "history_shallow_H"
+      ],
+      "event": "POWER_ON"
+    },
+    {
+      "from": [
+        "history_shallow_service"
+      ],
+      "to": [
+        "history_shallow_off"
+      ],
+      "event": "POWER_OFF"
+    },
+    {
+      "from": [
+        "history_shallow_idle"
+      ],
+      "to": [
+        "history_shallow_run"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "history_shallow_run"
+      ],
+      "to": [
+        "history_shallow_pause"
+      ],
+      "event": "PAUSE"
+    },
+    {
+      "from": [
+        "history_shallow_pause"
+      ],
+      "to": [
+        "history_shallow_run"
+      ],
+      "event": "RESUME"
+    },
+    {
+      "from": [
+        "history_shallow_run"
+      ],
+      "to": [
+        "history_shallow_idle"
+      ],
+      "event": "STOP"
+    }
+  ],
+  "name": "history_bearing_shallow_service"
+}

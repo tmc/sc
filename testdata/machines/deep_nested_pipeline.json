@@ -1,0 +1,118 @@
+{
+  "rootState": {
+    "label": "deep_pipeline_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "deep_pipeline_parked",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "deep_pipeline_mission",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "deep_pipeline_phase1",
+            "type": "STATE_TYPE_OR",
+            "isInitial": true,
+            "children": [
+              {
+                "label": "deep_pipeline_phase1_idle",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "deep_pipeline_phase1_run",
+                "type": "STATE_TYPE_BASIC"
+              }
+            ]
+          },
+          {
+            "label": "deep_pipeline_phase2",
+            "type": "STATE_TYPE_OR",
+            "children": [
+              {
+                "label": "deep_pipeline_phase2_wait",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "deep_pipeline_phase2_run",
+                "type": "STATE_TYPE_OR",
+                "children": [
+                  {
+                    "label": "deep_pipeline_phase2_scan",
+                    "type": "STATE_TYPE_BASIC",
+                    "isInitial": true
+                  },
+                  {
+                    "label": "deep_pipeline_phase2_commit",
+                    "type": "STATE_TYPE_BASIC"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "deep_pipeline_parked"
+      ],
+      "to": [
+        "deep_pipeline_phase1_idle"
+      ],
+      "event": "ENGAGE"
+    },
+    {
+      "from": [
+        "deep_pipeline_phase1_idle"
+      ],
+      "to": [
+        "deep_pipeline_phase1_run"
+      ],
+      "event": "BEGIN1"
+    },
+    {
+      "from": [
+        "deep_pipeline_phase1_run"
+      ],
+      "to": [
+        "deep_pipeline_phase2_wait"
+      ],
+      "event": "ADVANCE"
+    },
+    {
+      "from": [
+        "deep_pipeline_phase2_wait"
+      ],
+      "to": [
+        "deep_pipeline_phase2_scan"
+      ],
+      "event": "BEGIN2"
+    },
+    {
+      "from": [
+        "deep_pipeline_phase2_scan"
+      ],
+      "to": [
+        "deep_pipeline_phase2_commit"
+      ],
+      "event": "COMMIT"
+    },
+    {
+      "from": [
+        "deep_pipeline_phase2_commit"
+      ],
+      "to": [
+        "deep_pipeline_parked"
+      ],
+      "event": "RESET"
+    }
+  ],
+  "name": "deep_nested_pipeline"
+}

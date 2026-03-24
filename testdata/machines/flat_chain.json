@@ -1,0 +1,64 @@
+{
+  "rootState": {
+    "label": "flat_chain_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "flat_chain_a",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "flat_chain_b",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "flat_chain_c",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "flat_chain_d",
+        "type": "STATE_TYPE_BASIC"
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "flat_chain_a"
+      ],
+      "to": [
+        "flat_chain_b"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "flat_chain_b"
+      ],
+      "to": [
+        "flat_chain_c"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "flat_chain_c"
+      ],
+      "to": [
+        "flat_chain_d"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "flat_chain_d"
+      ],
+      "to": [
+        "flat_chain_a"
+      ],
+      "event": "RESET"
+    }
+  ],
+  "name": "flat_chain"
+}

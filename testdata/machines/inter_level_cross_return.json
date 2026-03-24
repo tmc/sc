@@ -1,0 +1,113 @@
+{
+  "rootState": {
+    "label": "inter_level_cross_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "inter_level_cross_cold",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "inter_level_cross_process",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "inter_level_cross_load",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "inter_level_cross_run",
+            "type": "STATE_TYPE_BASIC"
+          },
+          {
+            "label": "inter_level_cross_flush",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "inter_level_cross_audit",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "inter_level_cross_inspect",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "inter_level_cross_signoff",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "inter_level_cross_cold"
+      ],
+      "to": [
+        "inter_level_cross_load"
+      ],
+      "event": "BOOT"
+    },
+    {
+      "from": [
+        "inter_level_cross_load"
+      ],
+      "to": [
+        "inter_level_cross_run"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "inter_level_cross_run"
+      ],
+      "to": [
+        "inter_level_cross_inspect"
+      ],
+      "event": "ESCALATE"
+    },
+    {
+      "from": [
+        "inter_level_cross_inspect"
+      ],
+      "to": [
+        "inter_level_cross_signoff"
+      ],
+      "event": "CHECK"
+    },
+    {
+      "from": [
+        "inter_level_cross_signoff"
+      ],
+      "to": [
+        "inter_level_cross_load"
+      ],
+      "event": "REENTER"
+    },
+    {
+      "from": [
+        "inter_level_cross_process"
+      ],
+      "to": [
+        "inter_level_cross_cold"
+      ],
+      "event": "SHUTDOWN"
+    },
+    {
+      "from": [
+        "inter_level_cross_run"
+      ],
+      "to": [
+        "inter_level_cross_flush"
+      ],
+      "event": "FLUSH"
+    }
+  ],
+  "name": "inter_level_cross_return"
+}

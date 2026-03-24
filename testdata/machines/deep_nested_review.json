@@ -1,0 +1,153 @@
+{
+  "rootState": {
+    "label": "deep_review_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "deep_review_idle",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "deep_review_session",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "deep_review_collect",
+            "type": "STATE_TYPE_OR",
+            "isInitial": true,
+            "children": [
+              {
+                "label": "deep_review_capture",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "deep_review_label",
+                "type": "STATE_TYPE_BASIC"
+              }
+            ]
+          },
+          {
+            "label": "deep_review_review",
+            "type": "STATE_TYPE_OR",
+            "children": [
+              {
+                "label": "deep_review_inspect",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "deep_review_approve",
+                "type": "STATE_TYPE_BASIC"
+              },
+              {
+                "label": "deep_review_reject",
+                "type": "STATE_TYPE_BASIC"
+              }
+            ]
+          },
+          {
+            "label": "deep_review_archive",
+            "type": "STATE_TYPE_OR",
+            "children": [
+              {
+                "label": "deep_review_pack",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "deep_review_store",
+                "type": "STATE_TYPE_BASIC"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "deep_review_idle"
+      ],
+      "to": [
+        "deep_review_capture"
+      ],
+      "event": "OPEN"
+    },
+    {
+      "from": [
+        "deep_review_capture"
+      ],
+      "to": [
+        "deep_review_label"
+      ],
+      "event": "TAG"
+    },
+    {
+      "from": [
+        "deep_review_label"
+      ],
+      "to": [
+        "deep_review_inspect"
+      ],
+      "event": "REVIEW"
+    },
+    {
+      "from": [
+        "deep_review_inspect"
+      ],
+      "to": [
+        "deep_review_approve"
+      ],
+      "event": "ACCEPT"
+    },
+    {
+      "from": [
+        "deep_review_inspect"
+      ],
+      "to": [
+        "deep_review_reject"
+      ],
+      "event": "DECLINE"
+    },
+    {
+      "from": [
+        "deep_review_approve"
+      ],
+      "to": [
+        "deep_review_pack"
+      ],
+      "event": "ARCHIVE"
+    },
+    {
+      "from": [
+        "deep_review_pack"
+      ],
+      "to": [
+        "deep_review_store"
+      ],
+      "event": "STORE"
+    },
+    {
+      "from": [
+        "deep_review_store"
+      ],
+      "to": [
+        "deep_review_idle"
+      ],
+      "event": "CLOSE"
+    },
+    {
+      "from": [
+        "deep_review_reject"
+      ],
+      "to": [
+        "deep_review_capture"
+      ],
+      "event": "REWORK"
+    }
+  ],
+  "name": "deep_nested_review"
+}

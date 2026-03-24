@@ -1,0 +1,113 @@
+{
+  "rootState": {
+    "label": "shallow_branch_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "shallow_branch_dock",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "shallow_branch_mission",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "shallow_branch_arm",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "shallow_branch_move",
+            "type": "STATE_TYPE_BASIC"
+          },
+          {
+            "label": "shallow_branch_report",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "shallow_branch_recover",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "shallow_branch_assess",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "shallow_branch_fix",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "shallow_branch_dock"
+      ],
+      "to": [
+        "shallow_branch_arm"
+      ],
+      "event": "LAUNCH"
+    },
+    {
+      "from": [
+        "shallow_branch_arm"
+      ],
+      "to": [
+        "shallow_branch_move"
+      ],
+      "event": "ARM"
+    },
+    {
+      "from": [
+        "shallow_branch_move"
+      ],
+      "to": [
+        "shallow_branch_report"
+      ],
+      "event": "SAMPLE"
+    },
+    {
+      "from": [
+        "shallow_branch_report"
+      ],
+      "to": [
+        "shallow_branch_dock"
+      ],
+      "event": "LAND"
+    },
+    {
+      "from": [
+        "shallow_branch_move"
+      ],
+      "to": [
+        "shallow_branch_assess"
+      ],
+      "event": "FAIL"
+    },
+    {
+      "from": [
+        "shallow_branch_assess"
+      ],
+      "to": [
+        "shallow_branch_fix"
+      ],
+      "event": "PATCH"
+    },
+    {
+      "from": [
+        "shallow_branch_fix"
+      ],
+      "to": [
+        "shallow_branch_arm"
+      ],
+      "event": "RETRY"
+    }
+  ],
+  "name": "shallow_nested_branching"
+}

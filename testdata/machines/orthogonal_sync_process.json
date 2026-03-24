@@ -1,0 +1,110 @@
+{
+  "rootState": {
+    "label": "orth_sync_root",
+    "type": "STATE_TYPE_AND",
+    "children": [
+      {
+        "label": "orth_sync_gate",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "orth_sync_closed",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "orth_sync_open",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "orth_sync_conveyor",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "orth_sync_stopped",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "orth_sync_moving",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "orth_sync_quality",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "orth_sync_ready",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "orth_sync_hold",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "orth_sync_closed"
+      ],
+      "to": [
+        "orth_sync_open"
+      ],
+      "event": "OPEN_GATE"
+    },
+    {
+      "from": [
+        "orth_sync_open"
+      ],
+      "to": [
+        "orth_sync_closed"
+      ],
+      "event": "CLOSE_GATE"
+    },
+    {
+      "from": [
+        "orth_sync_stopped"
+      ],
+      "to": [
+        "orth_sync_moving"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "orth_sync_moving"
+      ],
+      "to": [
+        "orth_sync_stopped"
+      ],
+      "event": "STOP"
+    },
+    {
+      "from": [
+        "orth_sync_ready"
+      ],
+      "to": [
+        "orth_sync_hold"
+      ],
+      "event": "HOLD"
+    },
+    {
+      "from": [
+        "orth_sync_hold"
+      ],
+      "to": [
+        "orth_sync_ready"
+      ],
+      "event": "RELEASE"
+    }
+  ],
+  "name": "orthogonal_sync_process"
+}

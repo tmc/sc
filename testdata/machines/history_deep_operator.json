@@ -1,0 +1,113 @@
+{
+  "rootState": {
+    "label": "history_deep_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "history_deep_standby",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "history_deep_active",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "history_deep_H",
+            "type": "STATE_TYPE_BASIC",
+            "isHistory": true,
+            "historyType": "HISTORY_TYPE_DEEP"
+          },
+          {
+            "label": "history_deep_routine",
+            "type": "STATE_TYPE_OR",
+            "isInitial": true,
+            "children": [
+              {
+                "label": "history_deep_acquire",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "history_deep_maintain",
+                "type": "STATE_TYPE_BASIC"
+              }
+            ]
+          },
+          {
+            "label": "history_deep_exception",
+            "type": "STATE_TYPE_OR",
+            "children": [
+              {
+                "label": "history_deep_inspect",
+                "type": "STATE_TYPE_BASIC",
+                "isInitial": true
+              },
+              {
+                "label": "history_deep_repair",
+                "type": "STATE_TYPE_BASIC"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "history_deep_standby"
+      ],
+      "to": [
+        "history_deep_H"
+      ],
+      "event": "WAKE"
+    },
+    {
+      "from": [
+        "history_deep_active"
+      ],
+      "to": [
+        "history_deep_standby"
+      ],
+      "event": "SLEEP"
+    },
+    {
+      "from": [
+        "history_deep_acquire"
+      ],
+      "to": [
+        "history_deep_maintain"
+      ],
+      "event": "LOCK"
+    },
+    {
+      "from": [
+        "history_deep_maintain"
+      ],
+      "to": [
+        "history_deep_inspect"
+      ],
+      "event": "ESCALATE"
+    },
+    {
+      "from": [
+        "history_deep_inspect"
+      ],
+      "to": [
+        "history_deep_repair"
+      ],
+      "event": "FIX"
+    },
+    {
+      "from": [
+        "history_deep_repair"
+      ],
+      "to": [
+        "history_deep_maintain"
+      ],
+      "event": "RESUME"
+    }
+  ],
+  "name": "history_bearing_deep_operator"
+}

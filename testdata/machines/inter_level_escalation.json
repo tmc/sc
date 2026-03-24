@@ -1,0 +1,80 @@
+{
+  "rootState": {
+    "label": "inter_level_escalation_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "inter_level_escalation_idle",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "inter_level_escalation_active",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "inter_level_escalation_plan",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "inter_level_escalation_execute",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "inter_level_escalation_halted",
+        "type": "STATE_TYPE_BASIC"
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "inter_level_escalation_idle"
+      ],
+      "to": [
+        "inter_level_escalation_plan"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "inter_level_escalation_plan"
+      ],
+      "to": [
+        "inter_level_escalation_execute"
+      ],
+      "event": "GO"
+    },
+    {
+      "from": [
+        "inter_level_escalation_execute"
+      ],
+      "to": [
+        "inter_level_escalation_halted"
+      ],
+      "event": "ABORT"
+    },
+    {
+      "from": [
+        "inter_level_escalation_halted"
+      ],
+      "to": [
+        "inter_level_escalation_plan"
+      ],
+      "event": "RESUME"
+    },
+    {
+      "from": [
+        "inter_level_escalation_active"
+      ],
+      "to": [
+        "inter_level_escalation_idle"
+      ],
+      "event": "STOP"
+    }
+  ],
+  "name": "inter_level_escalation"
+}

@@ -1,0 +1,82 @@
+{
+  "rootState": {
+    "label": "flat_star_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "flat_star_center",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "flat_star_north",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "flat_star_east",
+        "type": "STATE_TYPE_BASIC"
+      },
+      {
+        "label": "flat_star_west",
+        "type": "STATE_TYPE_BASIC"
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "flat_star_center"
+      ],
+      "to": [
+        "flat_star_north"
+      ],
+      "event": "GO_NORTH"
+    },
+    {
+      "from": [
+        "flat_star_center"
+      ],
+      "to": [
+        "flat_star_east"
+      ],
+      "event": "GO_EAST"
+    },
+    {
+      "from": [
+        "flat_star_center"
+      ],
+      "to": [
+        "flat_star_west"
+      ],
+      "event": "GO_WEST"
+    },
+    {
+      "from": [
+        "flat_star_north"
+      ],
+      "to": [
+        "flat_star_center"
+      ],
+      "event": "RETURN"
+    },
+    {
+      "from": [
+        "flat_star_east"
+      ],
+      "to": [
+        "flat_star_center"
+      ],
+      "event": "RETURN"
+    },
+    {
+      "from": [
+        "flat_star_west"
+      ],
+      "to": [
+        "flat_star_center"
+      ],
+      "event": "RETURN"
+    }
+  ],
+  "name": "flat_star"
+}

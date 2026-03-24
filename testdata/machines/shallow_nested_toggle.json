@@ -1,0 +1,113 @@
+{
+  "rootState": {
+    "label": "shallow_toggle_root",
+    "type": "STATE_TYPE_OR",
+    "children": [
+      {
+        "label": "shallow_toggle_sleep",
+        "type": "STATE_TYPE_BASIC",
+        "isInitial": true
+      },
+      {
+        "label": "shallow_toggle_work",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "shallow_toggle_prep",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "shallow_toggle_exec",
+            "type": "STATE_TYPE_BASIC"
+          },
+          {
+            "label": "shallow_toggle_review",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      },
+      {
+        "label": "shallow_toggle_break",
+        "type": "STATE_TYPE_OR",
+        "children": [
+          {
+            "label": "shallow_toggle_pause",
+            "type": "STATE_TYPE_BASIC",
+            "isInitial": true
+          },
+          {
+            "label": "shallow_toggle_stretch",
+            "type": "STATE_TYPE_BASIC"
+          }
+        ]
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "shallow_toggle_sleep"
+      ],
+      "to": [
+        "shallow_toggle_prep"
+      ],
+      "event": "WAKE"
+    },
+    {
+      "from": [
+        "shallow_toggle_prep"
+      ],
+      "to": [
+        "shallow_toggle_exec"
+      ],
+      "event": "GO"
+    },
+    {
+      "from": [
+        "shallow_toggle_exec"
+      ],
+      "to": [
+        "shallow_toggle_review"
+      ],
+      "event": "CHECK"
+    },
+    {
+      "from": [
+        "shallow_toggle_review"
+      ],
+      "to": [
+        "shallow_toggle_sleep"
+      ],
+      "event": "FINISH"
+    },
+    {
+      "from": [
+        "shallow_toggle_review"
+      ],
+      "to": [
+        "shallow_toggle_pause"
+      ],
+      "event": "BREAK"
+    },
+    {
+      "from": [
+        "shallow_toggle_pause"
+      ],
+      "to": [
+        "shallow_toggle_stretch"
+      ],
+      "event": "STRETCH"
+    },
+    {
+      "from": [
+        "shallow_toggle_stretch"
+      ],
+      "to": [
+        "shallow_toggle_prep"
+      ],
+      "event": "RESUME"
+    }
+  ],
+  "name": "shallow_nested_toggle"
+}
