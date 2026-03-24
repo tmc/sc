@@ -169,6 +169,10 @@ message GuardEvaluation {
 
   // Error message if evaluation failed
   string error = 4;
+
+  // Transition this guard belongs to.
+  // Disambiguates identical guard expressions on different transitions.
+  TransitionRef transition = 5;
 }
 
 /**
