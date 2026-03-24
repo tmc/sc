@@ -9,6 +9,7 @@ import (
 	validationv1 "github.com/tmc/sc/gen/validation/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
 )
 
 // ValidatorClient wraps a connection to the SemanticValidator service.
@@ -45,20 +46,7 @@ func (c *ValidatorClient) ValidateStatechart(ctx context.Context, statechart *St
 	if c.client == nil {
 		return fmt.Errorf("validator client is not initialized")
 	}
-	// Convert to proto statechart
-	protoStatechart := &pb.Statechart{
-		RootState:   convertStateToProto(statechart.RootState),
-		Transitions: make([]*pb.Transition, 0, len(statechart.Transitions)),
-		Events:      make([]*pb.Event, 0, len(statechart.Events)),
-	}
-
-	for _, t := range statechart.Transitions {
-		protoStatechart.Transitions = append(protoStatechart.Transitions, convertTransitionToProto(t))
-	}
-
-	for _, e := range statechart.Events {
-		protoStatechart.Events = append(protoStatechart.Events, convertEventToProto(e))
-	}
+	protoStatechart := convertStatechartToProto(statechart.Statechart)
 
 	// Call the validator
 	resp, err := c.client.ValidateChart(ctx, &validationv1.ValidateChartRequest{
@@ -87,20 +75,7 @@ func (c *ValidatorClient) ValidateTrace(ctx context.Context, statechart *Statech
 	if c.client == nil {
 		return fmt.Errorf("validator client is not initialized")
 	}
-	// Convert to proto statechart
-	protoStatechart := &pb.Statechart{
-		RootState:   convertStateToProto(statechart.RootState),
-		Transitions: make([]*pb.Transition, 0, len(statechart.Transitions)),
-		Events:      make([]*pb.Event, 0, len(statechart.Events)),
-	}
-
-	for _, t := range statechart.Transitions {
-		protoStatechart.Transitions = append(protoStatechart.Transitions, convertTransitionToProto(t))
-	}
-
-	for _, e := range statechart.Events {
-		protoStatechart.Events = append(protoStatechart.Events, convertEventToProto(e))
-	}
+	protoStatechart := convertStatechartToProto(statechart.Statechart)
 
 	// Convert machines to proto machines
 	protoMachines := make([]*pb.Machine, 0, len(machines))
@@ -133,79 +108,39 @@ func (c *ValidatorClient) ValidateTrace(ctx context.Context, statechart *Statech
 
 // Helper functions to convert between proto and regular types
 
+func convertStatechartToProto(statechart *sc.Statechart) *pb.Statechart {
+	if statechart == nil {
+		return nil
+	}
+	return proto.Clone(statechart).(*pb.Statechart)
+}
+
 func convertStateToProto(state *sc.State) *pb.State {
 	if state == nil {
 		return nil
 	}
-
-	result := &pb.State{
-		Label:     state.Label,
-		Type:      pb.StateType(state.Type),
-		IsInitial: state.IsInitial,
-		IsFinal:   state.IsFinal,
-		Children:  make([]*pb.State, 0, len(state.Children)),
-	}
-
-	for _, child := range state.Children {
-		result.Children = append(result.Children, convertStateToProto(child))
-	}
-
-	return result
+	return proto.Clone(state).(*pb.State)
 }
 
 func convertTransitionToProto(transition *sc.Transition) *pb.Transition {
 	if transition == nil {
 		return nil
 	}
-
-	result := &pb.Transition{
-		Label: transition.Label,
-		From:  transition.From,
-		To:    transition.To,
-		Event: transition.Event,
-	}
-
-	if transition.Guard != nil {
-		result.Guard = &pb.Guard{
-			Expression: transition.Guard.Expression,
-		}
-	}
-
-	if len(transition.Actions) > 0 {
-		result.Actions = make([]*pb.Action, 0, len(transition.Actions))
-		for _, action := range transition.Actions {
-			result.Actions = append(result.Actions, &pb.Action{
-				Label: action.Label,
-			})
-		}
-	}
-
-	return result
+	return proto.Clone(transition).(*pb.Transition)
 }
 
 func convertEventToProto(event *sc.Event) *pb.Event {
 	if event == nil {
 		return nil
 	}
-
-	return &pb.Event{
-		Label: event.Label,
-	}
+	return proto.Clone(event).(*pb.Event)
 }
 
 func convertMachineToProto(machine *sc.Machine) *pb.Machine {
 	if machine == nil {
 		return nil
 	}
-
-	// This is a simplified conversion - a full implementation would convert
-	// all fields including step history, etc.
-	result := &pb.Machine{
-		Id:    machine.Id,
-		State: pb.MachineState(machine.State),
-	}
-
-	return result
+	return proto.Clone(machine).(*pb.Machine)
 }
 
 // Validate calls the validator service to validate this statechart.

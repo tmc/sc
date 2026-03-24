@@ -149,6 +149,16 @@ func TestAncestor(t *testing.T) {
 	}
 }
 
+func TestLeastCommonAncestorWithRoot(t *testing.T) {
+	got, err := exampleStatechart1.LeastCommonAncestor("__root__", "Blocked")
+	if err != nil {
+		t.Fatalf("LeastCommonAncestor() error = %v", err)
+	}
+	if got != "__root__" {
+		t.Fatalf("LeastCommonAncestor() = %v, want __root__", got)
+	}
+}
+
 func TestAncestrallyRelated(t *testing.T) {
 	tests := []struct {
 		name    string

@@ -8,6 +8,7 @@ import (
 	validationv1 "github.com/tmc/sc/gen/validation/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestValidateChart(t *testing.T) {
@@ -72,7 +73,7 @@ func TestValidateChart(t *testing.T) {
 					},
 				},
 			},
-			wantViolations: 1,
+			wantViolations: 2,
 			wantCode:       codes.FailedPrecondition,
 		},
 		{
@@ -96,7 +97,7 @@ func TestValidateChart(t *testing.T) {
 					},
 				},
 			},
-			wantViolations: 1,
+			wantViolations: 2,
 			wantCode:       codes.FailedPrecondition,
 		},
 		{
@@ -114,7 +115,7 @@ func TestValidateChart(t *testing.T) {
 					},
 				},
 			},
-			wantViolations: 2, // Updated to expect 2 violations (root state needs initial state too)
+			wantViolations: 3,
 			wantCode:       codes.FailedPrecondition,
 		},
 		{
@@ -137,7 +138,7 @@ func TestValidateChart(t *testing.T) {
 					},
 				},
 			},
-			wantViolations: 1,
+			wantViolations: 2,
 			wantCode:       codes.FailedPrecondition,
 		},
 		{
@@ -160,7 +161,10 @@ func TestValidateChart(t *testing.T) {
 					},
 				},
 			},
-			ignoreRules:    []validationv1.RuleId{validationv1.RuleId_SINGLE_DEFAULT_CHILD},
+			ignoreRules: []validationv1.RuleId{
+				validationv1.RuleId_SINGLE_DEFAULT_CHILD,
+				validationv1.RuleId_RULE_UNSPECIFIED,
+			},
 			wantViolations: 0,
 			wantCode:       codes.OK,
 		},
@@ -498,5 +502,365 @@ func TestValidateChart_MapsEventConsistencyRuleID(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("expected at least one violation with rule %v, got %+v", validationv1.RuleId_EVENT_PARAMETERS_CONSISTENT, resp.Violations)
+	}
+}
+
+func TestConvertProtoToStatechartPreservesFields(t *testing.T) {
+	variables, err := structpb.NewStruct(map[string]interface{}{
+		"answer": 42,
+	})
+	if err != nil {
+		t.Fatalf("structpb.NewStruct() error = %v", err)
+	}
+
+	chart := &pb.Statechart{
+		Name:        "history-chart",
+		Description: "preserve all modeled fields",
+		Variables:   variables,
+		RootState: &pb.State{
+			Label: "root",
+			Type:  pb.StateType_STATE_TYPE_OR,
+			Children: []*pb.State{
+				{
+					Label:       "H",
+					Type:        pb.StateType_STATE_TYPE_BASIC,
+					IsHistory:   true,
+					HistoryType: pb.HistoryType_HISTORY_TYPE_SHALLOW,
+				},
+				{
+					Label:     "A",
+					Type:      pb.StateType_STATE_TYPE_BASIC,
+					IsInitial: true,
+				},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{
+				Label:    "t1",
+				From:     []string{"A"},
+				To:       []string{"H"},
+				Event:    "resume",
+				Priority: 9,
+			},
+		},
+		Events: []*pb.Event{
+			{
+				Label: "resume",
+			},
+		},
+	}
+
+	got := convertProtoToStatechart(chart)
+	if got == nil {
+		t.Fatal("convertProtoToStatechart() = nil, want non-nil")
+	}
+	if got.Name != "history-chart" || got.Description != "preserve all modeled fields" {
+		t.Fatalf("convertProtoToStatechart() lost chart metadata: %+v", got)
+	}
+	if got.Variables == nil || got.Variables.Fields["answer"].GetNumberValue() != 42 {
+		t.Fatalf("convertProtoToStatechart() variables = %#v, want answer=42", got.Variables)
+	}
+	if len(got.RootState.Children) != 2 || !got.RootState.Children[0].IsHistory {
+		t.Fatalf("convertProtoToStatechart() root children = %#v, want history child preserved", got.RootState.Children)
+	}
+	if got.Transitions[0].Priority != 9 || got.Transitions[0].To[0] != "H" {
+		t.Fatalf("convertProtoToStatechart() transition = %#v, want priority and target preserved", got.Transitions[0])
+	}
+}
+
+func TestValidateChart_ReconciledConstraintWarning(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{
+				Label: "t1",
+				From:  []string{"A"},
+				To:    []string{"B"},
+				Event: "e",
+				Actions: []*pb.Action{
+					{Label: "raise:i"},
+					{Label: "raise:j"},
+				},
+			},
+		},
+		Events: []*pb.Event{
+			{Label: "e"},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	found := false
+	for _, violation := range resp.Violations {
+		if violation.Rule == validationv1.RuleId_RECONCILING_C14_SINGLE_GENERATED_EVENT {
+			found = true
+			if violation.Severity != validationv1.Severity_WARNING {
+				t.Fatalf("reconciled warning severity = %v, want %v", violation.Severity, validationv1.Severity_WARNING)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected reconciled C14 warning, got %+v", resp.Violations)
+	}
+
+	if code := status.FromProto(resp.Status).Code(); code != codes.OK {
+		t.Fatalf("ValidateChart() status code = %v, want %v", code, codes.OK)
+	}
+}
+
+func TestValidateChart_IgnoreReconciledConstraint(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{
+				Label: "t1",
+				From:  []string{"A"},
+				To:    []string{"B"},
+				Event: "e",
+				Actions: []*pb.Action{
+					{Label: "raise:i"},
+					{Label: "raise:j"},
+				},
+			},
+		},
+		Events: []*pb.Event{
+			{Label: "e"},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart:       chart,
+		IgnoreRules: []validationv1.RuleId{validationv1.RuleId_RECONCILING_C14_SINGLE_GENERATED_EVENT},
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	for _, violation := range resp.Violations {
+		if violation.Rule == validationv1.RuleId_RECONCILING_C14_SINGLE_GENERATED_EVENT {
+			t.Fatalf("unexpected reconciled C14 warning after ignore: %+v", resp.Violations)
+		}
+	}
+}
+
+func TestValidateChart_HistoryStateValidationRuleID(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "Off", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{
+					Label: "On",
+					Type:  pb.StateType_STATE_TYPE_NORMAL,
+					Children: []*pb.State{
+						{
+							Label:       "H",
+							Type:        pb.StateType_STATE_TYPE_BASIC,
+							IsHistory:   true,
+							HistoryType: pb.HistoryType_HISTORY_TYPE_DEEP,
+						},
+						{
+							Label:     "Idle",
+							Type:      pb.StateType_STATE_TYPE_BASIC,
+							IsInitial: true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	found := false
+	for _, violation := range resp.Violations {
+		if violation.Rule == validationv1.RuleId_HISTORY_STATES_WELL_FORMED {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected history validation rule, got %+v", resp.Violations)
+	}
+}
+
+func TestValidateChart_EmitsMultipleViolationsForSameRule(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{
+					Label:     "A",
+					Type:      pb.StateType_STATE_TYPE_BASIC,
+					IsInitial: true,
+					Children: []*pb.State{
+						{Label: "A1", Type: pb.StateType_STATE_TYPE_BASIC},
+					},
+				},
+				{
+					Label: "B",
+					Type:  pb.StateType_STATE_TYPE_BASIC,
+					Children: []*pb.State{
+						{Label: "B1", Type: pb.StateType_STATE_TYPE_BASIC},
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	var got []*validationv1.Violation
+	for _, violation := range resp.Violations {
+		if violation.Rule == validationv1.RuleId_BASIC_HAS_NO_CHILDREN {
+			got = append(got, violation)
+		}
+	}
+	if len(got) != 2 {
+		t.Fatalf("BASIC_HAS_NO_CHILDREN violations = %d, want 2: %+v", len(got), resp.Violations)
+	}
+	for _, violation := range got {
+		if len(violation.Xpath) == 0 {
+			t.Fatalf("violation %+v missing xpath details", violation)
+		}
+	}
+}
+
+func TestValidateChart_DeterministicAndBroadcastRules(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+				{Label: "C", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "e", Actions: []*pb.Action{{Label: "raise:f"}}},
+			{Label: "t2", From: []string{"A"}, To: []string{"C"}, Event: "e"},
+			{Label: "t3", From: []string{"B"}, To: []string{"A"}, Event: "f", Actions: []*pb.Action{{Label: "raise:e"}}},
+		},
+		Events: []*pb.Event{
+			{Label: "e"},
+			{Label: "f"},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	foundDeterministic := false
+	foundBroadcast := false
+	for _, violation := range resp.Violations {
+		switch violation.Rule {
+		case validationv1.RuleId_DETERMINISTIC_TRANSITION_SELECTION:
+			foundDeterministic = true
+			if len(violation.Xpath) == 0 {
+				t.Fatalf("deterministic violation missing xpath: %+v", violation)
+			}
+		case validationv1.RuleId_NO_EVENT_BROADCAST_CYCLES:
+			foundBroadcast = true
+			if len(violation.Xpath) == 0 {
+				t.Fatalf("broadcast-cycle violation missing xpath: %+v", violation)
+			}
+		}
+	}
+	if !foundDeterministic {
+		t.Fatalf("expected deterministic-transition violation, got %+v", resp.Violations)
+	}
+	if !foundBroadcast {
+		t.Fatalf("expected event-broadcast-cycle violation, got %+v", resp.Violations)
+	}
+}
+
+func TestValidateChart_StructuredGuardDoesNotRequireLegacyExpression(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+				{Label: "B", Type: pb.StateType_STATE_TYPE_BASIC},
+			},
+		},
+		Transitions: []*pb.Transition{
+			{
+				Label: "t1",
+				From:  []string{"A"},
+				To:    []string{"B"},
+				Event: "e1",
+				Guard: &pb.Guard{
+					Condition: &pb.Expression{
+						Type:   pb.ExpressionType_EXPRESSION_TYPE_RAW,
+						Source: "context.ready",
+					},
+				},
+			},
+		},
+		Events: []*pb.Event{
+			{Label: "e1"},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	for _, violation := range resp.Violations {
+		if violation.Rule == validationv1.RuleId_GUARD_EXPRESSIONS_VALID {
+			t.Fatalf("unexpected guard-expression violation for structured guard: %+v", resp.Violations)
+		}
 	}
 }

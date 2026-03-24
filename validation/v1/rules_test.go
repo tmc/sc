@@ -87,7 +87,7 @@ func TestValidateUniqueStateLabels(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateUniqueStateLabels(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
@@ -223,7 +223,7 @@ func TestValidateSingleDefaultChild(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateSingleDefaultChild(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
@@ -308,7 +308,7 @@ func TestValidateBasicHasNoChildren(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateBasicHasNoChildren(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
@@ -399,7 +399,7 @@ func TestValidateCompoundHasChildren(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateCompoundHasChildren(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
@@ -457,7 +457,7 @@ func TestValidateRootState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateRootState(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
@@ -595,7 +595,7 @@ func TestValidateDeterministicTransitionSelection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateDeterministicTransitionSelection(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
@@ -614,9 +614,10 @@ func TestValidateDeterministicTransitionSelection(t *testing.T) {
 
 func TestValidateNoEventBroadcastCycles(t *testing.T) {
 	tests := []struct {
-		name        string
-		statechart  *sc.Statechart
-		expectError bool
+		name          string
+		statechart    *sc.Statechart
+		expectError   bool
+		expectedError string
 	}{
 		{
 			name:        "simple statechart",
@@ -628,15 +629,41 @@ func TestValidateNoEventBroadcastCycles(t *testing.T) {
 			statechart:  testutil.CreateHierarchicalStatechart(),
 			expectError: false,
 		},
+		{
+			name: "event broadcast cycle",
+			statechart: testutil.NewStatechartBuilder().
+				WithTransition(
+					testutil.NewTransitionBuilder("T1").
+						From("A").
+						To("B").
+						OnEvent("e").
+						WithAction("raise:f").
+						Build(),
+				).
+				WithTransition(
+					testutil.NewTransitionBuilder("T2").
+						From("B").
+						To("A").
+						OnEvent("f").
+						WithAction("raise:e").
+						Build(),
+				).
+				Build(),
+			expectError:   true,
+			expectedError: "event broadcast cycle detected: e -> f -> e",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateNoEventBroadcastCycles(tt.statechart)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
+				}
+				if tt.expectedError != "" && err.Error() != tt.expectedError {
+					t.Fatalf("Expected error '%s', got '%s'", tt.expectedError, err.Error())
 				}
 			} else {
 				if err != nil {
@@ -649,7 +676,7 @@ func TestValidateNoEventBroadcastCycles(t *testing.T) {
 
 func BenchmarkValidateUniqueStateLabels(b *testing.B) {
 	statechart := testutil.CreateLargeStatechart(1000, 500)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = validateUniqueStateLabels(statechart)
@@ -658,7 +685,7 @@ func BenchmarkValidateUniqueStateLabels(b *testing.B) {
 
 func BenchmarkValidateSingleDefaultChild(b *testing.B) {
 	statechart := testutil.CreateLargeStatechart(1000, 500)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = validateSingleDefaultChild(statechart)
@@ -667,7 +694,7 @@ func BenchmarkValidateSingleDefaultChild(b *testing.B) {
 
 func BenchmarkValidateBasicHasNoChildren(b *testing.B) {
 	statechart := testutil.CreateLargeStatechart(1000, 500)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = validateBasicHasNoChildren(statechart)
@@ -676,7 +703,7 @@ func BenchmarkValidateBasicHasNoChildren(b *testing.B) {
 
 func BenchmarkValidateCompoundHasChildren(b *testing.B) {
 	statechart := testutil.CreateLargeStatechart(1000, 500)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = validateCompoundHasChildren(statechart)
@@ -685,7 +712,7 @@ func BenchmarkValidateCompoundHasChildren(b *testing.B) {
 
 func BenchmarkValidateDeterministicTransitionSelection(b *testing.B) {
 	statechart := testutil.CreateLargeStatechart(1000, 2000)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = validateDeterministicTransitionSelection(statechart)

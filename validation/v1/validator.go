@@ -9,10 +9,12 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/tmc/sc"
 	pb "github.com/tmc/sc/gen/statecharts/v1"
 	validationv1 "github.com/tmc/sc/gen/validation/v1"
+	semantics "github.com/tmc/sc/semantics/v1"
 )
 
 // NewSemanticValidator creates a new SemanticValidator service.
@@ -270,51 +272,28 @@ func sortedCopy(items []string) []string {
 func (s *SemanticValidator) validateChart(statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool) []*validationv1.Violation {
 	var violations []*validationv1.Violation
 
-	// Apply each rule if not ignored
-	if !ignoreRules[validationv1.RuleId_UNIQUE_STATE_LABELS] {
-		if err := validateUniqueStateLabels(statechart); err != nil {
-			violations = append(violations, &validationv1.Violation{
-				Rule:     validationv1.RuleId_UNIQUE_STATE_LABELS,
-				Severity: validationv1.Severity_ERROR,
-				Message:  err.Error(),
-			})
-		}
-	}
-
-	if !ignoreRules[validationv1.RuleId_SINGLE_DEFAULT_CHILD] {
-		if err := validateSingleDefaultChild(statechart); err != nil {
-			violations = append(violations, &validationv1.Violation{
-				Rule:     validationv1.RuleId_SINGLE_DEFAULT_CHILD,
-				Severity: validationv1.Severity_ERROR,
-				Message:  err.Error(),
-			})
-		}
-	}
-
-	if !ignoreRules[validationv1.RuleId_BASIC_HAS_NO_CHILDREN] {
-		if err := validateBasicHasNoChildren(statechart); err != nil {
-			violations = append(violations, &validationv1.Violation{
-				Rule:     validationv1.RuleId_BASIC_HAS_NO_CHILDREN,
-				Severity: validationv1.Severity_ERROR,
-				Message:  err.Error(),
-			})
-		}
-	}
-
-	if !ignoreRules[validationv1.RuleId_COMPOUND_HAS_CHILDREN] {
-		if err := validateCompoundHasChildren(statechart); err != nil {
-			violations = append(violations, &validationv1.Violation{
-				Rule:     validationv1.RuleId_COMPOUND_HAS_CHILDREN,
-				Severity: validationv1.Severity_ERROR,
-				Message:  err.Error(),
-			})
-		}
+	for _, rule := range []struct {
+		id      validationv1.RuleId
+		collect func(*sc.Statechart) []validationIssue
+	}{
+		{id: validationv1.RuleId_UNIQUE_STATE_LABELS, collect: collectUniqueStateLabelIssues},
+		{id: validationv1.RuleId_SINGLE_DEFAULT_CHILD, collect: collectSingleDefaultChildIssues},
+		{id: validationv1.RuleId_BASIC_HAS_NO_CHILDREN, collect: collectBasicHasNoChildrenIssues},
+		{id: validationv1.RuleId_COMPOUND_HAS_CHILDREN, collect: collectCompoundHasChildrenIssues},
+		{id: validationv1.RuleId_DETERMINISTIC_TRANSITION_SELECTION, collect: collectDeterministicTransitionSelectionIssues},
+		{id: validationv1.RuleId_NO_EVENT_BROADCAST_CYCLES, collect: collectNoEventBroadcastCycleIssues},
+	} {
+		violations = append(violations, collectRuleViolations(statechart, ignoreRules, rule.id, validationv1.Severity_ERROR, "", rule.collect)...)
 	}
 
 	// Run comprehensive Harel validation rules
 	harelViolations := s.validateHarelRules(statechart, ignoreRules)
 	violations = append(violations, harelViolations...)
 
+	reconciledViolations := s.validateReconciledConstraints(statechart, ignoreRules)
+	violations = append(violations, reconciledViolations...)
+
+	sortViolations(violations)
 	return violations
 }
 
@@ -322,138 +301,166 @@ func (s *SemanticValidator) validateChart(statechart *sc.Statechart, ignoreRules
 func (s *SemanticValidator) validateHarelRules(statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool) []*validationv1.Violation {
 	var violations []*validationv1.Violation
 
-	// Skip Harel rules if RULE_UNSPECIFIED is being ignored (for backward compatibility)
-	if ignoreRules[validationv1.RuleId_RULE_UNSPECIFIED] {
-		return violations
-	}
-
-	// Get selected Harel validation rules that don't duplicate existing functionality
-	harelRules := GetHarelValidationRules()
-
-	// Filter rules to avoid duplication with existing basic rules
-	rulesToApply := []HarelValidationRule{}
-	for _, rule := range harelRules {
-		switch rule.Name {
-		case "NoStateNameConflicts":
-			// Skip - duplicates UNIQUE_STATE_LABELS
-			continue
-		case "StateHierarchyWellFormed":
-			// Skip - overlaps with UNIQUE_STATE_LABELS for duplicate detection
-			continue
-		case "ConfigurationConsistency":
-			// Skip parts that duplicate BASIC_HAS_NO_CHILDREN, COMPOUND_HAS_CHILDREN, SINGLE_DEFAULT_CHILD
-			continue
-		default:
-			// Apply advanced rules that add new validation capabilities
-			rulesToApply = append(rulesToApply, rule)
-		}
-	}
-
-	// Apply filtered rules
-	for _, rule := range rulesToApply {
-		if err := rule.Validator(statechart); err != nil {
-			ruleID := harelRuleToRuleID(rule.Name)
-			violations = append(violations, &validationv1.Violation{
-				Rule:     ruleID,
-				Severity: validationv1.Severity_ERROR,
-				Message:  fmt.Sprintf("Harel Rule %s: %s", rule.Name, err.Error()),
-			})
-		}
+	for _, rule := range []struct {
+		name    string
+		ruleID  validationv1.RuleId
+		collect func(*sc.Statechart) []validationIssue
+	}{
+		{name: "StateHierarchyWellFormed", ruleID: harelRuleToRuleID("StateHierarchyWellFormed"), collect: collectStateHierarchyWellFormedIssues},
+		{name: "OrthogonalStatesDisjoint", ruleID: harelRuleToRuleID("OrthogonalStatesDisjoint"), collect: collectOrthogonalStatesDisjointIssues},
+		{name: "TransitionSourceTargetValidity", ruleID: harelRuleToRuleID("TransitionSourceTargetValidity"), collect: collectTransitionSourceTargetValidityIssues},
+		{name: "EventConsistency", ruleID: harelRuleToRuleID("EventConsistency"), collect: collectEventConsistencyIssues},
+		{name: "ConfigurationConsistency", ruleID: harelRuleToRuleID("ConfigurationConsistency"), collect: collectConfigurationConsistencyIssues},
+		{name: "TransitionWellFormedness", ruleID: harelRuleToRuleID("TransitionWellFormedness"), collect: collectTransitionWellFormednessIssues},
+		{name: "InitialStateExists", ruleID: harelRuleToRuleID("InitialStateExists"), collect: collectInitialStateExistsIssues},
+		{name: "NoSelfContainment", ruleID: harelRuleToRuleID("NoSelfContainment"), collect: collectNoSelfContainmentIssues},
+		{name: "FinalStateProperties", ruleID: harelRuleToRuleID("FinalStateProperties"), collect: collectFinalStatePropertiesIssues},
+		{name: "HistoryStateProperties", ruleID: harelRuleToRuleID("HistoryStateProperties"), collect: collectHistoryStatePropertyIssues},
+		{name: "ParallelStateSemantics", ruleID: harelRuleToRuleID("ParallelStateSemantics"), collect: collectParallelStateSemanticsIssues},
+	} {
+		violations = append(violations,
+			collectRuleViolations(statechart, ignoreRules, rule.ruleID, validationv1.Severity_ERROR,
+				fmt.Sprintf("Harel Rule %s: ", rule.name), rule.collect)...)
 	}
 
 	return violations
 }
 
+func collectRuleViolations(statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool, ruleID validationv1.RuleId, severity validationv1.Severity, prefix string, collect func(*sc.Statechart) []validationIssue) []*validationv1.Violation {
+	if collect == nil {
+		return nil
+	}
+	if ignoreRules[ruleID] {
+		return nil
+	}
+	if ruleID == validationv1.RuleId_RULE_UNSPECIFIED && ignoreRules[validationv1.RuleId_RULE_UNSPECIFIED] {
+		return nil
+	}
+	return issuesToViolations(ruleID, severity, prefix, collect(statechart))
+}
+
 func harelRuleToRuleID(name string) validationv1.RuleId {
 	switch name {
+	case "StateHierarchyWellFormed":
+		return validationv1.RuleId_PSEUDO_STATES_WELL_FORMED
+	case "OrthogonalStatesDisjoint":
+		return validationv1.RuleId_FORK_JOIN_BALANCED
+	case "TransitionSourceTargetValidity":
+		return validationv1.RuleId_INTERNAL_TRANSITIONS_VALID
 	case "EventConsistency":
 		return validationv1.RuleId_EVENT_PARAMETERS_CONSISTENT
-	case "HistoryStateProperties":
-		return validationv1.RuleId_HISTORY_STATES_WELL_FORMED
+	case "ConfigurationConsistency":
+		return validationv1.RuleId_COMPLETION_TRANSITIONS_VALID
 	case "TransitionWellFormedness":
 		return validationv1.RuleId_GUARD_EXPRESSIONS_VALID
+	case "InitialStateExists":
+		return validationv1.RuleId_HISTORY_DEFAULTS_VALID
+	case "NoSelfContainment":
+		return validationv1.RuleId_INVARIANTS_SATISFIABLE
+	case "FinalStateProperties":
+		return validationv1.RuleId_ACTION_EXPRESSIONS_VALID
+	case "HistoryStateProperties":
+		return validationv1.RuleId_HISTORY_STATES_WELL_FORMED
+	case "ParallelStateSemantics":
+		return validationv1.RuleId_CHOICE_GUARDS_COMPLETE
+	default:
+		return validationv1.RuleId_RULE_UNSPECIFIED
+	}
+}
+
+func sortViolations(violations []*validationv1.Violation) {
+	sort.SliceStable(violations, func(i, j int) bool {
+		if violations[i].Rule != violations[j].Rule {
+			return violations[i].Rule < violations[j].Rule
+		}
+		if violations[i].Severity != violations[j].Severity {
+			return violations[i].Severity < violations[j].Severity
+		}
+		if violations[i].Message != violations[j].Message {
+			return violations[i].Message < violations[j].Message
+		}
+		return strings.Join(violations[i].Xpath, "\x00") < strings.Join(violations[j].Xpath, "\x00")
+	})
+}
+
+func (s *SemanticValidator) validateReconciledConstraints(statechart *sc.Statechart, ignoreRules map[validationv1.RuleId]bool) []*validationv1.Violation {
+	var violations []*validationv1.Violation
+
+	reconciled := semantics.NewStatechart(statechart)
+	reconciledViolations, err := reconciled.CheckReconciledConstraints(semantics.ReconciledOptions{MaxSteps: 256})
+	if err != nil {
+		if ignoreRules[validationv1.RuleId_RULE_UNSPECIFIED] {
+			return violations
+		}
+		return []*validationv1.Violation{{
+			Rule:     validationv1.RuleId_RULE_UNSPECIFIED,
+			Severity: validationv1.Severity_WARNING,
+			Message:  fmt.Sprintf("reconciled semantics constraints not checked: %v", err),
+		}}
+	}
+
+	for _, violation := range reconciledViolations {
+		ruleID := reconciledConstraintToRuleID(violation.Constraint)
+		if ignoreRules[ruleID] {
+			continue
+		}
+		violations = append(violations, &validationv1.Violation{
+			Rule:     ruleID,
+			Severity: validationv1.Severity_WARNING,
+			Message:  fmt.Sprintf("reconciled %s: %s", violation.Constraint, violation.Message),
+		})
+	}
+
+	return violations
+}
+
+func reconciledConstraintToRuleID(id semantics.ReconciledConstraintID) validationv1.RuleId {
+	switch id {
+	case semantics.ReconciledConstraintC1:
+		return validationv1.RuleId_RECONCILING_C1_NO_COMPLETION_TRANSITIONS
+	case semantics.ReconciledConstraintC2:
+		return validationv1.RuleId_RECONCILING_C2_ACYCLIC_TRIGGERING
+	case semantics.ReconciledConstraintC3:
+		return validationv1.RuleId_RECONCILING_C3_NO_EXTERNAL_INTERNAL_CONFLICT
+	case semantics.ReconciledConstraintC4:
+		return validationv1.RuleId_RECONCILING_C4_TRIGGERS_ARE_CONSISTENT
+	case semantics.ReconciledConstraintC5:
+		return validationv1.RuleId_RECONCILING_C5_TOUCHED_INTERNAL_PRECONDITION
+	case semantics.ReconciledConstraintC6:
+		return validationv1.RuleId_RECONCILING_C6_CONSISTENT_TRIGGERS_STAY_CONSISTENT
+	case semantics.ReconciledConstraintC7:
+		return validationv1.RuleId_RECONCILING_C7_NO_COMPLETION_CYCLES
+	case semantics.ReconciledConstraintC8:
+		return validationv1.RuleId_RECONCILING_C8_NO_COMPLETION_TOUCHES_INTERNAL
+	case semantics.ReconciledConstraintC9:
+		return validationv1.RuleId_RECONCILING_C9_NO_EXTERNAL_COMPLETION_CONFLICT
+	case semantics.ReconciledConstraintC10:
+		return validationv1.RuleId_RECONCILING_C10_NO_COMPLETION_INTERNAL_CONFLICT
+	case semantics.ReconciledConstraintC11:
+		return validationv1.RuleId_RECONCILING_C11_CONFLICTING_COMPLETIONS_SHARE_SOURCES
+	case semantics.ReconciledConstraintC12:
+		return validationv1.RuleId_RECONCILING_C12_ACYCLIC_PREC_RELATION
+	case semantics.ReconciledConstraintC13:
+		return validationv1.RuleId_RECONCILING_C13_EQUAL_PRIORITY_SHAPE
+	case semantics.ReconciledConstraintC14:
+		return validationv1.RuleId_RECONCILING_C14_SINGLE_GENERATED_EVENT
+	case semantics.ReconciledConstraintC15:
+		return validationv1.RuleId_RECONCILING_C15_CONSISTENT_SAME_TRIGGER_SAME_OUTPUT
+	case semantics.ReconciledConstraintC16:
+		return validationv1.RuleId_RECONCILING_C16_COMPLETION_NOT_CONSISTENT_WITH_INTERNAL
+	case semantics.ReconciledConstraintC17:
+		return validationv1.RuleId_RECONCILING_C17_UML_INTERNAL_PRIORITY
 	default:
 		return validationv1.RuleId_RULE_UNSPECIFIED
 	}
 }
 
 // convertProtoToStatechart converts a proto statechart to a native statechart.
-// This is a simplified conversion for validation purposes.
+// The native types in package sc are aliases of the generated protobuf types,
+// so a protobuf clone preserves the full model without field-by-field loss.
 func convertProtoToStatechart(protoChart *pb.Statechart) *sc.Statechart {
 	if protoChart == nil {
 		return nil
 	}
-
-	statechart := &sc.Statechart{
-		RootState:   convertState(protoChart.RootState),
-		Transitions: make([]*sc.Transition, 0, len(protoChart.Transitions)),
-		Events:      make([]*sc.Event, 0, len(protoChart.Events)),
-	}
-
-	for _, t := range protoChart.Transitions {
-		statechart.Transitions = append(statechart.Transitions, convertTransition(t))
-	}
-
-	for _, e := range protoChart.Events {
-		statechart.Events = append(statechart.Events, convertEvent(e))
-	}
-
-	return statechart
-}
-
-func convertState(protoState *pb.State) *sc.State {
-	if protoState == nil {
-		return nil
-	}
-
-	state := &sc.State{
-		Label:     protoState.Label,
-		Type:      sc.StateType(protoState.Type),
-		IsInitial: protoState.IsInitial,
-		IsFinal:   protoState.IsFinal,
-		Children:  make([]*sc.State, 0, len(protoState.Children)),
-	}
-
-	for _, child := range protoState.Children {
-		state.Children = append(state.Children, convertState(child))
-	}
-
-	return state
-}
-
-func convertTransition(protoTransition *pb.Transition) *sc.Transition {
-	if protoTransition == nil {
-		return nil
-	}
-
-	transition := &sc.Transition{
-		Label: protoTransition.Label,
-		From:  protoTransition.From,
-		To:    protoTransition.To,
-		Event: protoTransition.Event,
-	}
-
-	if protoTransition.Guard != nil {
-		transition.Guard = &sc.Guard{
-			Expression: protoTransition.Guard.Expression,
-		}
-	}
-
-	for _, a := range protoTransition.Actions {
-		transition.Actions = append(transition.Actions, &sc.Action{
-			Label: a.Label,
-		})
-	}
-
-	return transition
-}
-
-func convertEvent(protoEvent *pb.Event) *sc.Event {
-	if protoEvent == nil {
-		return nil
-	}
-
-	return &sc.Event{
-		Label: protoEvent.Label,
-	}
+	return proto.Clone(protoChart).(*pb.Statechart)
 }

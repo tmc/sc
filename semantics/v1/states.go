@@ -184,15 +184,18 @@ func (c *Statechart) findAncestors(state StateLabel) ([]StateLabel, error) {
 	currentState := state
 
 	for {
+		if currentState == StateLabel(c.RootState.Label) {
+			break
+		}
 		parent, err := c.GetParent(currentState)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get parent of %s: %w", currentState, err)
 		}
-		ancestors = append(ancestors, StateLabel(parent.Label))
-		currentState = StateLabel(parent.Label)
-		if parent.Label == c.RootState.Label {
+		if parent == nil {
 			break
 		}
+		ancestors = append(ancestors, StateLabel(parent.Label))
+		currentState = StateLabel(parent.Label)
 	}
 
 	return ancestors, nil

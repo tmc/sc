@@ -6,6 +6,7 @@ import (
 
 	"github.com/tmc/sc"
 	testutil "github.com/tmc/sc/testing"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestValidatorClient_NewValidatorClient(t *testing.T) {
@@ -34,30 +35,30 @@ func TestValidatorClient_NewValidatorClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, err := NewValidatorClient(tt.target)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Fatal("Expected error, but got nil")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Fatalf("Expected no error, but got: %v", err)
 			}
-			
+
 			if client == nil {
 				t.Fatal("Expected non-nil client")
 			}
-			
+
 			if client.client == nil {
 				t.Fatal("Expected non-nil client.client")
 			}
-			
+
 			if client.conn == nil {
 				t.Fatal("Expected non-nil client.conn")
 			}
-			
+
 			// Clean up
 			_ = client.Close()
 		})
@@ -69,12 +70,12 @@ func TestValidatorClient_Close(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
-	
+
 	err = client.Close()
 	if err != nil {
 		t.Fatalf("Failed to close client: %v", err)
 	}
-	
+
 	// Closing again should not error
 	err = client.Close()
 	if err != nil {
@@ -175,33 +176,33 @@ func TestConvertStateToProto(t *testing.T) {
 					t.Fatalf("convertStateToProto panicked: %v", r)
 				}
 			}()
-			
+
 			result := convertStateToProto(tt.input)
-			
+
 			if tt.input == nil {
 				if result != nil {
 					t.Fatal("Expected nil result for nil input")
 				}
 				return
 			}
-			
+
 			if result == nil {
 				t.Fatal("Expected non-nil result for non-nil input")
 			}
-			
+
 			// Basic validation
 			if result.Label != tt.input.Label {
 				t.Errorf("Label mismatch: expected %s, got %s", tt.input.Label, result.Label)
 			}
-			
+
 			if result.IsInitial != tt.input.IsInitial {
 				t.Errorf("IsInitial mismatch: expected %v, got %v", tt.input.IsInitial, result.IsInitial)
 			}
-			
+
 			if result.IsFinal != tt.input.IsFinal {
 				t.Errorf("IsFinal mismatch: expected %v, got %v", tt.input.IsFinal, result.IsFinal)
 			}
-			
+
 			if len(result.Children) != len(tt.input.Children) {
 				t.Errorf("Children count mismatch: expected %d, got %d", len(tt.input.Children), len(result.Children))
 			}
@@ -272,37 +273,37 @@ func TestConvertTransitionToProto(t *testing.T) {
 					t.Fatalf("convertTransitionToProto panicked: %v", r)
 				}
 			}()
-			
+
 			result := convertTransitionToProto(tt.input)
-			
+
 			if tt.input == nil {
 				if result != nil {
 					t.Fatal("Expected nil result for nil input")
 				}
 				return
 			}
-			
+
 			if result == nil {
 				t.Fatal("Expected non-nil result for non-nil input")
 			}
-			
+
 			// Basic validation
 			if result.Label != tt.input.Label {
 				t.Errorf("Label mismatch: expected %s, got %s", tt.input.Label, result.Label)
 			}
-			
+
 			if result.Event != tt.input.Event {
 				t.Errorf("Event mismatch: expected %s, got %s", tt.input.Event, result.Event)
 			}
-			
+
 			if len(result.From) != len(tt.input.From) {
 				t.Errorf("From count mismatch: expected %d, got %d", len(tt.input.From), len(result.From))
 			}
-			
+
 			if len(result.To) != len(tt.input.To) {
 				t.Errorf("To count mismatch: expected %d, got %d", len(tt.input.To), len(result.To))
 			}
-			
+
 			// Guard validation
 			if tt.input.Guard == nil && result.Guard != nil {
 				t.Error("Expected nil guard, got non-nil")
@@ -315,7 +316,7 @@ func TestConvertTransitionToProto(t *testing.T) {
 					t.Errorf("Guard expression mismatch: expected %s, got %s", tt.input.Guard.Expression, result.Guard.Expression)
 				}
 			}
-			
+
 			// Actions validation
 			if len(result.Actions) != len(tt.input.Actions) {
 				t.Errorf("Actions count mismatch: expected %d, got %d", len(tt.input.Actions), len(result.Actions))
@@ -354,20 +355,20 @@ func TestConvertEventToProto(t *testing.T) {
 					t.Fatalf("convertEventToProto panicked: %v", r)
 				}
 			}()
-			
+
 			result := convertEventToProto(tt.input)
-			
+
 			if tt.input == nil {
 				if result != nil {
 					t.Fatal("Expected nil result for nil input")
 				}
 				return
 			}
-			
+
 			if result == nil {
 				t.Fatal("Expected non-nil result for non-nil input")
 			}
-			
+
 			if result.Label != tt.input.Label {
 				t.Errorf("Label mismatch: expected %s, got %s", tt.input.Label, result.Label)
 			}
@@ -407,20 +408,20 @@ func TestConvertMachineToProto(t *testing.T) {
 					t.Fatalf("convertMachineToProto panicked: %v", r)
 				}
 			}()
-			
+
 			result := convertMachineToProto(tt.input)
-			
+
 			if tt.input == nil {
 				if result != nil {
 					t.Fatal("Expected nil result for nil input")
 				}
 				return
 			}
-			
+
 			if result == nil {
 				t.Fatal("Expected non-nil result for non-nil input")
 			}
-			
+
 			if result.Id != tt.input.Id {
 				t.Errorf("Id mismatch: expected %s, got %s", tt.input.Id, result.Id)
 			}
@@ -431,7 +432,7 @@ func TestConvertMachineToProto(t *testing.T) {
 func TestStatechart_ValidateWithService(t *testing.T) {
 	// This test is mostly to ensure the method exists and doesn't panic
 	// In a real scenario, this would require a running gRPC service
-	
+
 	statechart := &Statechart{
 		Statechart: &sc.Statechart{
 			RootState: &sc.State{
@@ -440,15 +441,15 @@ func TestStatechart_ValidateWithService(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Create a mock client (this would fail in real usage but tests the code path)
 	client := &ValidatorClient{
 		client: nil, // In real usage, this would be a proper gRPC client
 		conn:   nil,
 	}
-	
+
 	ctx := context.Background()
-	
+
 	// This should return an error since we don't have a real service running
 	err := statechart.ValidateWithService(ctx, client)
 	if err == nil {
@@ -486,31 +487,31 @@ func TestComplexConversions(t *testing.T) {
 				if protoState == nil {
 					t.Fatal("Expected non-nil proto state")
 				}
-				
+
 				if protoState.Label != tc.statechart.RootState.Label {
 					t.Errorf("Root state label mismatch: expected %s, got %s", tc.statechart.RootState.Label, protoState.Label)
 				}
 			}
-			
+
 			// Test transitions conversion
 			for i, transition := range tc.statechart.Transitions {
 				protoTransition := convertTransitionToProto(transition)
 				if protoTransition == nil {
 					t.Fatalf("Expected non-nil proto transition for transition %d", i)
 				}
-				
+
 				if protoTransition.Label != transition.Label {
 					t.Errorf("Transition %d label mismatch: expected %s, got %s", i, transition.Label, protoTransition.Label)
 				}
 			}
-			
+
 			// Test events conversion
 			for i, event := range tc.statechart.Events {
 				protoEvent := convertEventToProto(event)
 				if protoEvent == nil {
 					t.Fatalf("Expected non-nil proto event for event %d", i)
 				}
-				
+
 				if protoEvent.Label != event.Label {
 					t.Errorf("Event %d label mismatch: expected %s, got %s", i, event.Label, protoEvent.Label)
 				}
@@ -519,9 +520,129 @@ func TestComplexConversions(t *testing.T) {
 	}
 }
 
+func TestConvertStateToProto_PreservesHistoryAndMetadata(t *testing.T) {
+	metadata, err := structpb.NewStruct(map[string]interface{}{
+		"source": "history-test",
+	})
+	if err != nil {
+		t.Fatalf("structpb.NewStruct() error = %v", err)
+	}
+
+	state := &sc.State{
+		Label:       "H",
+		Type:        sc.StateTypeBasic,
+		IsHistory:   true,
+		HistoryType: sc.HistoryType_HISTORY_TYPE_DEEP,
+		Metadata:    metadata,
+	}
+
+	got := convertStateToProto(state)
+	if got == nil {
+		t.Fatal("convertStateToProto() = nil, want non-nil")
+	}
+	if !got.IsHistory {
+		t.Fatal("convertStateToProto() lost IsHistory")
+	}
+	if got.HistoryType != sc.HistoryType_HISTORY_TYPE_DEEP {
+		t.Fatalf("convertStateToProto() history type = %v, want %v", got.HistoryType, sc.HistoryType_HISTORY_TYPE_DEEP)
+	}
+	if got.Metadata == nil || got.Metadata.Fields["source"].GetStringValue() != "history-test" {
+		t.Fatalf("convertStateToProto() metadata = %#v, want source=history-test", got.Metadata)
+	}
+}
+
+func TestConvertTransitionToProto_PreservesPriorityAndMetadata(t *testing.T) {
+	metadata, err := structpb.NewStruct(map[string]interface{}{
+		"kind": "transition",
+	})
+	if err != nil {
+		t.Fatalf("structpb.NewStruct() error = %v", err)
+	}
+
+	transition := &sc.Transition{
+		Label:    "t",
+		From:     []string{"A"},
+		To:       []string{"B"},
+		Event:    "e",
+		Priority: 7,
+		Metadata: metadata,
+		Actions: []*sc.Action{
+			{Label: "raise:i"},
+		},
+	}
+
+	got := convertTransitionToProto(transition)
+	if got == nil {
+		t.Fatal("convertTransitionToProto() = nil, want non-nil")
+	}
+	if got.Priority != 7 {
+		t.Fatalf("convertTransitionToProto() priority = %d, want 7", got.Priority)
+	}
+	if got.Metadata == nil || got.Metadata.Fields["kind"].GetStringValue() != "transition" {
+		t.Fatalf("convertTransitionToProto() metadata = %#v, want kind=transition", got.Metadata)
+	}
+	if len(got.Actions) != 1 || got.Actions[0].Label != "raise:i" {
+		t.Fatalf("convertTransitionToProto() actions = %#v, want raise:i", got.Actions)
+	}
+}
+
+func TestConvertEventToProto_PreservesParameters(t *testing.T) {
+	parameters, err := structpb.NewStruct(map[string]interface{}{
+		"count": 3,
+	})
+	if err != nil {
+		t.Fatalf("structpb.NewStruct() error = %v", err)
+	}
+
+	event := &sc.Event{
+		Label:      "tick",
+		Parameters: parameters,
+	}
+
+	got := convertEventToProto(event)
+	if got == nil {
+		t.Fatal("convertEventToProto() = nil, want non-nil")
+	}
+	if got.Parameters == nil || got.Parameters.Fields["count"].GetNumberValue() != 3 {
+		t.Fatalf("convertEventToProto() parameters = %#v, want count=3", got.Parameters)
+	}
+}
+
+func TestConvertMachineToProto_PreservesConfigurationHistoryAndSteps(t *testing.T) {
+	machine := &sc.Machine{
+		Id:    "m",
+		State: sc.MachineStateRunning,
+		Configuration: &sc.Configuration{
+			States: []*sc.StateRef{{Label: "A"}},
+			History: map[string]*sc.Configuration{
+				"On": {
+					States: []*sc.StateRef{{Label: "B"}},
+				},
+			},
+		},
+		StepHistory: []*sc.Step{
+			{
+				Events:      []*sc.Event{{Label: "e"}},
+				Transitions: []*sc.Transition{{Label: "t"}},
+			},
+		},
+	}
+
+	got := convertMachineToProto(machine)
+	if got == nil {
+		t.Fatal("convertMachineToProto() = nil, want non-nil")
+	}
+	if got.Configuration == nil || len(got.Configuration.History["On"].States) != 1 {
+		t.Fatalf("convertMachineToProto() history = %#v, want history for On", got.Configuration)
+	}
+	if len(got.StepHistory) != 1 || len(got.StepHistory[0].Events) != 1 || got.StepHistory[0].Events[0].Label != "e" {
+		t.Fatalf("convertMachineToProto() step history = %#v, want event e", got.StepHistory)
+	}
+}
+
 func BenchmarkConvertStateToProto(b *testing.B) {
 	statechart := testutil.CreateLargeStatechart(100, 50)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = convertStateToProto(statechart.RootState)
@@ -533,9 +654,9 @@ func BenchmarkConvertTransitionToProto(b *testing.B) {
 	if len(statechart.Transitions) == 0 {
 		b.Skip("No transitions to benchmark")
 	}
-	
+
 	transition := statechart.Transitions[0]
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = convertTransitionToProto(transition)
@@ -547,9 +668,9 @@ func BenchmarkConvertEventToProto(b *testing.B) {
 	if len(statechart.Events) == 0 {
 		b.Skip("No events to benchmark")
 	}
-	
+
 	event := statechart.Events[0]
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = convertEventToProto(event)
@@ -561,7 +682,7 @@ func BenchmarkConvertMachineToProto(b *testing.B) {
 		Id:    "benchmark-machine",
 		State: sc.MachineStateRunning,
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = convertMachineToProto(machine)
