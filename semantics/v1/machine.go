@@ -516,7 +516,7 @@ func (m *MachineWrapper) resolveTargetStates(targets map[string]bool) ([]string,
 		}
 
 		if state.IsHistory {
-			// Resolve history
+			// Resolve history: restore the previously active substates.
 			historyConfig := m.resolveHistory(state)
 			if len(historyConfig) > 0 {
 				for _, histState := range historyConfig {
@@ -525,11 +525,15 @@ func (m *MachineWrapper) resolveTargetStates(targets map[string]bool) ([]string,
 					}
 				}
 			} else {
-				// Default history behavior (if no history, follow default transition from history state)
-				// Note: The proto definition for History states might expect them to have outgoing transitions
-				// acting as defaults.
-				// For now, we assume if no history, we might fall back to initial state of parent or specific default.
-				// This implementation assumes strict history or nothing.
+				// No saved history — fall back to the initial (default) state
+				// of the parent composite state, per Harel semantics.
+				parent, err := m.statechart.GetParent(StateLabel(state.Label))
+				if err == nil && parent != nil {
+					defaultState, err := m.statechart.Default(StateLabel(parent.Label))
+					if err == nil && !processed[string(defaultState)] {
+						queue = append(queue, string(defaultState))
+					}
+				}
 			}
 		} else {
 			resolved = append(resolved, label)
