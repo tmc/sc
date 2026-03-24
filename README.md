@@ -16,7 +16,7 @@ Statecharts extend classical finite state machines with three key concepts:
 2. **Orthogonality** - System components can operate concurrently through orthogonal (parallel) states, allowing the decomposition of complex behaviors.
 3. **Communication** - Events can trigger transitions and broadcast to other parts of the system, enabling coordination between components.
 
-The formal semantics of Statecharts in this implementation follow the reconciled definitions presented in academic literature, particularly von der Beeck's comparison of statechart variants (1994) and Harel and Naamad's operational semantics (1996).
+The formal semantics of Statecharts in this implementation follow the reconciled definitions presented in academic literature, particularly von der Beeck's comparison of statechart variants (1994), Harel and Naamad's operational semantics (1996), and Eshuis' "Reconciling statechart semantics" (2009).
 
 ## Features
 
@@ -24,7 +24,26 @@ The formal semantics of Statecharts in this implementation follow the reconciled
 - Rigorous implementation of operational semantics for state transitions and event processing
 - Precise handling of state configurations and hierarchical state relationships
 - Validation rules ensuring well-formed statechart models
+- Explicit execution models for the paper semantics:
+  - fixpoint
+  - Statemate
+  - single-event Statemate
+  - UML
 - Extensible architecture supporting theoretical extensions and domain-specific adaptations
+
+## Paper Semantics
+
+The `semantics/v1` package now includes an explicit engine for the four
+execution models compared in Eshuis' paper. Use `Statechart.Reactions(...)` or
+`Statechart.ReactionsWithOptions(...)` to evaluate a chart under those
+semantics and enumerate the possible reactions.
+
+This is distinct from the package's older `MachineWrapper` and `EventProcessor`
+helpers, which remain useful as runtime utilities but do not by themselves
+encode the paper's full operational distinctions.
+
+For the paper semantics engine, internally generated events are represented by
+transition actions whose labels begin with `raise:`, `emit:`, or `send:`.
 
 ## Documentation
 

@@ -2,6 +2,24 @@
 //
 // This package implements Harel's statechart semantics including:
 //
+// # Reconciled Paper Semantics
+//
+// The package also provides an explicit implementation of the operational
+// semantics formalized in Rik Eshuis, "Reconciling statechart semantics":
+//
+//   - fixpoint
+//   - Statemate
+//   - single-event Statemate
+//   - UML
+//
+// Use [Statechart.Reactions] or [Statechart.ReactionsWithOptions] when you
+// need the paper's execution models. The older [MachineWrapper] and
+// [EventProcessor] types remain useful runtime helpers, but they are not by
+// themselves the paper-faithful execution model.
+//
+// Internal event generation for the paper semantics engine is represented by
+// transition actions whose labels start with `raise:`, `emit:`, or `send:`.
+//
 // # Transition Execution
 //
 // The transition execution system follows the formal semantics defined by David Harel
@@ -25,17 +43,17 @@
 //
 // The system supports entry and exit actions through a convention-based approach:
 //
-//  - Entry actions: Named with prefix "entry_" + state label
-//  - Exit actions: Named with prefix "exit_" + state label
-//  - Actions are executed via a pluggable ActionRegistry system
+//   - Entry actions: Named with prefix "entry_" + state label
+//   - Exit actions: Named with prefix "exit_" + state label
+//   - Actions are executed via a pluggable ActionRegistry system
 //
 // # Complex Transitions
 //
 // Advanced transition types are supported:
 //
-//  - Compound Transitions: Multiple atomic transitions executed atomically
-//  - Cross-Region Transitions: Transitions that affect multiple orthogonal regions
-//  - Hierarchical Transitions: Transitions crossing multiple hierarchy levels
+//   - Compound Transitions: Multiple atomic transitions executed atomically
+//   - Cross-Region Transitions: Transitions that affect multiple orthogonal regions
+//   - Hierarchical Transitions: Transitions crossing multiple hierarchy levels
 //
 // # Usage Examples
 //
@@ -65,10 +83,10 @@
 //
 // The package provides comprehensive state hierarchy management including:
 //
-//  - Finding least common ancestors
-//  - Determining ancestral relationships
-//  - Checking orthogonality between states
-//  - Configuration validation and default completion
+//   - Finding least common ancestors
+//   - Determining ancestral relationships
+//   - Checking orthogonality between states
+//   - Configuration validation and default completion
 //
 // All operations are designed to be deterministic and follow the formal semantics
 // to ensure correct statechart behavior across different execution contexts.
