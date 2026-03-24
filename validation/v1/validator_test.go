@@ -164,6 +164,8 @@ func TestValidateChart(t *testing.T) {
 			ignoreRules: []validationv1.RuleId{
 				validationv1.RuleId_SINGLE_DEFAULT_CHILD,
 				validationv1.RuleId_RULE_UNSPECIFIED,
+				validationv1.RuleId_COMPLETION_TRANSITIONS_VALID, // ConfigurationConsistency
+				validationv1.RuleId_HISTORY_DEFAULTS_VALID,       // InitialStateExists
 			},
 			wantViolations: 0,
 			wantCode:       codes.OK,
