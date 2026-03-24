@@ -148,12 +148,37 @@ type topologyState struct {
 }
 
 type topologyEdge struct {
-	Label   string   `json:"label,omitempty"`
-	From    []string `json:"from"`
-	To      []string `json:"to"`
-	Event   string   `json:"event,omitempty"`
-	Guard   string   `json:"guard,omitempty"`
-	Actions []string `json:"actions,omitempty"`
+	Label         string   `json:"label,omitempty"`
+	From          []string `json:"from"`
+	To            []string `json:"to"`
+	Event         string   `json:"event,omitempty"`
+	Guard         string   `json:"guard,omitempty"`
+	Actions       []string `json:"actions,omitempty"`
+	SourceDepth   int      `json:"source_depth"`
+	TargetDepth   int      `json:"target_depth"`
+	LCA           string   `json:"lca,omitempty"`
+	IsInterLevel  bool     `json:"is_inter_level"`
+	ExitedStates  []string `json:"exited_states,omitempty"`
+	EnteredStates []string `json:"entered_states,omitempty"`
+}
+
+// historyActivation records when a history pseudostate resolves during a step.
+type historyActivation struct {
+	HistoryState    string   `json:"history_state"`
+	HistoryType     string   `json:"history_type"`
+	RestoredConfig  []string `json:"restored_config"`
+	HadPriorHistory bool     `json:"had_prior_history"`
+}
+
+// transitionMetadata captures inter-level and history details for a trace step.
+type transitionMetadata struct {
+	SourceDepth       int                  `json:"source_depth,omitempty"`
+	TargetDepth       int                  `json:"target_depth,omitempty"`
+	LCA               string               `json:"lca,omitempty"`
+	IsInterLevel      bool                 `json:"is_inter_level,omitempty"`
+	ExitedStates      []string             `json:"exited_states,omitempty"`
+	EnteredStates     []string             `json:"entered_states,omitempty"`
+	HistoryActivation *historyActivation   `json:"history_activation,omitempty"`
 }
 
 func generateOutput(chart *sc.Statechart, wrapped *semantics.Statechart, sourcePath string, events []string, traceCount, stepCount int, seed int64, rng *rand.Rand, pretty bool, dl detailLevel) ([]byte, error) {
@@ -273,6 +298,16 @@ func generateTrace(chartID string, chart *sc.Statechart, wrapped *semantics.Stat
 			entry.ContextAfter = afterContext
 		}
 
+		// At standard+ detail, add inter-level and history metadata.
+		if dl >= detailStandard && transitioned && len(fired) > 0 {
+			tm := buildTransitionMetadata(wrapped, chart, fired, beforeConfig, afterConfig)
+			if tm != nil {
+				if b, err := json.Marshal(tm); err == nil {
+					entry.Metadata["transition_metadata"] = string(b)
+				}
+			}
+		}
+
 		entries = append(entries, entry)
 	}
 
@@ -387,11 +422,17 @@ func buildTopology(chart *sc.Statechart) *groundTruthTopology {
 		Edges:  make([]*topologyEdge, 0, len(chart.Transitions)),
 	}
 
+	// Build depth and ancestry maps while walking.
+	depthMap := map[string]int{}
+	parentMap := map[string]string{}
+
 	var walk func(state *sc.State, parent string, depth int)
 	walk = func(state *sc.State, parent string, depth int) {
 		if state == nil {
 			return
 		}
+		depthMap[state.Label] = depth
+		parentMap[state.Label] = parent
 		topology.States = append(topology.States, &topologyState{
 			Label:       state.Label,
 			Type:        stateTypeString(state.Type),
@@ -407,20 +448,199 @@ func buildTopology(chart *sc.Statechart) *groundTruthTopology {
 	}
 	walk(chart.RootState, "", 0)
 
+	// Helper: ancestors from state to root (inclusive).
+	ancestors := func(label string) []string {
+		var path []string
+		cur := label
+		for cur != "" {
+			path = append(path, cur)
+			cur = parentMap[cur]
+		}
+		return path
+	}
+
+	// Helper: LCA of two labels.
+	lca := func(a, b string) string {
+		aAnc := ancestors(a)
+		bSet := map[string]bool{}
+		for _, s := range ancestors(b) {
+			bSet[s] = true
+		}
+		for _, s := range aAnc {
+			if bSet[s] {
+				return s
+			}
+		}
+		return ""
+	}
+
 	for _, transition := range chart.Transitions {
 		if transition == nil {
 			continue
 		}
-		topology.Edges = append(topology.Edges, &topologyEdge{
+		edge := &topologyEdge{
 			Label:   transition.Label,
 			From:    append([]string(nil), transition.From...),
 			To:      append([]string(nil), transition.To...),
 			Event:   transition.Event,
 			Guard:   guardExpression(transition.Guard),
 			Actions: actionLabels(transition.Actions),
-		})
+		}
+
+		// Compute inter-level metadata.
+		if len(transition.From) > 0 && len(transition.To) > 0 {
+			src := transition.From[0]
+			tgt := transition.To[0]
+			edge.SourceDepth = depthMap[src]
+			edge.TargetDepth = depthMap[tgt]
+			lcaLabel := lca(src, tgt)
+			edge.LCA = lcaLabel
+			edge.IsInterLevel = edge.SourceDepth != edge.TargetDepth
+
+			// Compute exited/entered states (from source up to LCA, from LCA down to target).
+			for _, s := range ancestors(src) {
+				if s == lcaLabel {
+					break
+				}
+				edge.ExitedStates = append(edge.ExitedStates, s)
+			}
+			for _, s := range ancestors(tgt) {
+				if s == lcaLabel {
+					break
+				}
+				edge.EnteredStates = append(edge.EnteredStates, s)
+			}
+			// EnteredStates should be shallowest-first (reverse the deepest-first order).
+			slices.Reverse(edge.EnteredStates)
+		}
+
+		topology.Edges = append(topology.Edges, edge)
 	}
 	return topology
+}
+
+// buildTransitionMetadata computes inter-level and history metadata for fired transitions.
+func buildTransitionMetadata(wrapped *semantics.Statechart, chart *sc.Statechart, fired []*statechartspb.TransitionRef, beforeConfig, afterConfig *sc.Configuration) *transitionMetadata {
+	if len(fired) == 0 {
+		return nil
+	}
+
+	// Build depth, parent, and state lookup maps from chart.
+	depthMap := map[string]int{}
+	parentMap := map[string]string{}
+	stateMap := map[string]*sc.State{}
+	var walkDepths func(state *sc.State, parent string, depth int)
+	walkDepths = func(state *sc.State, parent string, depth int) {
+		if state == nil {
+			return
+		}
+		depthMap[state.Label] = depth
+		parentMap[state.Label] = parent
+		stateMap[state.Label] = state
+		for _, child := range state.Children {
+			walkDepths(child, state.Label, depth+1)
+		}
+	}
+	walkDepths(chart.RootState, "", 0)
+
+	ancestors := func(label string) []string {
+		var path []string
+		cur := label
+		for cur != "" {
+			path = append(path, cur)
+			cur = parentMap[cur]
+		}
+		return path
+	}
+
+	ref := fired[0]
+	tm := &transitionMetadata{}
+
+	if len(ref.From) > 0 && len(ref.To) > 0 {
+		src := ref.From[0]
+		tgt := ref.To[0]
+		tm.SourceDepth = depthMap[src]
+		tm.TargetDepth = depthMap[tgt]
+		tm.IsInterLevel = tm.SourceDepth != tm.TargetDepth
+
+		lcaLabel, err := wrapped.LeastCommonAncestor(semantics.StateLabel(src), semantics.StateLabel(tgt))
+		if err == nil {
+			tm.LCA = string(lcaLabel)
+		}
+
+		lcaStr := tm.LCA
+		for _, s := range ancestors(src) {
+			if s == lcaStr {
+				break
+			}
+			tm.ExitedStates = append(tm.ExitedStates, s)
+		}
+		entered := ancestors(tgt)
+		for i := range entered {
+			if entered[i] == lcaStr {
+				entered = entered[:i]
+				break
+			}
+		}
+		slices.Reverse(entered)
+		tm.EnteredStates = entered
+	}
+
+	// Detect history activation: check if any target was a history state
+	// by comparing before/after configs — if target labels in the transition
+	// differ from actual after-config states, history resolved.
+	if len(ref.To) > 0 {
+		for _, tgt := range ref.To {
+			// Find the state in the chart to check is_history.
+			state := stateMap[tgt]
+			if state == nil || !state.IsHistory {
+				continue
+			}
+			// This target was a history state — figure out what it resolved to.
+			afterLabels := configLabels(afterConfig)
+			beforeLabels := configLabels(beforeConfig)
+			// Restored config = states in afterConfig that weren't in beforeConfig.
+			restored := make([]string, 0)
+			beforeSet := map[string]bool{}
+			for _, l := range beforeLabels {
+				beforeSet[l] = true
+			}
+			for _, l := range afterLabels {
+				if !beforeSet[l] {
+					restored = append(restored, l)
+				}
+			}
+
+			histType := "shallow"
+			if state.HistoryType == sc.HistoryType_HISTORY_TYPE_DEEP {
+				histType = "deep"
+			}
+
+			tm.HistoryActivation = &historyActivation{
+				HistoryState:    tgt,
+				HistoryType:     histType,
+				RestoredConfig:  restored,
+				HadPriorHistory: len(restored) > 0,
+			}
+			break
+		}
+	}
+
+	return tm
+}
+
+// configLabels extracts state labels from a configuration.
+func configLabels(config *sc.Configuration) []string {
+	if config == nil {
+		return nil
+	}
+	labels := make([]string, 0, len(config.States))
+	for _, s := range config.States {
+		if s != nil {
+			labels = append(labels, s.Label)
+		}
+	}
+	return labels
 }
 
 func evaluateGuards(chart *semantics.Statechart, config *sc.Configuration, context *structpb.Struct, eventLabel string, dl detailLevel) []*statechartspb.GuardEvaluation {
