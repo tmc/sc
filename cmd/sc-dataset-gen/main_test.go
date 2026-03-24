@@ -8,6 +8,7 @@ import (
 
 	"github.com/tmc/sc"
 	statechartspb "github.com/tmc/sc/gen/statecharts/v1"
+	validationv1 "github.com/tmc/sc/gen/validation/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -401,6 +402,55 @@ func TestValidationProduct(t *testing.T) {
 	}
 	if mutated == 0 {
 		t.Error("expected at least one mutated validation row")
+	}
+}
+
+func TestValidationRuleCoverage(t *testing.T) {
+	chart := &sc.Statechart{
+		Name: "coverage_test",
+		RootState: &sc.State{
+			Label: "__root__", Type: sc.StateTypeOR,
+			Children: []*sc.State{
+				{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+				{Label: "B", Type: sc.StateTypeBasic},
+			},
+		},
+		Transitions: []*sc.Transition{
+			{Label: "go", From: []string{"A"}, To: []string{"B"}, Event: "GO"},
+			{Label: "back", From: []string{"B"}, To: []string{"A"}, Event: "BACK"},
+		},
+		Events: []*sc.Event{{Label: "GO"}, {Label: "BACK"}},
+	}
+
+	rows := buildValidationRows(chart, "cov", []string{"flat"}, 42, 20)
+
+	seen := map[int]bool{}
+	for _, row := range rows {
+		for _, id := range row.ViolatedRuleIDs {
+			seen[id] = true
+		}
+	}
+
+	// We expect all 35 rule IDs (1-35) to be triggered, with two known exceptions:
+	// - Rule 17 (INVARIANTS_SATISFIABLE): requires circular containment not constructible via protobuf
+	// Rules 1-16, 18-35 should all be present.
+	expected := []int{
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18,
+		19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+	}
+	var missing []int
+	for _, id := range expected {
+		if !seen[id] {
+			missing = append(missing, id)
+		}
+	}
+
+	t.Logf("Total rows: %d, triggered %d unique rule IDs (of target %d)", len(rows), len(seen), len(expected))
+	if len(missing) > 0 {
+		for _, id := range missing {
+			t.Errorf("rule ID %d (%s) not triggered by any validation row",
+				id, validationv1.RuleId(id).String())
+		}
 	}
 }
 

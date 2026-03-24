@@ -796,3 +796,30 @@ func collectParallelStateSemanticsIssues(statechart *sc.Statechart) []validation
 
 	return issues
 }
+
+func collectTimeoutEventsUniqueIssues(statechart *sc.Statechart) []validationIssue {
+	if statechart == nil {
+		return nil
+	}
+
+	var issues []validationIssue
+	seen := make(map[string]string)
+	for i, event := range statechart.Events {
+		if event == nil {
+			continue
+		}
+		label := event.Label
+		if !strings.HasPrefix(label, "after:") {
+			continue
+		}
+		path := eventXPath(i)
+		if firstPath, ok := seen[label]; ok {
+			issues = append(issues, issuef([]string{firstPath, path},
+				"duplicate timeout event: %s", label))
+			continue
+		}
+		seen[label] = path
+	}
+
+	return issues
+}

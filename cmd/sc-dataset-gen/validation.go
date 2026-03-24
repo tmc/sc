@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"sort"
 
@@ -16,18 +17,18 @@ import (
 
 // validationRow records the result of running the full validator against a chart.
 type validationRow struct {
-	ChartID        string             `json:"chart_id"`
-	ChartHash      string             `json:"chart_hash"`
-	IsMutated      bool               `json:"is_mutated"`
-	MutationFamily string             `json:"mutation_family,omitempty"`
-	MutationOp     string             `json:"mutation_op,omitempty"`
-	NStates        int                `json:"n_states"`
-	NTransitions   int                `json:"n_transitions"`
-	Families       []string           `json:"families"`
-	Violations     []violationEntry   `json:"violations"`
-	ViolatedRuleIDs []int             `json:"violated_rule_ids"`
-	NViolations    int                `json:"n_violations"`
-	IsWellFormed   bool               `json:"is_well_formed"`
+	ChartID         string           `json:"chart_id"`
+	ChartHash       string           `json:"chart_hash"`
+	IsMutated       bool             `json:"is_mutated"`
+	MutationFamily  string           `json:"mutation_family,omitempty"`
+	MutationOp      string           `json:"mutation_op,omitempty"`
+	NStates         int              `json:"n_states"`
+	NTransitions    int              `json:"n_transitions"`
+	Families        []string         `json:"families"`
+	Violations      []violationEntry `json:"violations"`
+	ViolatedRuleIDs []int            `json:"violated_rule_ids"`
+	NViolations     int              `json:"n_violations"`
+	IsWellFormed    bool             `json:"is_well_formed"`
 }
 
 type violationEntry struct {
@@ -37,8 +38,8 @@ type violationEntry struct {
 	Message  string `json:"message"`
 }
 
-// buildValidationRows runs the validator against the clean chart and targeted
-// mutations, returning one row per chart variant.
+// buildValidationRows runs the validator against the clean chart, targeted
+// mutations, and synthetic charts designed to trigger all 35 rule IDs.
 func buildValidationRows(chart *sc.Statechart, chartID string, families []string, seed int64, mutationCount int) []validationRow {
 	var rows []validationRow
 
@@ -58,6 +59,13 @@ func buildValidationRows(chart *sc.Statechart, chartID string, families []string
 		rows = append(rows, runValidation(mutated, chartID, families, true, m.family, op))
 	}
 
+	// Synthetic charts that exercise reconciled constraints (C1-C17) and
+	// other rules that require specific structural patterns.
+	for _, sc := range syntheticViolationCharts() {
+		id := fmt.Sprintf("%s__synthetic_%s", chartID, sc.family)
+		rows = append(rows, runValidation(sc.chart, id, families, true, sc.family, sc.op))
+	}
+
 	return rows
 }
 
@@ -66,15 +74,15 @@ func runValidation(chart *sc.Statechart, chartID string, families []string, isMu
 	resp, err := v.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{Chart: chart})
 
 	row := validationRow{
-		ChartID:      chartID,
-		ChartHash:    validationChartHash(chart),
-		IsMutated:    isMutated,
+		ChartID:        chartID,
+		ChartHash:      validationChartHash(chart),
+		IsMutated:      isMutated,
 		MutationFamily: mutFamily,
-		MutationOp:   mutOp,
-		NStates:      countStates(chart.RootState),
-		NTransitions: len(chart.Transitions),
-		Families:     families,
-		IsWellFormed: true,
+		MutationOp:     mutOp,
+		NStates:        countStates(chart.RootState),
+		NTransitions:   len(chart.Transitions),
+		Families:       families,
+		IsWellFormed:   true,
 	}
 
 	if err == nil && resp != nil {
@@ -143,10 +151,14 @@ func targetedMutators() []targetedMutator {
 		{"compound_no_children", mutateCompoundNoChildren},
 		// Rule 5: DETERMINISTIC_TRANSITION_SELECTION
 		{"nondeterministic_transition", mutateNondeterministicTransition},
+		// Rule 6: NO_EVENT_BROADCAST_CYCLES
+		{"event_broadcast_cycle", mutateEventBroadcastCycle},
 		// Rule 7: HISTORY_STATES_WELL_FORMED
 		{"invalid_history", mutateInvalidHistory},
 		// Rule 10: CHOICE_GUARDS_COMPLETE — remove transition leaving dead end
 		{"create_dead_end", mutateCreateDeadEnd},
+		// Rule 11: TIMEOUT_EVENTS_UNIQUE
+		{"duplicate_timeout_event", mutateDuplicateTimeoutEvent},
 		// Rule 13: GUARD_EXPRESSIONS_VALID
 		{"invalid_guard", mutateInvalidGuard},
 		// Rule 14: EVENT_PARAMETERS_CONSISTENT
@@ -155,21 +167,23 @@ func targetedMutators() []targetedMutator {
 		{"cross_boundary_source", mutateCrossBoundarySource},
 		// Structural: remove all transitions
 		{"remove_all_transitions", mutateRemoveAllTransitions},
-		// Structural: add self-loop on final state
+		// Structural: add self-loop on final state (Rule 12: ACTION_EXPRESSIONS_VALID)
 		{"final_with_outgoing", mutateFinalWithOutgoing},
 		// Structural: change state type without adjusting children
 		{"wrong_state_type", mutateWrongStateType},
+		// Rule 9: FORK_JOIN_BALANCED — overlapping orthogonal regions
+		{"overlapping_regions", mutateOverlappingRegions},
 	}
 }
 
-// mutateDuplicateLabel renames a random state to share a label with another state.
+// --- Mutation operators ---
+
 func mutateDuplicateLabel(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	states := collectAllStates(chart.RootState)
-	if len(states) < 3 { // need root + at least 2 others
+	if len(states) < 3 {
 		return "", false
 	}
-	// Pick two non-root states.
-	nonRoot := states[1:] // skip __root__
+	nonRoot := states[1:]
 	if len(nonRoot) < 2 {
 		return "", false
 	}
@@ -180,7 +194,6 @@ func mutateDuplicateLabel(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	}
 	old := b.Label
 	b.Label = a.Label
-	// Also fix transition references that pointed to old label.
 	for _, t := range chart.Transitions {
 		for i, f := range t.From {
 			if f == old {
@@ -196,7 +209,6 @@ func mutateDuplicateLabel(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	return "duplicate label " + a.Label, true
 }
 
-// mutateExtraInitial marks a second child as initial in an OR state.
 func mutateExtraInitial(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	composites := collectCompositeStates(chart.RootState, sc.StateTypeNormal)
 	if len(composites) == 0 {
@@ -212,7 +224,6 @@ func mutateExtraInitial(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	return "", false
 }
 
-// mutateRemoveInitial clears the initial flag from the default child.
 func mutateRemoveInitial(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	composites := collectCompositeStates(chart.RootState, sc.StateTypeNormal)
 	if len(composites) == 0 {
@@ -228,7 +239,6 @@ func mutateRemoveInitial(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	return "", false
 }
 
-// mutateBasicWithChildren turns a basic state into one with children.
 func mutateBasicWithChildren(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	basics := collectBasicStates(chart.RootState)
 	if len(basics) == 0 {
@@ -241,7 +251,6 @@ func mutateBasicWithChildren(chart *sc.Statechart, rng *rand.Rand) (string, bool
 	return "add child to basic " + s.Label, true
 }
 
-// mutateCompoundNoChildren removes all children from a composite state.
 func mutateCompoundNoChildren(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	composites := collectCompositeStates(chart.RootState, sc.StateTypeNormal)
 	composites = append(composites, collectCompositeStates(chart.RootState, sc.StateTypeParallel)...)
@@ -253,7 +262,6 @@ func mutateCompoundNoChildren(chart *sc.Statechart, rng *rand.Rand) (string, boo
 	return "remove children from " + s.Label, true
 }
 
-// mutateNondeterministicTransition duplicates a transition creating nondeterminism.
 func mutateNondeterministicTransition(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	if len(chart.Transitions) == 0 {
 		return "", false
@@ -261,7 +269,6 @@ func mutateNondeterministicTransition(chart *sc.Statechart, rng *rand.Rand) (str
 	idx := rng.Intn(len(chart.Transitions))
 	t := chart.Transitions[idx]
 	dup := proto.Clone(t).(*sc.Transition)
-	// Change target to create a genuine conflict.
 	states := collectAllStates(chart.RootState)
 	nonRoot := filterNonRoot(states)
 	if len(nonRoot) < 2 {
@@ -273,7 +280,26 @@ func mutateNondeterministicTransition(chart *sc.Statechart, rng *rand.Rand) (str
 	return "duplicate transition " + t.Label, true
 }
 
-// mutateInvalidHistory creates a badly configured history pseudostate.
+func mutateEventBroadcastCycle(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
+	if len(chart.Transitions) < 2 {
+		return "", false
+	}
+	// Pick two transitions and add raise: actions creating a cycle.
+	i := rng.Intn(len(chart.Transitions))
+	j := rng.Intn(len(chart.Transitions))
+	for j == i {
+		j = rng.Intn(len(chart.Transitions))
+	}
+	evA := chart.Transitions[i].Event
+	evB := chart.Transitions[j].Event
+	if evA == "" || evB == "" || evA == evB {
+		return "", false
+	}
+	chart.Transitions[i].Actions = append(chart.Transitions[i].Actions, &sc.Action{Label: "raise:" + evB})
+	chart.Transitions[j].Actions = append(chart.Transitions[j].Actions, &sc.Action{Label: "raise:" + evA})
+	return fmt.Sprintf("broadcast cycle %s<->%s", evA, evB), true
+}
+
 func mutateInvalidHistory(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	basics := collectBasicStates(chart.RootState)
 	if len(basics) == 0 {
@@ -282,11 +308,9 @@ func mutateInvalidHistory(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	s := basics[rng.Intn(len(basics))]
 	s.IsHistory = true
 	s.HistoryType = sc.HistoryType_HISTORY_TYPE_SHALLOW
-	// History in a basic state (no composite parent with proper structure) is invalid.
 	return "invalid history on " + s.Label, true
 }
 
-// mutateCreateDeadEnd removes all outgoing transitions from a random state.
 func mutateCreateDeadEnd(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	states := collectAllStates(chart.RootState)
 	nonRoot := filterNonRoot(states)
@@ -317,7 +341,15 @@ func mutateCreateDeadEnd(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	return "create dead end at " + target, true
 }
 
-// mutateInvalidGuard adds a syntactically invalid guard expression.
+func mutateDuplicateTimeoutEvent(chart *sc.Statechart, _ *rand.Rand) (string, bool) {
+	// Add two timeout events with the same label.
+	chart.Events = append(chart.Events,
+		&sc.Event{Label: "after:500ms"},
+		&sc.Event{Label: "after:500ms"},
+	)
+	return "duplicate timeout event after:500ms", true
+}
+
 func mutateInvalidGuard(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	if len(chart.Transitions) == 0 {
 		return "", false
@@ -332,7 +364,6 @@ func mutateInvalidGuard(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	return "invalid guard on " + label, true
 }
 
-// mutateUndeclaredEvent changes a transition's event to one not in the Events list.
 func mutateUndeclaredEvent(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	if len(chart.Transitions) == 0 {
 		return "", false
@@ -342,7 +373,6 @@ func mutateUndeclaredEvent(chart *sc.Statechart, rng *rand.Rand) (string, bool) 
 	return "undeclared event on transition", true
 }
 
-// mutateCrossBoundarySource changes a transition source to a state in a different branch.
 func mutateCrossBoundarySource(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	if len(chart.Transitions) == 0 {
 		return "", false
@@ -359,7 +389,6 @@ func mutateCrossBoundarySource(chart *sc.Statechart, rng *rand.Rand) (string, bo
 	return "cross boundary source " + newSrc, true
 }
 
-// mutateRemoveAllTransitions removes every transition.
 func mutateRemoveAllTransitions(chart *sc.Statechart, _ *rand.Rand) (string, bool) {
 	if len(chart.Transitions) == 0 {
 		return "", false
@@ -368,13 +397,10 @@ func mutateRemoveAllTransitions(chart *sc.Statechart, _ *rand.Rand) (string, boo
 	return "remove all transitions", true
 }
 
-// mutateFinalWithOutgoing adds an outgoing transition from a final state (or marks
-// a state with outgoing transitions as final).
 func mutateFinalWithOutgoing(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	if len(chart.Transitions) == 0 {
 		return "", false
 	}
-	// Pick a random transition source and mark it final.
 	t := chart.Transitions[rng.Intn(len(chart.Transitions))]
 	if len(t.From) == 0 {
 		return "", false
@@ -388,11 +414,9 @@ func mutateFinalWithOutgoing(chart *sc.Statechart, rng *rand.Rand) (string, bool
 	return "final with outgoing " + src, true
 }
 
-// mutateWrongStateType flips a state type without adjusting structure.
 func mutateWrongStateType(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	composites := collectCompositeStates(chart.RootState, sc.StateTypeNormal)
 	if len(composites) == 0 {
-		// Try flipping a basic state to compound.
 		basics := collectBasicStates(chart.RootState)
 		if len(basics) == 0 {
 			return "", false
@@ -404,6 +428,473 @@ func mutateWrongStateType(chart *sc.Statechart, rng *rand.Rand) (string, bool) {
 	s := composites[rng.Intn(len(composites))]
 	s.Type = sc.StateTypeBasic
 	return "normal->basic with children " + s.Label, true
+}
+
+func mutateOverlappingRegions(chart *sc.Statechart, _ *rand.Rand) (string, bool) {
+	// Replace root with a parallel state with overlapping region labels.
+	chart.RootState = &sc.State{
+		Label: "__root__", Type: sc.StateTypeAND,
+		Children: []*sc.State{
+			{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+				{Label: "X", Type: sc.StateTypeBasic, IsInitial: true},
+			}},
+			{Label: "R2", Type: sc.StateTypeOR, Children: []*sc.State{
+				{Label: "X", Type: sc.StateTypeBasic, IsInitial: true},
+			}},
+		},
+	}
+	chart.Transitions = nil
+	return "overlapping regions with label X", true
+}
+
+// --- Synthetic charts for reconciled constraints (C1-C17) ---
+
+type syntheticChart struct {
+	family string
+	op     string
+	chart  *sc.Statechart
+}
+
+func syntheticViolationCharts() []syntheticChart {
+	return []syntheticChart{
+		// Rule 8: PSEUDO_STATES_WELL_FORMED — empty state label
+		{
+			family: "empty_label",
+			op:     "state with empty label",
+			chart: &sc.Statechart{
+				Name: "empty_label",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "", Type: sc.StateTypeBasic, IsInitial: true},
+				}},
+			},
+		},
+		// Rule 10: CHOICE_GUARDS_COMPLETE — parallel with <2 children
+		{
+			family: "parallel_one_child",
+			op:     "parallel state with only one region",
+			chart: &sc.Statechart{
+				Name: "par1",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					}},
+				}},
+			},
+		},
+		// Rule 13: GUARD_EXPRESSIONS_VALID — invalid guard syntax
+		{
+			family: "invalid_guard_synth",
+			op:     "guard with ;; syntax",
+			chart: &sc.Statechart{
+				Name: "bad_guard",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E", Guard: &sc.Guard{Expression: ";;bad;;"}},
+				},
+				Events: []*sc.Event{{Label: "E"}},
+			},
+		},
+		// Rule 14: EVENT_PARAMETERS_CONSISTENT — undeclared event
+		{
+			family: "undeclared_event_synth",
+			op:     "transition uses undeclared event",
+			chart: &sc.Statechart{
+				Name: "undeclared",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "MISSING"},
+				},
+				Events: []*sc.Event{{Label: "KNOWN"}},
+			},
+		},
+		// Rule 15: INTERNAL_TRANSITIONS_VALID — bad source state reference
+		{
+			family: "bad_source_synth",
+			op:     "transition references nonexistent source",
+			chart: &sc.Statechart{
+				Name: "bad_src",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"NONEXISTENT"}, To: []string{"A"}, Event: "E"},
+				},
+				Events: []*sc.Event{{Label: "E"}},
+			},
+		},
+		// Rule 18: HISTORY_DEFAULTS_VALID — compound with no initial
+		{
+			family: "no_initial_synth",
+			op:     "compound state with no initial child",
+			chart: &sc.Statechart{
+				Name: "no_init",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+			},
+		},
+		// Rule 11: TIMEOUT_EVENTS_UNIQUE — duplicate after: events
+		{
+			family: "duplicate_timeout",
+			op:     "duplicate after:500ms timeout events",
+			chart: &sc.Statechart{
+				Name: "dup_timeout",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+				}},
+				Events: []*sc.Event{
+					{Label: "after:500ms"},
+					{Label: "after:500ms"},
+				},
+			},
+		},
+		// Rule 19: C1 — completion transition (no event)
+		{
+			family: "c1_completion",
+			op:     "completion transition A->B",
+			chart: &sc.Statechart{
+				Name: "c1",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "comp", From: []string{"A"}, To: []string{"B"}},
+				},
+			},
+		},
+		// Rule 20: C2 — self-triggering cycle via raise:
+		{
+			family: "c2_self_trigger",
+			op:     "raise cycle X<->Y",
+			chart: &sc.Statechart{
+				Name: "c2",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "X", Actions: []*sc.Action{{Label: "raise:Y"}}},
+					{Label: "t2", From: []string{"B"}, To: []string{"A"}, Event: "Y", Actions: []*sc.Action{{Label: "raise:X"}}},
+				},
+				Events: []*sc.Event{{Label: "X"}, {Label: "Y"}},
+			},
+		},
+		// Rule 21: C3 — external conflicts with internal
+		{
+			family: "c3_ext_int_conflict",
+			op:     "external and internal transitions conflict",
+			chart: &sc.Statechart{
+				Name: "c3",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "R2", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "C", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "D", Type: sc.StateTypeBasic},
+					}},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "ext", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I"}}},
+					{Label: "int", From: []string{"C"}, To: []string{"D"}, Event: "I"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I"}},
+			},
+		},
+		// Rule 22: C4 — trigger inconsistent transition
+		{
+			family: "c4_inconsistent_trigger",
+			op:     "trigger raises event for inconsistent transition",
+			chart: &sc.Statechart{
+				Name: "c4",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "X", Actions: []*sc.Action{{Label: "raise:Y"}}},
+					{Label: "t2", From: []string{"B"}, To: []string{"A"}, Event: "Y", Actions: []*sc.Action{{Label: "raise:X"}}},
+				},
+				Events: []*sc.Event{{Label: "X"}, {Label: "Y"}},
+			},
+		},
+		// Rule 23: C5 — touched internal precondition
+		{
+			family: "c5_touched_internal",
+			op:     "external touches internal transition source",
+			chart: &sc.Statechart{
+				Name: "c5",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "ext", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I"}}},
+					{Label: "int", From: []string{"B"}, To: []string{"C"}, Event: "I"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I"}},
+			},
+		},
+		// Rule 24: C6 — consistent transitions trigger inconsistent ones
+		{
+			family: "c6_consistent_trigger_inconsistent",
+			op:     "consistent t1,t2 trigger inconsistent i1,i2",
+			chart: &sc.Statechart{
+				Name: "c6",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "R2", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "C", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "D", Type: sc.StateTypeBasic},
+					}},
+					{Label: "R3", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "X", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "Y", Type: sc.StateTypeBasic},
+					}},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I1"}}},
+					{Label: "t2", From: []string{"C"}, To: []string{"D"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I2"}}},
+					{Label: "i1", From: []string{"X"}, To: []string{"Y"}, Event: "I1"},
+					{Label: "i2", From: []string{"X"}, To: []string{"Y"}, Event: "I2"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I1"}, {Label: "I2"}},
+			},
+		},
+		// Rule 25: C7 — completion cycle
+		{
+			family: "c7_completion_cycle",
+			op:     "completion cycle A->B->A",
+			chart: &sc.Statechart{
+				Name: "c7",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "c1", From: []string{"A"}, To: []string{"B"}},
+					{Label: "c2", From: []string{"B"}, To: []string{"A"}},
+				},
+			},
+		},
+		// Rule 26: C8 — completion touches internal
+		{
+			family: "c8_completion_touches_internal",
+			op:     "completion enters state that has internal transition",
+			chart: &sc.Statechart{
+				Name: "c8",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "comp", From: []string{"A"}, To: []string{"B"}},
+					{Label: "ext", From: []string{"A"}, To: []string{"C"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I"}}},
+					{Label: "int", From: []string{"B"}, To: []string{"C"}, Event: "I"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I"}},
+			},
+		},
+		// Rule 27: C9 — external conflicts with completion
+		{
+			family: "c9_ext_comp_conflict",
+			op:     "external and completion transitions conflict",
+			chart: &sc.Statechart{
+				Name: "c9",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "comp", From: []string{"A"}, To: []string{"B"}},
+					{Label: "ext", From: []string{"A"}, To: []string{"C"}, Event: "E"},
+				},
+				Events: []*sc.Event{{Label: "E"}},
+			},
+		},
+		// Rule 28: C10 — completion conflicts with internal
+		{
+			family: "c10_comp_int_conflict",
+			op:     "completion and internal transitions conflict",
+			chart: &sc.Statechart{
+				Name: "c10",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "comp", From: []string{"A"}, To: []string{"B"}},
+					{Label: "ext", From: []string{"A"}, To: []string{"C"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I"}}},
+					{Label: "int", From: []string{"A"}, To: []string{"C"}, Event: "I"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I"}},
+			},
+		},
+		// Rule 29: C11 — conflicting completions with different sources
+		{
+			family: "c11_diff_source_completions",
+			op:     "completions from different hierarchy levels conflict",
+			chart: &sc.Statechart{
+				Name: "c11",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "P", Type: sc.StateTypeOR, IsInitial: true, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "comp1", From: []string{"A"}, To: []string{"B"}},
+					{Label: "comp2", From: []string{"P"}, To: []string{"C"}},
+				},
+			},
+		},
+		// Rule 30: C12 — cyclic prec relation
+		{
+			family: "c12_prec_cycle",
+			op:     "precedence cycle between external events",
+			chart: &sc.Statechart{
+				Name: "c12",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "R2", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "C", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "D", Type: sc.StateTypeBasic},
+					}},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E1"},
+					{Label: "t2", From: []string{"B"}, To: []string{"A"}, Event: "E2"},
+					{Label: "t3", From: []string{"C"}, To: []string{"D"}, Event: "E2"},
+					{Label: "t4", From: []string{"D"}, To: []string{"C"}, Event: "E1"},
+				},
+				Events: []*sc.Event{{Label: "E1"}, {Label: "E2"}},
+			},
+		},
+		// Rule 31: C13 — conflicting same-trigger transitions differ in source/scope
+		{
+			family: "c13_diff_priority_shape",
+			op:     "same trigger but different source hierarchy",
+			chart: &sc.Statechart{
+				Name: "c13",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "P", Type: sc.StateTypeOR, IsInitial: true, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E"},
+					{Label: "t2", From: []string{"P"}, To: []string{"C"}, Event: "E"},
+				},
+				Events: []*sc.Event{{Label: "E"}},
+			},
+		},
+		// Rule 32: C14 — multiple generated events
+		{
+			family: "c14_multi_gen",
+			op:     "transition generates two internal events",
+			chart: &sc.Statechart{
+				Name: "c14",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{
+						{Label: "raise:I1"},
+						{Label: "raise:I2"},
+					}},
+				},
+				Events: []*sc.Event{{Label: "E"}},
+			},
+		},
+		// Rule 33: C15 — consistent transitions with same trigger generate different events
+		{
+			family: "c15_diff_output",
+			op:     "consistent transitions same trigger different generated events",
+			chart: &sc.Statechart{
+				Name: "c15",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "R2", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "C", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "D", Type: sc.StateTypeBasic},
+					}},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "t1", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I1"}}},
+					{Label: "t2", From: []string{"C"}, To: []string{"D"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I2"}}},
+				},
+				Events: []*sc.Event{{Label: "E"}},
+			},
+		},
+		// Rule 34: C16 — completion consistent with internal
+		{
+			family: "c16_comp_consistent_int",
+			op:     "completion transition consistent with internal",
+			chart: &sc.Statechart{
+				Name: "c16",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeAND, Children: []*sc.State{
+					{Label: "R1", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "B", Type: sc.StateTypeBasic},
+					}},
+					{Label: "R2", Type: sc.StateTypeOR, Children: []*sc.State{
+						{Label: "C", Type: sc.StateTypeBasic, IsInitial: true},
+						{Label: "D", Type: sc.StateTypeBasic},
+					}},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "comp", From: []string{"A"}, To: []string{"B"}},
+					{Label: "ext_raise", From: []string{"C"}, To: []string{"D"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I"}}},
+					{Label: "int", From: []string{"C"}, To: []string{"D"}, Event: "I"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I"}},
+			},
+		},
+		// Rule 35: C17 — UML internal priority (both external and internal present)
+		{
+			family: "c17_mixed_events",
+			op:     "chart with both external and internal events",
+			chart: &sc.Statechart{
+				Name: "c17",
+				RootState: &sc.State{Label: "__root__", Type: sc.StateTypeOR, Children: []*sc.State{
+					{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+					{Label: "B", Type: sc.StateTypeBasic},
+					{Label: "C", Type: sc.StateTypeBasic},
+				}},
+				Transitions: []*sc.Transition{
+					{Label: "ext", From: []string{"A"}, To: []string{"B"}, Event: "E", Actions: []*sc.Action{{Label: "raise:I"}}},
+					{Label: "int", From: []string{"B"}, To: []string{"C"}, Event: "I"},
+				},
+				Events: []*sc.Event{{Label: "E"}, {Label: "I"}},
+			},
+		},
+	}
 }
 
 // --- helpers ---

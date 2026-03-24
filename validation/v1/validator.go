@@ -282,6 +282,7 @@ func (s *SemanticValidator) validateChart(statechart *sc.Statechart, ignoreRules
 		{id: validationv1.RuleId_COMPOUND_HAS_CHILDREN, collect: collectCompoundHasChildrenIssues},
 		{id: validationv1.RuleId_DETERMINISTIC_TRANSITION_SELECTION, collect: collectDeterministicTransitionSelectionIssues},
 		{id: validationv1.RuleId_NO_EVENT_BROADCAST_CYCLES, collect: collectNoEventBroadcastCycleIssues},
+		{id: validationv1.RuleId_TIMEOUT_EVENTS_UNIQUE, collect: collectTimeoutEventsUniqueIssues},
 	} {
 		violations = append(violations, collectRuleViolations(statechart, ignoreRules, rule.id, validationv1.Severity_ERROR, "", rule.collect)...)
 	}

@@ -822,6 +822,43 @@ func TestValidateChart_DeterministicAndBroadcastRules(t *testing.T) {
 	}
 }
 
+func TestValidateChart_TimeoutEventsUnique(t *testing.T) {
+	validator := NewSemanticValidator()
+
+	chart := &pb.Statechart{
+		RootState: &pb.State{
+			Label: "__root__",
+			Type:  pb.StateType_STATE_TYPE_NORMAL,
+			Children: []*pb.State{
+				{Label: "A", Type: pb.StateType_STATE_TYPE_BASIC, IsInitial: true},
+			},
+		},
+		Events: []*pb.Event{
+			{Label: "after:500ms"},
+			{Label: "after:500ms"},
+			{Label: "after:1s"},
+		},
+	}
+
+	resp, err := validator.ValidateChart(context.Background(), &validationv1.ValidateChartRequest{
+		Chart: chart,
+	})
+	if err != nil {
+		t.Fatalf("ValidateChart() error = %v", err)
+	}
+
+	found := false
+	for _, violation := range resp.Violations {
+		if violation.Rule == validationv1.RuleId_TIMEOUT_EVENTS_UNIQUE {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected TIMEOUT_EVENTS_UNIQUE violation, got %+v", resp.Violations)
+	}
+}
+
 func TestValidateChart_StructuredGuardDoesNotRequireLegacyExpression(t *testing.T) {
 	validator := NewSemanticValidator()
 
