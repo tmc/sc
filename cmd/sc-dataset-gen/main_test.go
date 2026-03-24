@@ -356,5 +356,53 @@ func TestSplitRatioParsing(t *testing.T) {
 	}
 }
 
+func TestValidationProduct(t *testing.T) {
+	chart := &sc.Statechart{
+		Name: "val_test",
+		RootState: &sc.State{
+			Label: "__root__", Type: sc.StateTypeOR,
+			Children: []*sc.State{
+				{Label: "A", Type: sc.StateTypeBasic, IsInitial: true},
+				{Label: "B", Type: sc.StateTypeBasic},
+			},
+		},
+		Transitions: []*sc.Transition{
+			{Label: "go", From: []string{"A"}, To: []string{"B"}, Event: "GO"},
+		},
+		Events: []*sc.Event{{Label: "GO"}},
+	}
+
+	rows := buildValidationRows(chart, "val_test", []string{"flat"}, 42, 5)
+	if len(rows) == 0 {
+		t.Fatal("expected at least one validation row")
+	}
+
+	// First row is the clean chart.
+	clean := rows[0]
+	if clean.IsMutated {
+		t.Error("first row should be the clean chart")
+	}
+	if clean.ChartID != "val_test" {
+		t.Errorf("ChartID = %q, want val_test", clean.ChartID)
+	}
+	if clean.NStates != 3 {
+		t.Errorf("NStates = %d, want 3", clean.NStates)
+	}
+
+	// At least some mutated rows should exist.
+	mutated := 0
+	for _, r := range rows[1:] {
+		if r.IsMutated {
+			mutated++
+			if r.MutationFamily == "" {
+				t.Error("mutated row should have a mutation family")
+			}
+		}
+	}
+	if mutated == 0 {
+		t.Error("expected at least one mutated validation row")
+	}
+}
+
 // Suppress unused import warnings.
 var _ = (*sc.Statechart)(nil)

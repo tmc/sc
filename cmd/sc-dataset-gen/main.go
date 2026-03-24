@@ -21,7 +21,7 @@
 //	-out         Output file (single chart) or directory (corpus).
 //	-pretty      Pretty-print JSON output (default true).
 //	-products    Comma-separated products: traces,topology,graph,classification,
-//	             vocabulary,history,guard_eval,mutation,all (default "all").
+//	             vocabulary,history,guard_eval,mutation,validation,all (default "all").
 //	-traces      Number of traces per chart (default 1).
 //	-steps       Max steps per trace (default 20).
 //	-detail      Trace detail: minimal, standard, debug (default "debug").
@@ -63,6 +63,7 @@ type datasetRecord struct {
 	HistoryRows         []historyRow          `json:"history_rows,omitempty"`
 	GuardEvalRows       []guardEvalRow        `json:"guard_eval_rows,omitempty"`
 	MutationRows        []mutationRow         `json:"mutation_rows,omitempty"`
+	ValidationRows      []validationRow       `json:"validation_rows,omitempty"`
 	CoverageResult      *coverageResult       `json:"coverage_result,omitempty"`
 }
 
@@ -260,6 +261,14 @@ func singleChartMode(chartPath string, products productSet, traceCount, stepCoun
 
 	if products.has("mutation") && len(chart.Transitions) > 0 {
 		record.MutationRows = generateMutations(chart, chartID, seed, mutationCount)
+	}
+
+	if products.has("validation") {
+		var fams []string
+		if record.Classification != nil {
+			fams = record.Classification.Families
+		}
+		record.ValidationRows = buildValidationRows(chart, chartID, fams, seed, mutationCount)
 	}
 
 	var out []byte
