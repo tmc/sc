@@ -1,35 +1,3 @@
-// Command sc-mcp provides an MCP (Model Context Protocol) server for statechart operations.
-//
-// It exposes tools, resources, and prompts for working with statecharts,
-// allowing LLMs to validate, query, visualize, and simulate statechart definitions.
-//
-// Usage:
-//
-//	sc-mcp [flags]
-//
-// Flags:
-//
-//	-dir string    Directory to serve statechart files from (enables resources)
-//
-// The server communicates via stdin/stdout using the MCP protocol.
-//
-// Tools:
-//   - sc_validate: Validate a statechart definition
-//   - sc_info: Get summary information about a statechart
-//   - sc_states: List all states in a statechart
-//   - sc_events: List all events in a statechart
-//   - sc_mermaid: Generate a Mermaid diagram
-//   - sc_step: Send events and get resulting configuration
-//   - sc_transitions: List all transitions
-//   - sc_dot: Generate a Graphviz DOT diagram
-//
-// Resources:
-//   - statechart://<path>: Access statechart files from the configured directory
-//
-// Prompts:
-//   - analyze_statechart: Comprehensive analysis of a statechart
-//   - design_statechart: Help design a new statechart
-//   - debug_transition: Debug why a transition isn't firing
 package main
 
 import (

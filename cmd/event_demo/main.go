@@ -1,4 +1,3 @@
-// Command event_demo demonstrates the statechart event processing system.
 package main
 
 import (
@@ -27,19 +26,19 @@ func main() {
 
 	// Create a simple turnstile state machine
 	machine := createTurnstileStateMachine()
-	
+
 	// Create and configure event processor
 	processor := semantics.NewEventProcessor(machine)
 	processor.EnableTracing()
-	
+
 	// Add event filter
-	filter := semantics.NewConditionalFilter("demo_filter", 
+	filter := semantics.NewConditionalFilter("demo_filter",
 		func(event semantics.ProcessedEvent, machine *sc.Machine) bool {
 			// Allow all events in this demo
 			return true
 		})
 	processor.AddFilter(filter)
-	
+
 	// Start the processor
 	processor.Start()
 	defer func() {
@@ -47,10 +46,10 @@ func main() {
 		processor.Stop()
 		fmt.Println("Event processor stopped.")
 	}()
-	
+
 	// Run the demo
 	runTurnstileDemo(processor, machine)
-	
+
 	// Show trace
 	showEventTrace(processor)
 }
@@ -107,19 +106,19 @@ func createTurnstileStateMachine() *sc.Machine {
 func runTurnstileDemo(processor *semantics.EventProcessor, machine *sc.Machine) {
 	fmt.Println("\n1. Initial state:")
 	printMachineState(machine)
-	
+
 	fmt.Println("\n2. Attempting to push while locked:")
 	sendEventAndWait(processor, "PUSH", "Should remain locked")
 	printMachineState(machine)
-	
+
 	fmt.Println("\n3. Inserting coin:")
 	sendEventAndWait(processor, "COIN", "Should unlock")
 	printMachineState(machine)
-	
+
 	fmt.Println("\n4. Pushing through:")
 	sendEventAndWait(processor, "PUSH", "Should lock again")
 	printMachineState(machine)
-	
+
 	fmt.Println("\n5. Testing priority events:")
 	// Send multiple events with different priorities
 	processor.SendEventWithPriority("COIN", semantics.PriorityLow, nil)
@@ -144,9 +143,9 @@ func printMachineState(machine *sc.Machine) {
 		fmt.Println("   State: No active states")
 		return
 	}
-	
+
 	fmt.Printf("   State: %s\n", machine.Configuration.States[0].Label)
-	
+
 	// Print context if available
 	if machine.Context != nil && machine.Context.Fields != nil {
 		fmt.Printf("   Context: ")
@@ -165,15 +164,15 @@ func printMachineState(machine *sc.Machine) {
 func showEventTrace(processor *semantics.EventProcessor) {
 	fmt.Println("\n=== Event Processing Trace ===")
 	trace := processor.GetTrace()
-	
+
 	if len(trace) == 0 {
 		fmt.Println("No events processed.")
 		return
 	}
-	
+
 	for i, entry := range trace {
-		fmt.Printf("%d. Event: %s (Type: %s, Priority: %s)\n", 
-			i+1, 
+		fmt.Printf("%d. Event: %s (Type: %s, Priority: %s)\n",
+			i+1,
 			entry.Event.Event.Label,
 			entry.Event.Type.String(),
 			entry.Event.Priority.String())
@@ -188,6 +187,6 @@ func showEventTrace(processor *semantics.EventProcessor) {
 		fmt.Printf("   Timestamp: %s\n", entry.Timestamp.Format("15:04:05.000"))
 		fmt.Println()
 	}
-	
+
 	fmt.Printf("Total events processed: %d\n", len(trace))
 }

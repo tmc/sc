@@ -1,37 +1,3 @@
-// Command sc provides a CLI tool for operating on statechart definition files.
-//
-// It supports reading from stdin (for Unix pipelines), files, and txtar archives.
-//
-// Usage:
-//
-//	sc <command> [flags] [file]
-//
-// Commands:
-//
-//	validate  - Check if statechart is well-formed
-//	info      - Show summary information about the statechart
-//	states    - List all states (outputs one per line)
-//	events    - List all events (outputs one per line)
-//	mermaid   - Generate Mermaid diagram
-//	step      - Send event(s) to machine and output resulting state
-//	dot       - Generate Graphviz DOT format
-//
-// Examples:
-//
-//	# Validate a statechart
-//	sc validate chart.json
-//
-//	# Pipeline: generate mermaid from stdin
-//	cat chart.json | sc mermaid
-//
-//	# List states, filter with grep
-//	sc states chart.json | grep -i error
-//
-//	# Send events and trace state changes
-//	sc step -e POWER_ON -e ARM chart.json
-//
-//	# Use txtar for complex definitions
-//	sc validate definition.txtar
 package main
 
 import (
