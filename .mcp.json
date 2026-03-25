@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "xcode": {
+            "command": "nc",
+            "args": [
+                "localhost",
+                "7000"
+            ],
+            "disabled": false,
+            "autoApprove": []
+        }
+    }
+}
