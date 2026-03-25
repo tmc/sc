@@ -1,0 +1,63 @@
+{
+  "name": "two_state_toggle",
+  "description": "Simple toggle between Off and On states",
+  "statechart": "Toggle: Off \u003c--TOGGLE--\u003e On",
+  "steps": [
+    {
+      "state_before": [
+        "__root__",
+        "Off"
+      ],
+      "event": "TOGGLE",
+      "state_after": [
+        "__root__",
+        "On"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "On"
+      ],
+      "event": "TOGGLE",
+      "state_after": [
+        "__root__",
+        "Off"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "Off"
+      ],
+      "event": "TOGGLE",
+      "state_after": [
+        "__root__",
+        "On"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "On"
+      ],
+      "event": "TOGGLE",
+      "state_after": [
+        "__root__",
+        "Off"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "name": "three_level_hierarchy",
+  "description": "Hierarchical states with nested transitions",
+  "statechart": "Root -\u003e A(A1,A2), B(B1,B2)",
+  "steps": [
+    {
+      "state_before": [
+        "__root__",
+        "A",
+        "A1"
+      ],
+      "event": "NEXT",
+      "state_after": [
+        "__root__",
+        "A",
+        "A2"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "A",
+        "A2"
+      ],
+      "event": "SWITCH",
+      "state_after": [
+        "__root__",
+        "B",
+        "B1"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "B",
+        "B1"
+      ],
+      "event": "NEXT",
+      "state_after": [
+        "__root__",
+        "B",
+        "B2"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "B",
+        "B2"
+      ],
+      "event": "SWITCH",
+      "state_after": [
+        "__root__",
+        "A",
+        "A1"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "A",
+        "A1"
+      ],
+      "event": "PREV",
+      "state_after": [
+        "__root__",
+        "A",
+        "A1"
+      ],
+      "guards_evaluated": [
+        "fired=false"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "A",
+        "A1"
+      ],
+      "event": "NEXT",
+      "state_after": [
+        "__root__",
+        "A",
+        "A2"
+      ],
+      "guards_evaluated": [
+        "fired=true"
+      ]
+    },
+    {
+      "state_before": [
+        "__root__",
+        "A",
+        "A2"
+      ],
+      "event": "NEXT",
+      "state_after": [
+        "__root__",
+        "A",
+        "A2"
+      ],
+      "guards_evaluated": [
+        "fired=false"
+      ]
+    }
+  ]
+}

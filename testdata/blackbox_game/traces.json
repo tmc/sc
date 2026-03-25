@@ -1,0 +1,2570 @@
+[
+  {
+    "combination": [
+      0,
+      4,
+      6
+    ],
+    "steps": [
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      1,
+      1,
+      2
+    ],
+    "steps": [
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      1,
+      7,
+      2
+    ],
+    "steps": [
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      6,
+      5,
+      4
+    ],
+    "steps": [
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      3,
+      3,
+      2
+    ],
+    "steps": [
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      2,
+      4,
+      9
+    ],
+    "steps": [
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      8,
+      7,
+      2
+    ],
+    "steps": [
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      4,
+      8,
+      7
+    ],
+    "steps": [
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      9,
+      6,
+      7
+    ],
+    "steps": [
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      4,
+      2,
+      4
+    ],
+    "steps": [
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      2,
+      7,
+      2
+    ],
+    "steps": [
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      5,
+      6,
+      6
+    ],
+    "steps": [
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "CLICK"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      3,
+      1,
+      9
+    ],
+    "steps": [
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      3,
+      7,
+      7
+    ],
+    "steps": [
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      1,
+      5,
+      1
+    ],
+    "steps": [
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      4,
+      6,
+      4
+    ],
+    "steps": [
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "CLICK"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      8,
+      8,
+      3
+    ],
+    "steps": [
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "CLICK"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      0,
+      0,
+      2
+    ],
+    "steps": [
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "OPEN"
+      }
+    ],
+    "solved": true
+  },
+  {
+    "combination": [
+      3,
+      7,
+      7
+    ],
+    "steps": [
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      }
+    ],
+    "solved": false
+  },
+  {
+    "combination": [
+      7,
+      9,
+      3
+    ],
+    "steps": [
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_3",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "RESET",
+        "output": "RESET"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "CLICK"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_9",
+        "output": "BUZZ"
+      },
+      {
+        "event": "TRY_OPEN",
+        "output": "LOCKED"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_0",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_2",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_7",
+        "output": "CLICK"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_6",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_1",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_8",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_5",
+        "output": "BUZZ"
+      },
+      {
+        "event": "DIAL_4",
+        "output": "BUZZ"
+      }
+    ],
+    "solved": false
+  }
+]
