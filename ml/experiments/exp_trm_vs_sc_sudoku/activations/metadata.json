@@ -1,8 +1,0 @@
-{
-  "num_samples": 200,
-  "hidden_dim": 128,
-  "H_cycles": 3,
-  "L_cycles": 4,
-  "extract_per_H": true,
-  "extract_per_L": false
-}

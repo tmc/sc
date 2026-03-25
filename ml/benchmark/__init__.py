@@ -1,1 +1,0 @@
-# Memory mechanism benchmarks
