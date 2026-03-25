@@ -1,0 +1,13 @@
+-- main.star --
+load("sc", "sc")
+load("helper", "mk_state")
+
+def main():
+    s = mk_state("test_state")
+    print("Created state:", s)
+
+-- helper.star --
+load("sc", "sc")
+
+def mk_state(name):
+    return sc.state(name)
