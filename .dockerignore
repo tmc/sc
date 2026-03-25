@@ -80,4 +80,9 @@ Thumbs.db
 # Project specific
 /cmd/web-visualizer/tmp/
 /cmd/web-visualizer/web-visualizer-enhanced
-.docker-initialized
+.docker-initializedbuild
+ios
+ml/experiments
+ml/models
+.git
+node_modules

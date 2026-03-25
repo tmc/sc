@@ -146,8 +146,7 @@ ios-build-release: ios-verify
 		-configuration Release \
 		-destination "generic/platform=iOS" \
 		-archivePath "$(shell pwd)/$(IOS_ARCHIVE_PATH)" \
-		SKIP_INSTALL=NO \
-		BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+		SKIP_INSTALL=NO
 	@echo "✅ Archive built successfully at $(IOS_ARCHIVE_PATH)"
 
 # Export IPA for TestFlight
@@ -158,7 +157,8 @@ ios-export: ios-build-release
 	xcodebuild -exportArchive \
 		-archivePath "$(shell pwd)/$(IOS_ARCHIVE_PATH)" \
 		-exportPath "$(shell pwd)/$(IOS_EXPORT_PATH)" \
-		-exportOptionsPlist "$(shell pwd)/$(IOS_EXPORT_OPTIONS)"
+		-exportOptionsPlist "$(shell pwd)/$(IOS_EXPORT_OPTIONS)" \
+		-allowProvisioningUpdates
 	@echo "✅ IPA exported successfully to $(IOS_EXPORT_PATH)"
 
 # Upload to TestFlight Internal
