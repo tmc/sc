@@ -63,14 +63,65 @@ markdown/
 appledocs/
 
 # Binaries
+/sc
+/sc-mcp
+/sc-dataset-gen
+/sc-infer
+/sc-starlark-gen
+/sc-trace-gen
+/stately-scraper
+/stately-scraper-bin
+/states-viewer
 cmd/stately-scraper/stately-scraper
 cmd/web-visualizer/web-visualizer-enhanced
 cmd/web-visualizer/test-server
 cmd/web-visualizer/web-visualizer
+cmd/web-visualizer/server
 cmd/event_demo/event_demo
+cmd/go-trace-viewer/go-trace-viewer
+
+# iOS build artifacts
+States.ipa
+Payload/
+
+# ML model weights
+ml/adapters/*.safetensors
+ml/custom_model.npz
+
+# Temp/scratch files
+phase7_*.txt
+build_output.txt
+check_screen.png
+.plan-review.md
+scraper_state.json
+test_scrape_web.json
+evolved_fighter.json
+generated.star
+find_simple_arc.py
+stately_editor_prd.md
+
+# iOS Xcode user state
+*.xcuserstate
 
 # Generated data
 cmd/web-visualizer/data/
 
 # Node modules
 node_modules/
+
+# Large data files
+corpus/full-manifest.json
+ml/data/
+ml/traces/
+ml/results.json
+ml/evolved_fighter.json
+ml/evolved_genome.json
+
+# Font binaries
+cmd/go-trace-viewer/fonts/
+
+# SVG test output
+cmd/web-visualizer/export_test.svg
+
+# iOS SPM backup
+ios/States/States.xcodeproj/Package.swift.bak
