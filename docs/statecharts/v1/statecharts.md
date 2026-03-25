@@ -91,6 +91,10 @@ Do-activities provide continuous behavior while state is active.
 | is_final |bool|  Terminal state: no outgoing transitions  |
 | entry_actions[] |[Action](#statecharts-v1-Action)| Action mappings γ: S → A* [H87, HN96, Section 6]  γₑₙₜᵣᵧ(s): executed on state entry  |
 | exit_actions[] |[Action](#statecharts-v1-Action)|  γₑₓᵢₜ(s): executed on state exit  |
+| is_history |bool| History pseudostate fields [UML 2.5, Section 14.5.5] Optional - only set when state is a history pseudostate  True if this is a history pseudostate  |
+| history_type |[HistoryType](#statecharts-v1-HistoryType)|  SHALLOW (H) or DEEP (H*) history  |
+| metadata |Struct| Extension points for tool-specific data These fields allow extractors and importers to preserve provenance and domain-specific metadata without modifying the core schema.  Ad-hoc key-value annotations  |
+| extensions[] |Any|  Typed extension messages  |
 
 
 
@@ -147,6 +151,8 @@ When fired, transition execution follows precise sequence:
 | guard |[Guard](#statecharts-v1-Guard)|  Guard condition: g ∈ G → Bool  |
 | actions[] |[Action](#statecharts-v1-Action)|  Action sequence: α ∈ A*  |
 | priority |int32| Priority for conflict resolution [HN96, Section 4.3]  Explicit priority (higher = more priority)  |
+| metadata |Struct| Extension points for tool-specific data  Ad-hoc key-value annotations  |
+| extensions[] |Any|  Typed extension messages  |
 
 
 
@@ -209,8 +215,11 @@ Implementation languages should provide deterministic evaluation semantics.
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| expression |string|  Boolean expression: g ∈ G  |
-| language |string|  Expression language (for semantic clarity)  |
+| expression |string| Legacy: raw expression string (deprecated, use condition field)  Boolean expression: g ∈ G  |
+| language |string|  Expression language hint (for legacy expressions)  |
+| condition |[Expression](./expressions.md#statecharts-v1-Expression)| Structured expression: evaluatable guard condition When present, takes precedence over the deprecated expression field.
+
+EVALUATION SEMANTICS: eval(condition, Γ, e) → Bool where Γ is the current context and e is the triggering event.   |
 
 
 
@@ -243,9 +252,16 @@ The core formalism distinguishes actions by their execution context
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | label |string|  Action identifier  |
-| expression |string|  Executable code: α ∈ A  |
-| language |string|  Implementation language  |
+| expression |string|  Legacy: executable code string  |
+| language |string|  Implementation language hint (for legacy)  |
 | parameters |Struct|  Action parameters  |
+| body |[Expression](./expressions.md#statecharts-v1-Expression)| Structured expression: evaluatable action body When present, takes precedence over the deprecated expression field.
+
+EXECUTION SEMANTICS: exec(body, Γ) → Γ' where Γ is the current context and Γ' is the updated context.
+
+For CEL expressions, actions typically use assignment syntax: "context.health = context.health - damage"
+
+For Starlark expressions, actions can include control flow: "def on_enter(ctx): ctx.emit('SOUND', {'name': 'beep'})"   |
 
 
 
@@ -462,6 +478,32 @@ theoretical purity and alignment with the cited academic papers.
 | STATE_TYPE_NORMAL | 2 | Academic terminology aliases [H87] for clarity  Alias for OR (common in literature)  |
 | STATE_TYPE_PARALLEL | 3 |  Alias for AND (UML terminology)  |
 | STATE_TYPE_ORTHOGONAL | 3 |  Alias for AND (Harel's original terminology)  |
+
+
+
+
+<a name="statecharts-v1-HistoryType"></a>
+
+### HistoryType
+HistoryType distinguishes shallow vs deep history pseudostates.
+
+FORMAL DEFINITION [UML 2.5, Section 14.5.5]:
+History pseudostates enable restoration of prior configurations when
+re-entering composite states, supporting two semantic variants:
+- SHALLOW: Restores only the immediate child state of the composite
+- DEEP: Restores the full nested configuration recursively
+
+SEMANTIC PROPERTIES:
+- H (shallow): restore(H, σ) = {s ∈ σ_prev | parent(s) = parent(H)}
+- H* (deep): restore(H*, σ) = σ_prev ∩ descendants(parent(H*))
+
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| HISTORY_TYPE_UNSPECIFIED | 0 |  Default: treated as SHALLOW  |
+| HISTORY_TYPE_SHALLOW | 1 |  H: restore immediate child only  |
+| HISTORY_TYPE_DEEP | 2 |  H*: restore full nested configuration  |
 
 
 
