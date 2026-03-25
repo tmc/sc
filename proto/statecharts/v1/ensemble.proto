@@ -1,0 +1,252 @@
+syntax = "proto3";
+
+package statecharts.v1;
+
+option go_package = "github.com/tmc/sc/gen/statecharts/v1;statechartspb";
+
+import "statecharts/v1/statecharts.proto";
+
+// ===========================================================================
+//  ENSEMBLE STATECHARTS - Multiple Concurrent Machine Compositions
+//
+//  Extension to Harel's formalism for multi-policy and multi-agent scenarios.
+//  Supports various composition strategies from voting to learned attention.
+//
+//  THEORETICAL FOUNDATION:
+//  An ensemble ES is defined as: ES = ({SC₁, ..., SCₙ}, φ, ω) where:
+//  - {SC₁, ..., SCₙ}: set of member statecharts
+//  - φ: composition function (how to combine configurations)
+//  - ω: weighting function (attention, fixed, or learned)
+//
+//  KEY PROPERTIES:
+//  - Each member maintains independent configuration σᵢ
+//  - Combined configuration: σ_ensemble = φ(σ₁, ..., σₙ; ω)
+//  - Events broadcast to all members (like orthogonal regions)
+// ===========================================================================
+
+/**
+ * EnsembleStatechart: Collection of statecharts running concurrently.
+ *
+ * Use cases:
+ * - Multiple policy versions (conservative, aggressive, balanced)
+ * - Multi-agent coordination (each agent has own chart)
+ * - Evolutionary populations (keep top-k charts)
+ * - A/B testing of chart variants
+ */
+message EnsembleStatechart {
+  // Unique identifier for the ensemble
+  string id = 1;
+
+  // Human-readable name
+  string name = 2;
+
+  // Member statecharts (order may matter for some strategies)
+  repeated EnsembleMember members = 3;
+
+  // How to combine member outputs
+  EnsembleStrategy strategy = 4;
+
+  // Strategy-specific configuration
+  EnsembleConfig config = 5;
+
+  // Shared event definitions (broadcast to all members)
+  repeated Event shared_events = 6;
+
+  // Inter-member communication channels
+  repeated Channel channels = 7;
+}
+
+/**
+ * EnsembleMember: Individual statechart within an ensemble.
+ */
+message EnsembleMember {
+  // Member identifier within ensemble
+  string id = 1;
+
+  // The actual statechart (inline or reference)
+  oneof source {
+    Statechart inline = 2;      // Embedded statechart definition
+    string ref = 3;             // Reference to external statechart by ID
+  }
+
+  // Fixed weight (for WEIGHTED_AVERAGE strategy)
+  float weight = 4;
+
+  // Member-specific parameters (for parameterized templates)
+  map<string, string> parameters = 5;
+
+  // Role annotation (e.g., "conservative", "aggressive", "explorer")
+  string role = 6;
+}
+
+/**
+ * EnsembleStrategy: How to combine member statechart outputs.
+ */
+enum EnsembleStrategy {
+  ENSEMBLE_STRATEGY_UNSPECIFIED = 0;
+
+  // Voting strategies (for discrete outputs)
+  ENSEMBLE_STRATEGY_MAJORITY_VOTE = 1;     // Most common output wins
+  ENSEMBLE_STRATEGY_UNANIMOUS = 2;          // All must agree
+  ENSEMBLE_STRATEGY_WEIGHTED_VOTE = 3;      // Votes weighted by member.weight
+
+  // Averaging strategies (for soft/differentiable outputs)
+  ENSEMBLE_STRATEGY_SOFT_AVERAGE = 4;       // σ = Σ wᵢσᵢ / Σ wᵢ
+  ENSEMBLE_STRATEGY_SOFT_MAX = 5;           // σ = max(σ₁, ..., σₙ) element-wise
+  ENSEMBLE_STRATEGY_SOFT_MIN = 6;           // σ = min(σ₁, ..., σₙ) element-wise
+
+  // Learned combination strategies
+  ENSEMBLE_STRATEGY_ATTENTION = 7;          // αᵢ = softmax(query · keyᵢ)
+  ENSEMBLE_STRATEGY_MIXTURE_OF_EXPERTS = 8; // Gating network selects expert
+  ENSEMBLE_STRATEGY_LEARNED_WEIGHTS = 9;    // Weights are trainable parameters
+
+  // Selection strategies
+  ENSEMBLE_STRATEGY_RANDOM_SELECT = 10;     // Random member per step
+  ENSEMBLE_STRATEGY_ROUND_ROBIN = 11;       // Cycle through members
+  ENSEMBLE_STRATEGY_BEST_CONFIDENCE = 12;   // Highest confidence member
+
+  // Hierarchical strategies
+  ENSEMBLE_STRATEGY_CASCADE = 13;           // Try members in order until success
+  ENSEMBLE_STRATEGY_FALLBACK = 14;          // Primary with fallback chain
+}
+
+/**
+ * EnsembleConfig: Strategy-specific configuration.
+ */
+message EnsembleConfig {
+  // Temperature for soft combination (lower = sharper)
+  float temperature = 1;
+
+  // Minimum confidence threshold (for BEST_CONFIDENCE)
+  float min_confidence = 2;
+
+  // Attention configuration
+  AttentionConfig attention = 3;
+
+  // Mixture of Experts configuration
+  MoEConfig moe = 4;
+
+  // Whether to train member weights jointly
+  bool joint_training = 5;
+
+  // Regularization on weight distribution (encourage diversity)
+  float diversity_penalty = 6;
+}
+
+/**
+ * AttentionConfig: Configuration for attention-based combination.
+ */
+message AttentionConfig {
+  // Dimension of query/key vectors
+  int32 d_model = 1;
+
+  // Number of attention heads
+  int32 num_heads = 2;
+
+  // What to use as query (e.g., "context", "last_event", "state_embedding")
+  string query_source = 3;
+
+  // Whether keys are learned or derived from member state
+  bool learnable_keys = 4;
+}
+
+/**
+ * MoEConfig: Mixture of Experts configuration.
+ */
+message MoEConfig {
+  // Number of experts to activate per step (top-k)
+  int32 top_k = 1;
+
+  // Gating network architecture
+  string gating_network = 2;
+
+  // Load balancing loss coefficient
+  float balance_loss_weight = 3;
+
+  // Whether experts share parameters
+  bool shared_backbone = 4;
+}
+
+/**
+ * Channel: Inter-member communication channel.
+ */
+message Channel {
+  string id = 1;
+  string from_member = 2;
+  string to_member = 3;
+
+  // What to communicate
+  ChannelType type = 4;
+}
+
+enum ChannelType {
+  CHANNEL_TYPE_UNSPECIFIED = 0;
+  CHANNEL_TYPE_EVENTS = 1;        // Forward events
+  CHANNEL_TYPE_CONFIGURATION = 2; // Share current config
+  CHANNEL_TYPE_ACTIONS = 3;       // Share action outputs
+  CHANNEL_TYPE_GRADIENTS = 4;     // For distributed training
+}
+
+// ===========================================================================
+//  ENSEMBLE CONFIGURATION (Runtime State)
+// ===========================================================================
+
+/**
+ * EnsembleConfiguration: Runtime state of an ensemble.
+ */
+message EnsembleConfiguration {
+  // Configuration for each member
+  map<string, Configuration> member_configs = 1;
+
+  // Current attention weights (if using attention strategy)
+  repeated float attention_weights = 2;
+
+  // Combined/output configuration
+  Configuration combined = 3;
+
+  // Which member was selected (for selection strategies)
+  string selected_member = 4;
+
+  // Confidence scores per member
+  map<string, float> member_confidences = 5;
+}
+
+/**
+ * EnsembleStep: Result of stepping an ensemble.
+ */
+message EnsembleStep {
+  // Previous ensemble configuration
+  EnsembleConfiguration before = 1;
+
+  // Event that triggered the step
+  Event event = 2;
+
+  // Per-member step results
+  map<string, Step> member_steps = 3;
+
+  // Combined step result
+  Step combined_step = 4;
+
+  // New ensemble configuration
+  EnsembleConfiguration after = 5;
+
+  // Disagreement metrics (for analysis)
+  DisagreementMetrics disagreement = 6;
+}
+
+/**
+ * DisagreementMetrics: How much members disagree.
+ */
+message DisagreementMetrics {
+  // Fraction of members that agree with combined output
+  float agreement_ratio = 1;
+
+  // Entropy of member outputs (high = diverse)
+  float output_entropy = 2;
+
+  // Which members disagreed
+  repeated string disagreeing_members = 3;
+
+  // KL divergence between members (average pairwise)
+  float average_kl_divergence = 4;
+}

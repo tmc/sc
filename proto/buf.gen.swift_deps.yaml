@@ -1,0 +1,5 @@
+version: v2
+plugins:
+  - remote: buf.build/apple/swift
+    out: ../ios/States/States/Generated
+    opt: Visibility=Public
