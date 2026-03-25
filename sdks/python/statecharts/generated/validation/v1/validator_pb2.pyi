@@ -5,7 +5,8 @@ from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from collections.abc import Iterable as _Iterable, Mapping as _Mapping
+from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -62,7 +63,7 @@ INVARIANTS_SATISFIABLE: RuleId
 HISTORY_DEFAULTS_VALID: RuleId
 
 class ValidateChartRequest(_message.Message):
-    __slots__ = ("chart", "ignore_rules")
+    __slots__ = ()
     CHART_FIELD_NUMBER: _ClassVar[int]
     IGNORE_RULES_FIELD_NUMBER: _ClassVar[int]
     chart: _statecharts_pb2.Statechart
@@ -70,7 +71,7 @@ class ValidateChartRequest(_message.Message):
     def __init__(self, chart: _Optional[_Union[_statecharts_pb2.Statechart, _Mapping]] = ..., ignore_rules: _Optional[_Iterable[_Union[RuleId, str]]] = ...) -> None: ...
 
 class ValidateTraceRequest(_message.Message):
-    __slots__ = ("chart", "trace", "ignore_rules")
+    __slots__ = ()
     CHART_FIELD_NUMBER: _ClassVar[int]
     TRACE_FIELD_NUMBER: _ClassVar[int]
     IGNORE_RULES_FIELD_NUMBER: _ClassVar[int]
@@ -80,7 +81,7 @@ class ValidateTraceRequest(_message.Message):
     def __init__(self, chart: _Optional[_Union[_statecharts_pb2.Statechart, _Mapping]] = ..., trace: _Optional[_Iterable[_Union[_statecharts_pb2.Machine, _Mapping]]] = ..., ignore_rules: _Optional[_Iterable[_Union[RuleId, str]]] = ...) -> None: ...
 
 class ValidateChartResponse(_message.Message):
-    __slots__ = ("status", "violations")
+    __slots__ = ()
     STATUS_FIELD_NUMBER: _ClassVar[int]
     VIOLATIONS_FIELD_NUMBER: _ClassVar[int]
     status: _status_pb2.Status
@@ -88,7 +89,7 @@ class ValidateChartResponse(_message.Message):
     def __init__(self, status: _Optional[_Union[_status_pb2.Status, _Mapping]] = ..., violations: _Optional[_Iterable[_Union[Violation, _Mapping]]] = ...) -> None: ...
 
 class ValidateTraceResponse(_message.Message):
-    __slots__ = ("status", "violations")
+    __slots__ = ()
     STATUS_FIELD_NUMBER: _ClassVar[int]
     VIOLATIONS_FIELD_NUMBER: _ClassVar[int]
     status: _status_pb2.Status
@@ -96,7 +97,7 @@ class ValidateTraceResponse(_message.Message):
     def __init__(self, status: _Optional[_Union[_status_pb2.Status, _Mapping]] = ..., violations: _Optional[_Iterable[_Union[Violation, _Mapping]]] = ...) -> None: ...
 
 class Violation(_message.Message):
-    __slots__ = ("rule", "severity", "message", "xpath")
+    __slots__ = ()
     RULE_FIELD_NUMBER: _ClassVar[int]
     SEVERITY_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
