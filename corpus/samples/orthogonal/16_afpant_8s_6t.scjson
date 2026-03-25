@@ -1,0 +1,147 @@
+{
+  "name": "afpant",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "afpant",
+        "type": 2,
+        "children": [
+          {
+            "label": "initial",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "getActiveOrgs"
+                }
+              ],
+              "stately_id": "afpant.initial"
+            }
+          },
+          {
+            "label": "active orgs retrieved",
+            "type": 1,
+            "metadata": {
+              "stately_id": "afpant.active orgs retrieved"
+            }
+          },
+          {
+            "label": "have available files",
+            "type": 1,
+            "metadata": {
+              "stately_id": "afpant.have available files"
+            }
+          },
+          {
+            "label": "processing files",
+            "type": 3,
+            "children": [
+              {
+                "label": "processing file",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "afpant.processFile",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "afpant.processFile"
+                    }
+                  ],
+                  "stately_id": "afpant.processing files.processing file"
+                }
+              },
+              {
+                "label": "New state 2",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "afpant.processing files.New state 2"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "afpant.processing files"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "afpant"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "active orgs retrieved"
+      ]
+    },
+    {
+      "from": [
+        "active orgs retrieved"
+      ],
+      "to": [
+        "have available files"
+      ],
+      "event": "getAvailableFiles",
+      "guard": {
+        "expression": "have files",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "active orgs retrieved"
+      ],
+      "to": [
+        "initial"
+      ],
+      "event": "getAvailableFiles"
+    },
+    {
+      "from": [
+        "have available files"
+      ],
+      "to": [
+        "processing files"
+      ],
+      "event": "process files"
+    },
+    {
+      "from": [
+        "processing file"
+      ],
+      "to": [
+        "New state 2"
+      ]
+    },
+    {
+      "from": [
+        "processing file"
+      ],
+      "to": [
+        "processing file"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "getAvailableFiles"
+    },
+    {
+      "label": "process files"
+    }
+  ]
+}

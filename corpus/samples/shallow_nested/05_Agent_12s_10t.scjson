@@ -1,0 +1,262 @@
+{
+  "name": "Agent",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Agent",
+        "type": 2,
+        "children": [
+          {
+            "label": "inactive",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Agent.inactive"
+            }
+          },
+          {
+            "label": "active",
+            "type": 2,
+            "children": [
+              {
+                "label": "request module code",
+                "type": 1,
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "RequestModuleCode",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Agent.active.request module code"
+                }
+              },
+              {
+                "label": "write code",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "WriteCodeToContainer",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Agent.active.write code"
+                }
+              },
+              {
+                "label": "compile code",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "BuildProject",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Agent.active.compile code"
+                }
+              },
+              {
+                "label": "request module test",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "RequestModuleTests",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Agent.active.request module test"
+                }
+              },
+              {
+                "label": "request changes",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "RequestChanges",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Agent.active.request changes"
+                }
+              },
+              {
+                "label": "run test",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "RunTests",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Agent.active.run test"
+                }
+              },
+              {
+                "label": "Completed",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Agent.active.Completed"
+                }
+              },
+              {
+                "label": "Failed",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Agent.active.Failed"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Agent.active"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Agent"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "inactive"
+      ],
+      "to": [
+        "active"
+      ],
+      "event": "ACTIVATE",
+      "actions": [
+        {
+          "label": "AssignContainerID",
+          "language": "xstate"
+        },
+        {
+          "label": "AssignModuleContext",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "request module code"
+      ],
+      "to": [
+        "write code"
+      ],
+      "event": "IMPLEMENT"
+    },
+    {
+      "from": [
+        "write code"
+      ],
+      "to": [
+        "compile code"
+      ],
+      "event": "COMPILE"
+    },
+    {
+      "from": [
+        "request changes"
+      ],
+      "to": [
+        "write code"
+      ],
+      "event": "FIX_ERRORS"
+    },
+    {
+      "from": [
+        "compile code"
+      ],
+      "to": [
+        "request module test"
+      ],
+      "event": "Event 1",
+      "guard": {
+        "expression": "code compiles correctly AND !WROTE_TEST_CODE",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "compile code"
+      ],
+      "to": [
+        "run test"
+      ],
+      "event": "Event 1",
+      "guard": {
+        "expression": "code compiles correctly AND WROTE_TEST",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "compile code"
+      ],
+      "to": [
+        "request changes"
+      ],
+      "event": "Event 1"
+    },
+    {
+      "from": [
+        "request module test"
+      ],
+      "to": [
+        "write code"
+      ],
+      "event": "IMPLEMENT"
+    },
+    {
+      "from": [
+        "run test"
+      ],
+      "to": [
+        "Completed"
+      ],
+      "event": "Event 1",
+      "guard": {
+        "expression": "TestsRanSuccessfully",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "run test"
+      ],
+      "to": [
+        "Failed"
+      ],
+      "event": "Event 1"
+    }
+  ],
+  "events": [
+    {
+      "label": "Event 1"
+    },
+    {
+      "label": "ACTIVATE"
+    },
+    {
+      "label": "IMPLEMENT"
+    },
+    {
+      "label": "COMPILE"
+    },
+    {
+      "label": "FIX_ERRORS"
+    }
+  ]
+}

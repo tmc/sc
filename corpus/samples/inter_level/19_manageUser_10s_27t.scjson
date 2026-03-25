@@ -1,0 +1,470 @@
+{
+  "name": "manageUser",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "manageUser",
+        "type": 2,
+        "children": [
+          {
+            "label": "Idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "The admin is not currently managing any user accounts.",
+              "stately_id": "manageUser.Idle"
+            }
+          },
+          {
+            "label": "Creating account",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is in the process of creating a new user account.",
+              "stately_id": "manageUser.Creating account"
+            }
+          },
+          {
+            "label": "Updating account",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is updating existing user information or assigning roles and privileges.",
+              "stately_id": "manageUser.Updating account"
+            }
+          },
+          {
+            "label": "Updating info",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is specifically updating user information such as name, email, etc.",
+              "stately_id": "manageUser.Updating info"
+            }
+          },
+          {
+            "label": "Assigning role",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is assigning or changing the role and privileges of a user.",
+              "stately_id": "manageUser.Assigning role"
+            }
+          },
+          {
+            "label": "Deactivating account",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is deactivating a user account to restrict access temporarily.",
+              "stately_id": "manageUser.Deactivating account"
+            }
+          },
+          {
+            "label": "Reactivating account",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is reactivating a previously deactivated user account.",
+              "stately_id": "manageUser.Reactivating account"
+            }
+          },
+          {
+            "label": "Deleting account",
+            "type": 1,
+            "metadata": {
+              "description": "The admin is permanently deleting a user account from the system.",
+              "stately_id": "manageUser.Deleting account"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "manageUser"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Creating account"
+      ],
+      "event": "create"
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Updating account"
+      ],
+      "event": "selectUser"
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Deleting account"
+      ],
+      "event": "delete"
+    },
+    {
+      "from": [
+        "Creating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "onCreateSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Creating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "onCreateFailure",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Creating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Updating account"
+      ],
+      "to": [
+        "Updating info"
+      ],
+      "event": "updateInfo",
+      "actions": [
+        {
+          "label": "onUpdateInfo",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating account"
+      ],
+      "to": [
+        "Assigning role"
+      ],
+      "event": "assignRole",
+      "actions": [
+        {
+          "label": "onAssignRole",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating account"
+      ],
+      "to": [
+        "Deactivating account"
+      ],
+      "event": "deactivate",
+      "actions": [
+        {
+          "label": "onDeactivate",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating account"
+      ],
+      "to": [
+        "Reactivating account"
+      ],
+      "event": "reactivate",
+      "actions": [
+        {
+          "label": "onReactivate",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Updating info"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "onUpdateSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating info"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "onUpdateFailure",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating info"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Assigning role"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "onAssignSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Assigning role"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "onAssignFailure",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Assigning role"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Deactivating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "onDeactivateSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Deactivating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "onDeactivateFailure",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Deactivating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Reactivating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "onReactivateSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Reactivating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "onReactivateFailure",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Reactivating account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Deleting account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "onDeleteSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Deleting account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "onDeleteFailure",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Deleting account"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "manageUser"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "logout",
+      "actions": [
+        {
+          "label": "onLogout",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "logout"
+    },
+    {
+      "label": "create"
+    },
+    {
+      "label": "success"
+    },
+    {
+      "label": "cancel"
+    },
+    {
+      "label": "updateInfo"
+    },
+    {
+      "label": "assignRole"
+    },
+    {
+      "label": "selectUser"
+    },
+    {
+      "label": "delete"
+    },
+    {
+      "label": "failure"
+    },
+    {
+      "label": "deactivate"
+    },
+    {
+      "label": "reactivate"
+    }
+  ],
+  "variables": {
+    "userData": null,
+    "userRole": null
+  }
+}

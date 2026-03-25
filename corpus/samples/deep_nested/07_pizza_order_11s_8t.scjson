@@ -1,0 +1,239 @@
+{
+  "name": "pizza order",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "pizza order",
+        "type": 2,
+        "children": [
+          {
+            "label": "shopping",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "pizza order.shopping"
+            }
+          },
+          {
+            "label": "checkingOut",
+            "type": 2,
+            "children": [
+              {
+                "label": "payment_loading",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "pizza order.checkingOut.payment_loading"
+                }
+              },
+              {
+                "label": "inKitchen",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "preparingOrder",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "pizza order.checkingOut.inKitchen.preparingOrder"
+                    }
+                  },
+                  {
+                    "label": "ready_for_pickup",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "pizza order.checkingOut.inKitchen.ready_for_pickup"
+                    }
+                  },
+                  {
+                    "label": "out_for_delivery",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "pizza order.checkingOut.inKitchen.out_for_delivery"
+                    }
+                  },
+                  {
+                    "label": "order_delivered",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "pizza order.checkingOut.inKitchen.order_delivered"
+                    }
+                  },
+                  {
+                    "label": "completed",
+                    "type": 1,
+                    "is_final": true,
+                    "entry_actions": [
+                      {
+                        "label": "inline:order.checkingOut.inKitchen.completed#entry[0]",
+                        "language": "xstate"
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "pizza order.checkingOut.inKitchen.completed"
+                    }
+                  }
+                ],
+                "entry_actions": [
+                  {
+                    "label": "inline:order.checkingOut.inKitchen#entry[0]",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "pizza order.checkingOut.inKitchen"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "pizza order.checkingOut"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "pizza order"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "shopping"
+      ],
+      "to": [
+        "checkingOut"
+      ],
+      "event": "checkout",
+      "guard": {
+        "expression": "inline:order.shopping#checkout[-1]#guard",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "inline:order.shopping#checkout[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "shopping"
+      ],
+      "to": [
+        "shopping"
+      ],
+      "event": "add_to_cart",
+      "guard": {
+        "expression": "inline:order.shopping#add_to_cart[-1]#guard",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "inline:order.shopping#add_to_cart[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "payment_loading"
+      ],
+      "to": [
+        "inKitchen"
+      ],
+      "event": "payment_success",
+      "actions": [
+        {
+          "label": "inline:order.checkingOut.payment_loading#payment_success[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "payment_loading"
+      ],
+      "to": [
+        "payment_loading"
+      ],
+      "event": "payment_failure",
+      "actions": [
+        {
+          "label": "inline:order.checkingOut.payment_loading#payment_failure[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "preparingOrder"
+      ],
+      "to": [
+        "ready_for_pickup"
+      ],
+      "event": "ready_for_pickup"
+    },
+    {
+      "from": [
+        "ready_for_pickup"
+      ],
+      "to": [
+        "out_for_delivery"
+      ],
+      "event": "out_for_delivery"
+    },
+    {
+      "from": [
+        "out_for_delivery"
+      ],
+      "to": [
+        "order_delivered"
+      ],
+      "event": "order_delivered"
+    },
+    {
+      "from": [
+        "order_delivered"
+      ],
+      "to": [
+        "completed"
+      ],
+      "event": "completed"
+    }
+  ],
+  "events": [
+    {
+      "label": "order_delivered"
+    },
+    {
+      "label": "completed"
+    },
+    {
+      "label": "checkout"
+    },
+    {
+      "label": "add_to_cart"
+    },
+    {
+      "label": "payment_success"
+    },
+    {
+      "label": "payment_failure"
+    },
+    {
+      "label": "ready_for_pickup"
+    },
+    {
+      "label": "out_for_delivery"
+    }
+  ],
+  "variables": {
+    "items": null,
+    "orderId": null,
+    "status": null
+  }
+}

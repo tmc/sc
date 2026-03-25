@@ -1,0 +1,183 @@
+{
+  "name": "BlueIrisControl",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "BlueIrisControl",
+        "type": 3,
+        "children": [
+          {
+            "label": "BI_MANAGER",
+            "type": 2,
+            "children": [
+              {
+                "label": "BI_DISABLED",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "sendBICommandDIsabled",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "BlueIrisControl.BI_MANAGER.BI_DISABLED"
+                }
+              },
+              {
+                "label": "BI_STATUS_AWAY",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "sendBICommandEnabled",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "BlueIrisControl.BI_MANAGER.BI_STATUS_AWAY"
+                }
+              },
+              {
+                "label": "BI_STATUS_FULL_REC",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "sendBICommandRECAll",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "BlueIrisControl.BI_MANAGER.BI_STATUS_FULL_REC"
+                }
+              },
+              {
+                "label": "INIT",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "BlueIrisControl.BI_MANAGER.INIT"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "BlueIrisControl.BI_MANAGER"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "BlueIrisControl"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "BI_DISABLED"
+      ],
+      "to": [
+        "BI_STATUS_AWAY"
+      ],
+      "event": "alarmo_engaged"
+    },
+    {
+      "from": [
+        "BI_STATUS_AWAY"
+      ],
+      "to": [
+        "BI_DISABLED"
+      ],
+      "event": "alarmo_disengaged"
+    },
+    {
+      "from": [
+        "BI_STATUS_AWAY"
+      ],
+      "to": [
+        "BI_STATUS_FULL_REC"
+      ],
+      "event": "enable_full_record"
+    },
+    {
+      "from": [
+        "BI_DISABLED"
+      ],
+      "to": [
+        "BI_STATUS_FULL_REC"
+      ],
+      "event": "enable_full_record"
+    },
+    {
+      "from": [
+        "BI_STATUS_FULL_REC"
+      ],
+      "to": [
+        "BI_STATUS_AWAY"
+      ],
+      "guard": {
+        "expression": "alarmoIsEnabled",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "BI_STATUS_FULL_REC"
+      ],
+      "to": [
+        "BI_DISABLED"
+      ]
+    },
+    {
+      "from": [
+        "BI_MANAGER"
+      ],
+      "to": [
+        "BI_MANAGER"
+      ],
+      "event": "bi_restart",
+      "actions": [
+        {
+          "label": "sendAlarmoEvt",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "BI_MANAGER"
+      ],
+      "to": [
+        "BI_MANAGER"
+      ],
+      "event": "alarmo_state_changed",
+      "actions": [
+        {
+          "label": "updateAlarmoStsCtx",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "alarmo_engaged"
+    },
+    {
+      "label": "alarmo_disengaged"
+    },
+    {
+      "label": "enable_full_record"
+    },
+    {
+      "label": "bi_restart"
+    },
+    {
+      "label": "alarmo_state_changed"
+    }
+  ],
+  "variables": {
+    "alarmo_sts": "null"
+  }
+}

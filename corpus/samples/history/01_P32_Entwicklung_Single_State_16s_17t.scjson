@@ -1,0 +1,333 @@
+{
+  "name": "P32_Entwicklung Single State",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "P32_Entwicklung Single State",
+        "type": 2,
+        "children": [
+          {
+            "label": "Neu",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Neu"
+            }
+          },
+          {
+            "label": "Priorisiert",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Priorisiert"
+            }
+          },
+          {
+            "label": "In Bearbeitung",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.In Bearbeitung"
+            }
+          },
+          {
+            "label": "Behoben",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Behoben"
+            }
+          },
+          {
+            "label": "Verifiziert",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Verifiziert"
+            }
+          },
+          {
+            "label": "Abgeschlossen",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Abgeschlossen"
+            }
+          },
+          {
+            "label": "Nicht reproduzierbar",
+            "type": 1,
+            "is_history": true,
+            "history_type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Nicht reproduzierbar"
+            }
+          },
+          {
+            "label": "Zu Besprechen",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Zu Besprechen"
+            }
+          },
+          {
+            "label": "Spezifiziert",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Spezifiziert"
+            }
+          },
+          {
+            "label": "Wird nicht behoben",
+            "type": 1,
+            "is_history": true,
+            "history_type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Wird nicht behoben"
+            }
+          },
+          {
+            "label": "Wiedereröffnet",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Wiedereröffnet"
+            }
+          },
+          {
+            "label": "Zurückgestellt",
+            "type": 1,
+            "is_history": true,
+            "history_type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Zurückgestellt"
+            }
+          },
+          {
+            "label": "Duplikat",
+            "type": 1,
+            "is_history": true,
+            "history_type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Duplikat"
+            }
+          },
+          {
+            "label": "Prüfung",
+            "type": 1,
+            "metadata": {
+              "stately_id": "P32_Entwicklung Single State.Prüfung"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "P32_Entwicklung Single State"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "In Bearbeitung"
+      ],
+      "to": [
+        "Behoben"
+      ],
+      "event": "Work completed"
+    },
+    {
+      "from": [
+        "Behoben"
+      ],
+      "to": [
+        "Verifiziert"
+      ],
+      "event": "Verification",
+      "guard": {
+        "expression": "verified",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Behoben"
+      ],
+      "to": [
+        "Wiedereröffnet"
+      ],
+      "event": "Verification",
+      "guard": {
+        "expression": "not verified",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Verifiziert"
+      ],
+      "to": [
+        "Abgeschlossen"
+      ],
+      "event": "Finalize"
+    },
+    {
+      "from": [
+        "In Bearbeitung"
+      ],
+      "to": [
+        "Zu Besprechen"
+      ],
+      "event": "offene Fragen"
+    },
+    {
+      "from": [
+        "Zu Besprechen"
+      ],
+      "to": [
+        "Spezifiziert"
+      ],
+      "event": "Specify"
+    },
+    {
+      "from": [
+        "Spezifiziert"
+      ],
+      "to": [
+        "Zu Besprechen"
+      ],
+      "event": "???",
+      "guard": {
+        "expression": "offene Fragen",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Spezifiziert"
+      ],
+      "to": [
+        "In Bearbeitung"
+      ],
+      "event": "???"
+    },
+    {
+      "from": [
+        "Wiedereröffnet"
+      ],
+      "to": [
+        "In Bearbeitung"
+      ],
+      "event": "Start work"
+    },
+    {
+      "from": [
+        "Prüfung"
+      ],
+      "to": [
+        "Wird nicht behoben"
+      ],
+      "guard": {
+        "expression": "PM Entscheid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Prüfung"
+      ],
+      "to": [
+        "Nicht reproduzierbar"
+      ],
+      "guard": {
+        "expression": "Entwickler kann nicht reproduzieren",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Prüfung"
+      ],
+      "to": [
+        "Zurückgestellt"
+      ],
+      "guard": {
+        "expression": "Nicht jetzt",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Prüfung"
+      ],
+      "to": [
+        "Duplikat"
+      ],
+      "guard": {
+        "expression": "Duplikat",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Prüfung"
+      ],
+      "to": [
+        "Zu Besprechen"
+      ],
+      "guard": {
+        "expression": "Unklar",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Prüfung"
+      ],
+      "to": [
+        "Priorisiert"
+      ]
+    },
+    {
+      "from": [
+        "Priorisiert"
+      ],
+      "to": [
+        "Spezifiziert"
+      ],
+      "event": "Planung"
+    },
+    {
+      "from": [
+        "Neu"
+      ],
+      "to": [
+        "Prüfung"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "Planung"
+    },
+    {
+      "label": "Work completed"
+    },
+    {
+      "label": "Verification"
+    },
+    {
+      "label": "Finalize"
+    },
+    {
+      "label": "offene Fragen"
+    },
+    {
+      "label": "Specify"
+    },
+    {
+      "label": "???"
+    },
+    {
+      "label": "Start work"
+    }
+  ]
+}

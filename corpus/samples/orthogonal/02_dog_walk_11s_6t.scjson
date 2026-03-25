@@ -1,0 +1,174 @@
+{
+  "name": "dog walk",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "dog walk",
+        "type": 2,
+        "children": [
+          {
+            "label": "waiting",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "![puppy patiently waiting](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/waiting.svg)",
+              "stately_id": "dog walk.waiting"
+            }
+          },
+          {
+            "label": "on a walk",
+            "type": 3,
+            "children": [
+              {
+                "label": "activity",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "walking",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "description": "![happy walking puppy](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/walking.svg)",
+                      "stately_id": "dog walk.on a walk.activity.walking"
+                    }
+                  },
+                  {
+                    "label": "running",
+                    "type": 1,
+                    "metadata": {
+                      "description": "![puppy running bouncily](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/running.svg)",
+                      "stately_id": "dog walk.on a walk.activity.running"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "dog walk.on a walk.activity"
+                }
+              },
+              {
+                "label": "tail",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "not wagging",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "description": "![puppy sniffing the ground with a still tail](https://raw.githubusercontent.com/statelyai/assets/d236419f16a3b51a653e401084e9e9be8cfdbaa3/example-images/dogs/sniffing.svg)",
+                      "stately_id": "dog walk.on a walk.tail.not wagging"
+                    }
+                  },
+                  {
+                    "label": "wagging",
+                    "type": 1,
+                    "metadata": {
+                      "description": "![puppy sniffing the ground with a wagging tail](https://raw.githubusercontent.com/statelyai/assets/d236419f16a3b51a653e401084e9e9be8cfdbaa3/example-images/dogs/wagging.svg)",
+                      "stately_id": "dog walk.on a walk.tail.wagging"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "dog walk.on a walk.tail"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "dog walk.on a walk"
+            }
+          },
+          {
+            "label": "walk complete",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "description": "![sleeping puppy](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/asleep.svg)",
+              "stately_id": "dog walk.walk complete"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "dog walk"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "waiting"
+      ],
+      "to": [
+        "on a walk"
+      ],
+      "event": "leave home"
+    },
+    {
+      "from": [
+        "walking"
+      ],
+      "to": [
+        "running"
+      ],
+      "event": "speed up"
+    },
+    {
+      "from": [
+        "running"
+      ],
+      "to": [
+        "walking"
+      ],
+      "event": "slow down"
+    },
+    {
+      "from": [
+        "not wagging"
+      ],
+      "to": [
+        "wagging"
+      ],
+      "event": "wagging starts"
+    },
+    {
+      "from": [
+        "wagging"
+      ],
+      "to": [
+        "not wagging"
+      ],
+      "event": "wagging stops"
+    },
+    {
+      "from": [
+        "on a walk"
+      ],
+      "to": [
+        "walk complete"
+      ],
+      "event": "arrive home"
+    }
+  ],
+  "events": [
+    {
+      "label": "speed up"
+    },
+    {
+      "label": "slow down"
+    },
+    {
+      "label": "wagging starts"
+    },
+    {
+      "label": "wagging stops"
+    },
+    {
+      "label": "arrive home"
+    },
+    {
+      "label": "leave home"
+    }
+  ]
+}

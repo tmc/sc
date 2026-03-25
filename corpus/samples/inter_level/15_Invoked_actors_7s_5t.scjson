@@ -1,0 +1,128 @@
+{
+  "name": "Invoked actors",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Invoked actors",
+        "type": 2,
+        "children": [
+          {
+            "label": "Closed",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Invoked actors.Closed"
+            }
+          },
+          {
+            "label": "Opened",
+            "type": 2,
+            "children": [
+              {
+                "label": "Playing",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Invoked actors.Opened.Playing"
+                }
+              },
+              {
+                "label": "Paused",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Invoked actors.Opened.Paused"
+                }
+              },
+              {
+                "label": "Stopped",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Invoked actors.Opened.Stopped"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "Fullscreen mode",
+              "invoke": [
+                {
+                  "id": "anonymous",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "startVideo"
+                }
+              ],
+              "meta_entries": [],
+              "stately_id": "Invoked actors.Opened"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "description": "Video player",
+          "stately_id": "Invoked actors"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Closed"
+      ],
+      "to": [
+        "Opened"
+      ],
+      "event": "PLAY"
+    },
+    {
+      "from": [
+        "Playing"
+      ],
+      "to": [
+        "Paused"
+      ],
+      "event": "PAUSE"
+    },
+    {
+      "from": [
+        "Opened"
+      ],
+      "to": [
+        "Closed"
+      ]
+    },
+    {
+      "from": [
+        "Paused"
+      ],
+      "to": [
+        "Playing"
+      ],
+      "event": "PLAY"
+    },
+    {
+      "from": [
+        "Opened"
+      ],
+      "to": [
+        "Stopped"
+      ],
+      "event": "STOP"
+    }
+  ],
+  "events": [
+    {
+      "label": "PLAY"
+    },
+    {
+      "label": "PAUSE"
+    },
+    {
+      "label": "STOP"
+    }
+  ]
+}

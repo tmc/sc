@@ -1,0 +1,225 @@
+{
+  "name": "beacon-aog",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "beacon-aog",
+        "type": 2,
+        "children": [
+          {
+            "label": "closed",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "description": "Final state where the AOG has been resolved and closed.",
+              "meta_entries": [],
+              "stately_id": "beacon-aog.closed"
+            }
+          },
+          {
+            "label": "archived",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "description": "AOG has been deleted/archived.",
+              "meta_entries": [],
+              "stately_id": "beacon-aog.archived"
+            }
+          },
+          {
+            "label": "open",
+            "type": 2,
+            "children": [
+              {
+                "label": "initial",
+                "type": 1,
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "sendNotifications",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "description": "Initial state where a new AOG (Aircraft on Ground) is created.",
+                  "meta_entries": [],
+                  "stately_id": "beacon-aog.open.initial"
+                }
+              },
+              {
+                "label": "Pending Assignment",
+                "type": 1,
+                "metadata": {
+                  "description": "State where the AOG is waiting for resources to be assigned.",
+                  "meta_entries": [],
+                  "stately_id": "beacon-aog.open.Pending Assignment"
+                }
+              },
+              {
+                "label": "Pending Repair",
+                "type": 1,
+                "metadata": {
+                  "description": "State where the AOG is awaiting maintenance to start.",
+                  "meta_entries": [],
+                  "stately_id": "beacon-aog.open.Pending Repair"
+                }
+              },
+              {
+                "label": "In Progress",
+                "type": 1,
+                "metadata": {
+                  "description": "State where the maintenance is currently underway.",
+                  "meta_entries": [],
+                  "stately_id": "beacon-aog.open.In Progress"
+                }
+              },
+              {
+                "label": "Pending Approval",
+                "type": 1,
+                "metadata": {
+                  "description": "State where the maintenance is complete \n\nand is pending approval to return to service.",
+                  "meta_entries": [],
+                  "stately_id": "beacon-aog.open.Pending Approval"
+                }
+              },
+              {
+                "label": "Return to previous state",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "description": "This is a **history state**.\n\nTransitioning to this state basically means:\n\n\"Return to the child state of this parent state that we were just in\"",
+                  "meta_entries": [],
+                  "stately_id": "beacon-aog.open.Return to previous state"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "beacon-aog.open"
+            }
+          },
+          {
+            "label": "stalled",
+            "type": 1,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "beacon-aog.stalled"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "meta_entries": [],
+          "stately_id": "beacon-aog"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "Pending Assignment"
+      ],
+      "event": "maintenance_requested"
+    },
+    {
+      "from": [
+        "Pending Assignment"
+      ],
+      "to": [
+        "Pending Repair"
+      ],
+      "event": "resource_assigned"
+    },
+    {
+      "from": [
+        "Pending Repair"
+      ],
+      "to": [
+        "In Progress"
+      ],
+      "event": "maintenance_started"
+    },
+    {
+      "from": [
+        "In Progress"
+      ],
+      "to": [
+        "Pending Approval"
+      ],
+      "event": "maintenance_complete"
+    },
+    {
+      "from": [
+        "Pending Approval"
+      ],
+      "to": [
+        "closed"
+      ],
+      "event": "return_to_service"
+    },
+    {
+      "from": [
+        "open"
+      ],
+      "to": [
+        "stalled"
+      ],
+      "event": "pause_progress"
+    },
+    {
+      "from": [
+        "stalled"
+      ],
+      "to": [
+        "Return to previous state"
+      ],
+      "event": "resume"
+    },
+    {
+      "from": [
+        "open"
+      ],
+      "to": [
+        "archived"
+      ],
+      "event": "delete_case"
+    }
+  ],
+  "events": [
+    {
+      "label": "resource_assigned"
+    },
+    {
+      "label": "maintenance_started"
+    },
+    {
+      "label": "maintenance_complete"
+    },
+    {
+      "label": "return_to_service"
+    },
+    {
+      "label": "pause_progress"
+    },
+    {
+      "label": "resume"
+    },
+    {
+      "label": "delete_case"
+    },
+    {
+      "label": "maintenance_requested"
+    }
+  ],
+  "variables": {
+    "previousState": null
+  }
+}

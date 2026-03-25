@@ -1,0 +1,286 @@
+{
+  "name": "phoner",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "phoner",
+        "type": 2,
+        "children": [
+          {
+            "label": "idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "phoner.idle"
+            }
+          },
+          {
+            "label": "activated",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.activated"
+            }
+          },
+          {
+            "label": "menu opened",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.menu opened"
+            }
+          },
+          {
+            "label": "contacts opened",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.contacts opened"
+            }
+          },
+          {
+            "label": "settings opened",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.settings opened"
+            }
+          },
+          {
+            "label": "call logs opened",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.call logs opened"
+            }
+          },
+          {
+            "label": "final call recordings opened",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.final call recordings opened"
+            }
+          },
+          {
+            "label": "hot keys opened",
+            "type": 1,
+            "metadata": {
+              "stately_id": "phoner.hot keys opened"
+            }
+          },
+          {
+            "label": "fast search",
+            "type": 2,
+            "children": [
+              {
+                "label": "New state 1",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "phoner.fast search.New state 1"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "phoner.fast search"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "phoner"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "activated"
+      ],
+      "event": "hover"
+    },
+    {
+      "from": [
+        "activated"
+      ],
+      "to": [
+        "idle"
+      ],
+      "guard": {
+        "expression": "hover",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "activated"
+      ],
+      "to": [
+        "menu opened"
+      ],
+      "event": "open menu"
+    },
+    {
+      "from": [
+        "activated"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "collapse"
+    },
+    {
+      "from": [
+        "menu opened"
+      ],
+      "to": [
+        "activated"
+      ],
+      "event": "close menu"
+    },
+    {
+      "from": [
+        "menu opened"
+      ],
+      "to": [
+        "contacts opened"
+      ],
+      "event": "contacts"
+    },
+    {
+      "from": [
+        "menu opened"
+      ],
+      "to": [
+        "settings opened"
+      ],
+      "event": "settings"
+    },
+    {
+      "from": [
+        "menu opened"
+      ],
+      "to": [
+        "call logs opened"
+      ],
+      "event": "call log"
+    },
+    {
+      "from": [
+        "menu opened"
+      ],
+      "to": [
+        "final call recordings opened"
+      ],
+      "event": "final call recordings"
+    },
+    {
+      "from": [
+        "menu opened"
+      ],
+      "to": [
+        "hot keys opened"
+      ],
+      "event": "hot keys"
+    },
+    {
+      "from": [
+        "settings opened"
+      ],
+      "to": [
+        "menu opened"
+      ],
+      "event": "back to menu"
+    },
+    {
+      "from": [
+        "contacts opened"
+      ],
+      "to": [
+        "menu opened"
+      ],
+      "event": "back to menu"
+    },
+    {
+      "from": [
+        "call logs opened"
+      ],
+      "to": [
+        "menu opened"
+      ],
+      "event": "back to menu"
+    },
+    {
+      "from": [
+        "final call recordings opened"
+      ],
+      "to": [
+        "menu opened"
+      ],
+      "event": "back to menu"
+    },
+    {
+      "from": [
+        "hot keys opened"
+      ],
+      "to": [
+        "menu opened"
+      ],
+      "event": "back to menu"
+    },
+    {
+      "from": [
+        "activated"
+      ],
+      "to": [
+        "fast search"
+      ],
+      "event": "fast search"
+    },
+    {
+      "from": [
+        "activated"
+      ],
+      "to": [
+        "activated"
+      ],
+      "event": "hover"
+    }
+  ],
+  "events": [
+    {
+      "label": "fast search"
+    },
+    {
+      "label": "collapse"
+    },
+    {
+      "label": "settings"
+    },
+    {
+      "label": "final call recordings"
+    },
+    {
+      "label": "hot keys"
+    },
+    {
+      "label": "hover"
+    },
+    {
+      "label": "open menu"
+    },
+    {
+      "label": "close menu"
+    },
+    {
+      "label": "contacts"
+    },
+    {
+      "label": "call log"
+    },
+    {
+      "label": "back to menu"
+    }
+  ]
+}

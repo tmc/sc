@@ -1,0 +1,92 @@
+{
+  "name": "machine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "machine",
+        "type": 3,
+        "children": [
+          {
+            "label": "M1",
+            "type": 2,
+            "children": [
+              {
+                "label": "M1S1",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "machine.M1.M1S1"
+                }
+              },
+              {
+                "label": "M1S2",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "machine.M1.M1S2"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "machine.M1"
+            }
+          },
+          {
+            "label": "M2",
+            "type": 2,
+            "children": [
+              {
+                "label": "M2S1",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "machine.M2.M2S1"
+                }
+              },
+              {
+                "label": "M2S2",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "machine.M2.M2S2"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "machine.M2"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "machine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "M1S1"
+      ],
+      "to": [
+        "M2S1"
+      ],
+      "event": "data"
+    },
+    {
+      "from": [
+        "M1S1"
+      ],
+      "to": [
+        "M1S1"
+      ],
+      "event": "data"
+    }
+  ],
+  "events": [
+    {
+      "label": "data"
+    }
+  ]
+}

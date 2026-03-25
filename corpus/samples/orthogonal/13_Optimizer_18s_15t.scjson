@@ -1,0 +1,399 @@
+{
+  "name": "Optimizer",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Optimizer",
+        "type": 2,
+        "children": [
+          {
+            "label": "RUNNING",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:qs5e5s0515",
+                  "kind": "named",
+                  "src": "runModel"
+                }
+              ],
+              "stately_id": "Optimizer.RUNNING"
+            }
+          },
+          {
+            "label": "DONE",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Optimizer.DONE"
+            }
+          },
+          {
+            "label": "holder",
+            "type": 2,
+            "children": [
+              {
+                "label": "setup",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "editParameters",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "loaded_config",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "Optimizer.holder.setup.editParameters.loaded_config"
+                        }
+                      },
+                      {
+                        "label": "noLoaded",
+                        "type": 3,
+                        "children": [
+                          {
+                            "label": "idle",
+                            "type": 1,
+                            "metadata": {
+                              "stately_id": "Optimizer.holder.setup.editParameters.noLoaded.idle"
+                            }
+                          },
+                          {
+                            "label": "configs",
+                            "type": 2,
+                            "children": [
+                              {
+                                "label": "awaiting_configs",
+                                "type": 1,
+                                "is_initial": true,
+                                "metadata": {
+                                  "invoke": [
+                                    {
+                                      "id": ":invocation:22340rvz7suj",
+                                      "kind": "named",
+                                      "src": "getConfigs"
+                                    }
+                                  ],
+                                  "stately_id": "Optimizer.holder.setup.editParameters.noLoaded.configs.awaiting_configs"
+                                }
+                              },
+                              {
+                                "label": "has_configs",
+                                "type": 1,
+                                "metadata": {
+                                  "stately_id": "Optimizer.holder.setup.editParameters.noLoaded.configs.has_configs"
+                                }
+                              }
+                            ],
+                            "metadata": {
+                              "stately_id": "Optimizer.holder.setup.editParameters.noLoaded.configs"
+                            }
+                          }
+                        ],
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "Optimizer.holder.setup.editParameters.noLoaded"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "Optimizer.holder.setup.editParameters"
+                    }
+                  },
+                  {
+                    "label": "case",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "noCase",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "Optimizer.holder.setup.case.noCase"
+                        }
+                      },
+                      {
+                        "label": "Loaded",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "Optimizer.holder.setup.case.Loaded"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "Optimizer.holder.setup.case"
+                    }
+                  },
+                  {
+                    "label": "optimizationParameters",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Optimizer.holder.setup.optimizationParameters"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Optimizer.holder.setup"
+                }
+              },
+              {
+                "label": "setuphist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 2,
+                "metadata": {
+                  "stately_id": "Optimizer.holder.setuphist"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Optimizer.holder"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Optimizer"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "DONE"
+      ],
+      "to": [
+        "setuphist"
+      ],
+      "event": "RESET"
+    },
+    {
+      "from": [
+        "RUNNING"
+      ],
+      "to": [
+        "DONE"
+      ],
+      "actions": [
+        {
+          "label": "set_solution",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loaded_config"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "DELETE",
+      "actions": [
+        {
+          "label": "delete_config",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loaded_config"
+      ],
+      "to": [
+        "loaded_config"
+      ],
+      "event": "EDIT",
+      "actions": [
+        {
+          "label": "update_parameter",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loaded_config"
+      ],
+      "to": [
+        "loaded_config"
+      ],
+      "event": "SAVE",
+      "actions": [
+        {
+          "label": "save_config",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "noCase"
+      ],
+      "to": [
+        "Loaded"
+      ],
+      "event": "SELECT_CASE",
+      "actions": [
+        {
+          "label": "load_case",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Loaded"
+      ],
+      "to": [
+        "noCase"
+      ],
+      "event": "close",
+      "actions": [
+        {
+          "label": "close_case",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "DONE"
+      ],
+      "to": [
+        "DONE"
+      ],
+      "event": "SAVE",
+      "actions": [
+        {
+          "label": "save_as",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Loaded"
+      ],
+      "to": [
+        "RUNNING"
+      ],
+      "event": "RUN"
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "EDIT",
+      "actions": [
+        {
+          "label": "update_parameter",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "loaded_config"
+      ],
+      "event": "SAVE",
+      "actions": [
+        {
+          "label": "save_config",
+          "language": "xstate"
+        },
+        {
+          "label": "set_current_config",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "awaiting_configs"
+      ],
+      "to": [
+        "has_configs"
+      ]
+    },
+    {
+      "from": [
+        "has_configs"
+      ],
+      "to": [
+        "loaded_config"
+      ],
+      "event": "LOAD"
+    },
+    {
+      "from": [
+        "optimizationParameters"
+      ],
+      "to": [
+        "optimizationParameters"
+      ],
+      "event": "EDIT",
+      "actions": [
+        {
+          "label": "set_parameters",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Loaded"
+      ],
+      "to": [
+        "Loaded"
+      ],
+      "event": "DATE_RANGE"
+    }
+  ],
+  "events": [
+    {
+      "label": "RESET"
+    },
+    {
+      "label": "RUN"
+    },
+    {
+      "label": "LOAD"
+    },
+    {
+      "label": "DELETE"
+    },
+    {
+      "label": "EDIT"
+    },
+    {
+      "label": "SAVE"
+    },
+    {
+      "label": "SELECT_CASE"
+    },
+    {
+      "label": "close"
+    },
+    {
+      "label": "DATE_RANGE"
+    }
+  ],
+  "variables": {
+    "current_case": "",
+    "current_start_date": "None",
+    "optimiazion_parameters": "{}",
+    "parameters": {},
+    "start_date": "None"
+  }
+}

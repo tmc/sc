@@ -1,0 +1,175 @@
+{
+  "name": "ironProcessing",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "ironProcessing",
+        "type": 2,
+        "children": [
+          {
+            "label": "Idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "The machine is idle, waiting for an iron to be inserted.",
+              "stately_id": "ironProcessing.Idle"
+            }
+          },
+          {
+            "label": "Ignition",
+            "type": 1,
+            "metadata": {
+              "description": "The iron is inserted and the ignition process starts.",
+              "stately_id": "ironProcessing.Ignition"
+            }
+          },
+          {
+            "label": "Heating",
+            "type": 1,
+            "metadata": {
+              "description": "The iron is heating up for 5 seconds before cutting.",
+              "stately_id": "ironProcessing.Heating"
+            }
+          },
+          {
+            "label": "Cutting",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "iron.cut",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "description": "The iron is cut in half, and the pieces are ready to be submitted to two targets.",
+              "stately_id": "ironProcessing.Cutting"
+            }
+          },
+          {
+            "label": "Submitting",
+            "type": 3,
+            "children": [
+              {
+                "label": "Target1",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "target1.send",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "description": "Submitting the first half of the cut iron to the first target.",
+                  "stately_id": "ironProcessing.Submitting.Target1"
+                }
+              },
+              {
+                "label": "Target2",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "target2.send",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "description": "Submitting the second half of the cut iron to the second target.",
+                  "stately_id": "ironProcessing.Submitting.Target2"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "The cut pieces are being submitted to two different targets.",
+              "stately_id": "ironProcessing.Submitting"
+            }
+          },
+          {
+            "label": "Success",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "description": "Both pieces of iron have been successfully submitted to their respective targets.",
+              "stately_id": "ironProcessing.Success"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "ironProcessing"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Ignition"
+      ],
+      "event": "insert_iron",
+      "actions": [
+        {
+          "label": "iron.insert",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Ignition"
+      ],
+      "to": [
+        "Heating"
+      ]
+    },
+    {
+      "from": [
+        "Heating"
+      ],
+      "to": [
+        "Cutting"
+      ]
+    },
+    {
+      "from": [
+        "Cutting"
+      ],
+      "to": [
+        "Submitting"
+      ]
+    },
+    {
+      "from": [
+        "Target2"
+      ],
+      "to": [
+        "Success"
+      ],
+      "event": "Event 1"
+    },
+    {
+      "from": [
+        "Target1"
+      ],
+      "to": [
+        "Success"
+      ],
+      "event": "Event 1"
+    }
+  ],
+  "events": [
+    {
+      "label": "insert_iron"
+    },
+    {
+      "label": "Event 1"
+    }
+  ],
+  "variables": {
+    "cutPieces": []
+  }
+}

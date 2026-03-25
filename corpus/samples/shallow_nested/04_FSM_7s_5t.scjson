@@ -1,0 +1,123 @@
+{
+  "name": "FSM",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "FSM",
+        "type": 2,
+        "children": [
+          {
+            "label": "Initial state",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "FSM.Initial state"
+            }
+          },
+          {
+            "label": "Parent state",
+            "type": 2,
+            "children": [
+              {
+                "label": "Child state",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "FSM.Parent state.Child state"
+                }
+              },
+              {
+                "label": "Another child state",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "FSM.Parent state.Another child state"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "FSM.Parent state"
+            }
+          },
+          {
+            "label": "Another state",
+            "type": 1,
+            "metadata": {
+              "stately_id": "FSM.Another state"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "FSM"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Initial state"
+      ],
+      "to": [
+        "Another state"
+      ],
+      "event": "next"
+    },
+    {
+      "from": [
+        "Child state"
+      ],
+      "to": [
+        "Another child state"
+      ],
+      "event": "next"
+    },
+    {
+      "from": [
+        "Another state"
+      ],
+      "to": [
+        "Parent state"
+      ],
+      "event": "next",
+      "guard": {
+        "expression": "some condition",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Another state"
+      ],
+      "to": [
+        "Initial state"
+      ],
+      "event": "next"
+    },
+    {
+      "from": [
+        "Parent state"
+      ],
+      "to": [
+        "Initial state"
+      ],
+      "event": "back",
+      "actions": [
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "next"
+    },
+    {
+      "label": "back"
+    }
+  ]
+}

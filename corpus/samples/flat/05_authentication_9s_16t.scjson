@@ -1,0 +1,327 @@
+{
+  "name": "authentication",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "authentication",
+        "type": 2,
+        "children": [
+          {
+            "label": "unauthorized",
+            "type": 1,
+            "is_initial": true,
+            "entry_actions": [
+              {
+                "label": "resetUser",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "authentication.unauthorized"
+            }
+          },
+          {
+            "label": "signup",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "authentication.signup:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "performSignup"
+                }
+              ],
+              "stately_id": "authentication.signup"
+            }
+          },
+          {
+            "label": "loading",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "authentication.loading:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "performLogin"
+                }
+              ],
+              "stately_id": "authentication.loading"
+            }
+          },
+          {
+            "label": "updating",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "authentication.updating:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "updateProfile"
+                }
+              ],
+              "stately_id": "authentication.updating"
+            }
+          },
+          {
+            "label": "refreshing",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "authentication.refreshing:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "getUserProfile"
+                }
+              ],
+              "stately_id": "authentication.refreshing"
+            }
+          },
+          {
+            "label": "logout",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "authentication.logout:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "performLogout"
+                }
+              ],
+              "stately_id": "authentication.logout"
+            }
+          },
+          {
+            "label": "authorized",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "redirectHomeAfterLogin",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "authentication.authorized"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "authentication"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "unauthorized"
+      ],
+      "to": [
+        "loading"
+      ],
+      "event": "LOGIN"
+    },
+    {
+      "from": [
+        "unauthorized"
+      ],
+      "to": [
+        "signup"
+      ],
+      "event": "SIGNUP"
+    },
+    {
+      "from": [
+        "signup"
+      ],
+      "to": [
+        "unauthorized"
+      ],
+      "actions": [
+        {
+          "label": "onSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "signup"
+      ],
+      "to": [
+        "unauthorized"
+      ],
+      "actions": [
+        {
+          "label": "onError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loading"
+      ],
+      "to": [
+        "authorized"
+      ],
+      "actions": [
+        {
+          "label": "onSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loading"
+      ],
+      "to": [
+        "unauthorized"
+      ],
+      "actions": [
+        {
+          "label": "onError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "updating"
+      ],
+      "to": [
+        "refreshing"
+      ]
+    },
+    {
+      "from": [
+        "updating"
+      ],
+      "to": [
+        "unauthorized"
+      ],
+      "actions": [
+        {
+          "label": "onError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "refreshing"
+      ],
+      "to": [
+        "logout"
+      ],
+      "event": "LOGOUT"
+    },
+    {
+      "from": [
+        "refreshing"
+      ],
+      "to": [
+        "authorized"
+      ],
+      "actions": [
+        {
+          "label": "setUserProfile",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "refreshing"
+      ],
+      "to": [
+        "unauthorized"
+      ],
+      "actions": [
+        {
+          "label": "onError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "logout"
+      ],
+      "to": [
+        "unauthorized"
+      ]
+    },
+    {
+      "from": [
+        "logout"
+      ],
+      "to": [
+        "unauthorized"
+      ],
+      "actions": [
+        {
+          "label": "onError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "authorized"
+      ],
+      "to": [
+        "updating"
+      ],
+      "event": "UPDATE"
+    },
+    {
+      "from": [
+        "authorized"
+      ],
+      "to": [
+        "refreshing"
+      ],
+      "event": "REFRESH"
+    },
+    {
+      "from": [
+        "authorized"
+      ],
+      "to": [
+        "logout"
+      ],
+      "event": "LOGOUT"
+    }
+  ],
+  "events": [
+    {
+      "label": "LOGIN"
+    },
+    {
+      "label": "SIGNUP"
+    },
+    {
+      "label": "LOGOUT"
+    },
+    {
+      "label": "UPDATE"
+    },
+    {
+      "label": "REFRESH"
+    }
+  ]
+}

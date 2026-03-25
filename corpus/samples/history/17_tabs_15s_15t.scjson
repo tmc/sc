@@ -1,0 +1,299 @@
+{
+  "name": "tabs",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "tabs",
+        "type": 2,
+        "children": [
+          {
+            "label": "tab1",
+            "type": 2,
+            "children": [
+              {
+                "label": "tab1_l",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_l"
+                }
+              },
+              {
+                "label": "tab1_secondl",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_secondl"
+                }
+              },
+              {
+                "label": "tab1_thirdl",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_thirdl"
+                }
+              },
+              {
+                "label": "tab1_h",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_h"
+                }
+              },
+              {
+                "label": "tab1_secondh",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_secondh"
+                }
+              },
+              {
+                "label": "tab1_thirdh",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_thirdh"
+                }
+              },
+              {
+                "label": "tab1_hist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab1.tab1_hist"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "tab1",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "tab1"
+                }
+              ],
+              "stately_id": "tabs.tab1"
+            }
+          },
+          {
+            "label": "tab2",
+            "type": 2,
+            "children": [
+              {
+                "label": "tab2_state1",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "tabs.tab2.tab2_state1"
+                }
+              },
+              {
+                "label": "tab2_state2",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab2.tab2_state2"
+                }
+              },
+              {
+                "label": "tab2_state3",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab2.tab2_state3"
+                }
+              },
+              {
+                "label": "tab2_hist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "tabs.tab2.tab2_hist"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "tabs.tab2"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "tabs"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "tab1_l"
+      ],
+      "to": [
+        "tab1_secondl"
+      ],
+      "event": "first_to_second"
+    },
+    {
+      "from": [
+        "tab1_l"
+      ],
+      "to": [
+        "tab1_h"
+      ],
+      "event": "l_to_h"
+    },
+    {
+      "from": [
+        "tab1_secondl"
+      ],
+      "to": [
+        "tab1_thirdl"
+      ],
+      "event": "second_to_third"
+    },
+    {
+      "from": [
+        "tab1_secondl"
+      ],
+      "to": [
+        "tab1_l"
+      ],
+      "event": "second_to_first"
+    },
+    {
+      "from": [
+        "tab1_thirdl"
+      ],
+      "to": [
+        "tab1_secondl"
+      ],
+      "event": "third_to_second"
+    },
+    {
+      "from": [
+        "tab1_h"
+      ],
+      "to": [
+        "tab1_secondh"
+      ],
+      "event": "first_to_second"
+    },
+    {
+      "from": [
+        "tab1_h"
+      ],
+      "to": [
+        "tab1_l"
+      ],
+      "event": "h_to_l"
+    },
+    {
+      "from": [
+        "tab1_secondh"
+      ],
+      "to": [
+        "tab1_thirdh"
+      ],
+      "event": "second_to_third"
+    },
+    {
+      "from": [
+        "tab1_secondh"
+      ],
+      "to": [
+        "tab1_h"
+      ],
+      "event": "second_to_first"
+    },
+    {
+      "from": [
+        "tab1_thirdh"
+      ],
+      "to": [
+        "tab1_secondh"
+      ],
+      "event": "third_to_second"
+    },
+    {
+      "from": [
+        "tab1"
+      ],
+      "to": [
+        "tab2_hist"
+      ],
+      "event": "tab"
+    },
+    {
+      "from": [
+        "tab2_state1"
+      ],
+      "to": [
+        "tab2_state2"
+      ],
+      "event": "1_to_2"
+    },
+    {
+      "from": [
+        "tab2_state2"
+      ],
+      "to": [
+        "tab2_state3"
+      ],
+      "event": "2_to_3"
+    },
+    {
+      "from": [
+        "tab2_state3"
+      ],
+      "to": [
+        "tab2_state1"
+      ],
+      "event": "3_to_1"
+    },
+    {
+      "from": [
+        "tab2"
+      ],
+      "to": [
+        "tab1_hist"
+      ],
+      "event": "tab"
+    }
+  ],
+  "events": [
+    {
+      "label": "second_to_third"
+    },
+    {
+      "label": "h_to_l"
+    },
+    {
+      "label": "1_to_2"
+    },
+    {
+      "label": "2_to_3"
+    },
+    {
+      "label": "3_to_1"
+    },
+    {
+      "label": "first_to_second"
+    },
+    {
+      "label": "l_to_h"
+    },
+    {
+      "label": "second_to_first"
+    },
+    {
+      "label": "third_to_second"
+    },
+    {
+      "label": "tab"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "name": "EntityMovementLogic",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "EntityMovementLogic",
+        "type": 2,
+        "children": [
+          {
+            "label": "Traversing",
+            "type": 2,
+            "children": [
+              {
+                "label": "Moving",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "EntityMovementLogic.Traversing.Moving"
+                }
+              },
+              {
+                "label": "ArcJumping",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "EntityMovementLogic.Traversing.ArcJumping"
+                }
+              },
+              {
+                "label": "TranversingAgain",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "EntityMovementLogic.Traversing.TranversingAgain"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "EntityMovementLogic.Traversing"
+            }
+          },
+          {
+            "label": "Stunned",
+            "type": 1,
+            "metadata": {
+              "stately_id": "EntityMovementLogic.Stunned"
+            }
+          },
+          {
+            "label": "Idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "EntityMovementLogic.Idle"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "EntityMovementLogic"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Moving"
+      ],
+      "event": "moved"
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "ArcJumping"
+      ],
+      "event": "jumped"
+    },
+    {
+      "from": [
+        "Moving"
+      ],
+      "to": [
+        "Stunned"
+      ],
+      "event": "hit-stunned"
+    },
+    {
+      "from": [
+        "Stunned"
+      ],
+      "to": [
+        "TranversingAgain"
+      ],
+      "event": "stun finished",
+      "guard": {
+        "expression": "wasTraversing",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Stunned"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "stun finished"
+    }
+  ],
+  "events": [
+    {
+      "label": "moved"
+    },
+    {
+      "label": "jumped"
+    },
+    {
+      "label": "hit-stunned"
+    },
+    {
+      "label": "stun finished"
+    }
+  ]
+}

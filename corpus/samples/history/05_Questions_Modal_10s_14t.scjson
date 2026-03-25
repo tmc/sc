@@ -1,0 +1,279 @@
+{
+  "name": "Questions Modal",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Questions Modal",
+        "type": 2,
+        "children": [
+          {
+            "label": "Open",
+            "type": 2,
+            "children": [
+              {
+                "label": "Question 1",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Questions Modal.Open.Question 1"
+                }
+              },
+              {
+                "label": "Question 2",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "notify details needed",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Questions Modal.Open.Question 2"
+                }
+              },
+              {
+                "label": "Question 3",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Questions Modal.Open.Question 3"
+                }
+              },
+              {
+                "label": "Hist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "Questions Modal.Open.Hist"
+                }
+              },
+              {
+                "label": "Submitting",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "save_answers",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "save answers"
+                    }
+                  ],
+                  "stately_id": "Questions Modal.Open.Submitting"
+                }
+              },
+              {
+                "label": "Saved",
+                "type": 1,
+                "is_final": true,
+                "entry_actions": [
+                  {
+                    "label": "notify success",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Questions Modal.Open.Saved"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "Oh no. This state has a bug in its logic. Do you notice it?",
+              "stately_id": "Questions Modal.Open"
+            }
+          },
+          {
+            "label": "Close",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Questions Modal.Close"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "description": "![Logo for Holisticon AG](https://www.holisticon.de/wp-content/themes/hlcw/img/holisticon-main-logo@2x.png)",
+          "stately_id": "Questions Modal"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "Close"
+      ],
+      "event": "close"
+    },
+    {
+      "from": [
+        "Close"
+      ],
+      "to": [
+        "Hist"
+      ],
+      "event": "open"
+    },
+    {
+      "from": [
+        "Question 1"
+      ],
+      "to": [
+        "Question 2"
+      ],
+      "event": "forward",
+      "guard": {
+        "expression": "checked other",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Question 1"
+      ],
+      "to": [
+        "Question 3"
+      ],
+      "event": "forward"
+    },
+    {
+      "from": [
+        "Question 2"
+      ],
+      "to": [
+        "Question 3"
+      ],
+      "event": "forward"
+    },
+    {
+      "from": [
+        "Question 2"
+      ],
+      "to": [
+        "Question 1"
+      ],
+      "event": "back"
+    },
+    {
+      "from": [
+        "Question 3"
+      ],
+      "to": [
+        "Question 2"
+      ],
+      "event": "back"
+    },
+    {
+      "from": [
+        "Submitting"
+      ],
+      "to": [
+        "Question 3"
+      ],
+      "actions": [
+        {
+          "label": "notify save error",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Question 3"
+      ],
+      "to": [
+        "Submitting"
+      ],
+      "event": "forward"
+    },
+    {
+      "from": [
+        "Submitting"
+      ],
+      "to": [
+        "Saved"
+      ]
+    },
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "Close"
+      ]
+    },
+    {
+      "from": [
+        "Question 2"
+      ],
+      "to": [
+        "Question 2"
+      ],
+      "event": "answer",
+      "actions": [
+        {
+          "label": "store answer 2",
+          "language": "xstate"
+        },
+        {
+          "label": "inline:Questions Modal.Open.Question 2#answer[-1]#transition[1]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Question 1"
+      ],
+      "to": [
+        "Question 1"
+      ],
+      "event": "answer",
+      "actions": [
+        {
+          "label": "store answer 1",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Question 3"
+      ],
+      "to": [
+        "Question 3"
+      ],
+      "event": "answer",
+      "actions": [
+        {
+          "label": "store answer 3",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "close"
+    },
+    {
+      "label": "open"
+    },
+    {
+      "label": "forward"
+    },
+    {
+      "label": "back"
+    },
+    {
+      "label": "answer"
+    }
+  ]
+}

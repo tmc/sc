@@ -1,0 +1,451 @@
+{
+  "name": "fetch",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "fetch",
+        "type": 2,
+        "children": [
+          {
+            "label": "hist",
+            "type": 1,
+            "is_history": true,
+            "history_type": 2,
+            "metadata": {
+              "stately_id": "fetch.hist"
+            }
+          },
+          {
+            "label": "intro",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "fetch.intro"
+            }
+          },
+          {
+            "label": "why",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.why"
+            }
+          },
+          {
+            "label": "whatHaveYouTried",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.whatHaveYouTried"
+            }
+          },
+          {
+            "label": "coachExplain",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.coachExplain"
+            }
+          },
+          {
+            "label": "targetDate",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.targetDate"
+            }
+          },
+          {
+            "label": "testimonial",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.testimonial"
+            }
+          },
+          {
+            "label": "howWillYouKnow",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.howWillYouKnow"
+            }
+          },
+          {
+            "label": "pathExplain",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.pathExplain"
+            }
+          },
+          {
+            "label": "programme",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.programme"
+            }
+          },
+          {
+            "label": "whatKindOfCoach",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.whatKindOfCoach"
+            }
+          },
+          {
+            "label": "whatDay",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.whatDay"
+            }
+          },
+          {
+            "label": "whatTime",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.whatTime"
+            }
+          },
+          {
+            "label": "planExplain",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.planExplain"
+            }
+          },
+          {
+            "label": "email",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.email"
+            }
+          },
+          {
+            "label": "finish",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "fetch.finish"
+            }
+          },
+          {
+            "label": "New state 1",
+            "type": 1,
+            "metadata": {
+              "stately_id": "fetch.New state 1"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "fetch"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "intro"
+      ],
+      "to": [
+        "why"
+      ],
+      "event": "WHY_CONFIDENCE",
+      "actions": [
+        {
+          "label": "inline:fetch.intro#WHY_CONFIDENCE[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "intro"
+      ],
+      "to": [
+        "why"
+      ],
+      "event": "WHY_PROCRASTINATING",
+      "actions": [
+        {
+          "label": "inline:fetch.intro#WHY_PROCRASTINATING[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "intro"
+      ],
+      "to": [
+        "why"
+      ],
+      "event": "WHY_CLARITY",
+      "actions": [
+        {
+          "label": "inline:fetch.intro#WHY_CLARITY[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "intro"
+      ],
+      "to": [
+        "why"
+      ],
+      "event": "WHY_CONTROL",
+      "actions": [
+        {
+          "label": "inline:fetch.intro#WHY_CONTROL[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "intro"
+      ],
+      "to": [
+        "why"
+      ],
+      "event": "WHY_RELATIONSHIP",
+      "actions": [
+        {
+          "label": "inline:fetch.intro#WHY_RELATIONSHIP[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "why"
+      ],
+      "to": [
+        "whatHaveYouTried"
+      ],
+      "event": "WHAT_HAVE_YOU_TRIED",
+      "actions": [
+        {
+          "label": "inline:fetch.why#WHAT_HAVE_YOU_TRIED[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "whatHaveYouTried"
+      ],
+      "to": [
+        "coachExplain"
+      ],
+      "event": "COACH_EXPLAIN",
+      "actions": [
+        {
+          "label": "inline:fetch.whatHaveYouTried#COACH_EXPLAIN[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "coachExplain"
+      ],
+      "to": [
+        "targetDate"
+      ],
+      "event": "TARGET_DATE"
+    },
+    {
+      "from": [
+        "targetDate"
+      ],
+      "to": [
+        "testimonial"
+      ],
+      "event": "TESTIMONIAL",
+      "actions": [
+        {
+          "label": "inline:fetch.targetDate#TESTIMONIAL[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "testimonial"
+      ],
+      "to": [
+        "howWillYouKnow"
+      ],
+      "event": "HOW_WILL_YOU_KNOW"
+    },
+    {
+      "from": [
+        "howWillYouKnow"
+      ],
+      "to": [
+        "pathExplain"
+      ],
+      "event": "PATH_EXPLAIN",
+      "actions": [
+        {
+          "label": "inline:fetch.howWillYouKnow#PATH_EXPLAIN[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "pathExplain"
+      ],
+      "to": [
+        "programme"
+      ],
+      "event": "PROGRAMME"
+    },
+    {
+      "from": [
+        "programme"
+      ],
+      "to": [
+        "whatKindOfCoach"
+      ],
+      "event": "WHAT_KIND_OF_COACH"
+    },
+    {
+      "from": [
+        "whatKindOfCoach"
+      ],
+      "to": [
+        "whatDay"
+      ],
+      "event": "WHAT_DAY",
+      "actions": [
+        {
+          "label": "inline:fetch.whatKindOfCoach#WHAT_DAY[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "whatDay"
+      ],
+      "to": [
+        "whatTime"
+      ],
+      "event": "WHAT_TIME",
+      "actions": [
+        {
+          "label": "inline:fetch.whatDay#WHAT_TIME[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "whatTime"
+      ],
+      "to": [
+        "planExplain"
+      ],
+      "event": "PLAN_EXPLAIN",
+      "actions": [
+        {
+          "label": "inline:fetch.whatTime#PLAN_EXPLAIN[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "planExplain"
+      ],
+      "to": [
+        "email"
+      ],
+      "event": "EMAIL"
+    },
+    {
+      "from": [
+        "email"
+      ],
+      "to": [
+        "finish"
+      ],
+      "event": "RESULTS",
+      "actions": [
+        {
+          "label": "inline:fetch.email#RESULTS[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "TARGET_DATE"
+    },
+    {
+      "label": "WHAT_KIND_OF_COACH"
+    },
+    {
+      "label": "WHAT_DAY"
+    },
+    {
+      "label": "WHY_CLARITY"
+    },
+    {
+      "label": "WHAT_HAVE_YOU_TRIED"
+    },
+    {
+      "label": "COACH_EXPLAIN"
+    },
+    {
+      "label": "TESTIMONIAL"
+    },
+    {
+      "label": "PATH_EXPLAIN"
+    },
+    {
+      "label": "PLAN_EXPLAIN"
+    },
+    {
+      "label": "RESULTS"
+    },
+    {
+      "label": "WHY_CONFIDENCE"
+    },
+    {
+      "label": "WHY_PROCRASTINATING"
+    },
+    {
+      "label": "WHY_CONTROL"
+    },
+    {
+      "label": "HOW_WILL_YOU_KNOW"
+    },
+    {
+      "label": "PROGRAMME"
+    },
+    {
+      "label": "WHAT_TIME"
+    },
+    {
+      "label": "EMAIL"
+    },
+    {
+      "label": "WHY_RELATIONSHIP"
+    }
+  ],
+  "variables": {
+    "email": "",
+    "howWillYouKnow": "",
+    "path": "",
+    "targetDate": "",
+    "tried": [],
+    "whatDay": "",
+    "whatKindOfCoach": [],
+    "whatTime": [],
+    "why": []
+  }
+}

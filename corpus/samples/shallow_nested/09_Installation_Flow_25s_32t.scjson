@@ -1,0 +1,592 @@
+{
+  "name": "Installation Flow",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Installation Flow",
+        "type": 2,
+        "children": [
+          {
+            "label": "Search for product",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Installation Flow.Search for product"
+            }
+          },
+          {
+            "label": "Perform search",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Perform search"
+            }
+          },
+          {
+            "label": "Prompt for search permissions",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Prompt for search permissions"
+            }
+          },
+          {
+            "label": "Product list",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Product list"
+            }
+          },
+          {
+            "label": "Connecting to Product",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Connecting to Product"
+            }
+          },
+          {
+            "label": "Connected to Product",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Connected to Product"
+            }
+          },
+          {
+            "label": "Connection Failed",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Connection Failed"
+            }
+          },
+          {
+            "label": "Enable Service Mode",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Enable Service Mode"
+            }
+          },
+          {
+            "label": "Setup Overview",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Setup Overview"
+            }
+          },
+          {
+            "label": "Registration",
+            "type": 2,
+            "children": [
+              {
+                "label": "Check Registration Status",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Installation Flow.Registration.Check Registration Status"
+                }
+              },
+              {
+                "label": "Registration Required",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Installation Flow.Registration.Registration Required"
+                }
+              },
+              {
+                "label": "Registration page",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Installation Flow.Registration.Registration page"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Installation Flow.Registration"
+            }
+          },
+          {
+            "label": "Default Settings",
+            "type": 2,
+            "children": [
+              {
+                "label": "Settings List",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Installation Flow.Default Settings.Settings List"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Installation Flow.Default Settings"
+            }
+          },
+          {
+            "label": "Product Setup",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Installation Flow.Product Setup"
+            }
+          },
+          {
+            "label": "Diagnostic Tests",
+            "type": 2,
+            "children": [
+              {
+                "label": "Basic Diagnostics",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Installation Flow.Diagnostic Tests.Basic Diagnostics"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Installation Flow.Diagnostic Tests"
+            }
+          },
+          {
+            "label": "Activation",
+            "type": 2,
+            "children": [
+              {
+                "label": "Check Activation",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Installation Flow.Activation.Check Activation"
+                }
+              },
+              {
+                "label": "Activation success",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Installation Flow.Activation.Activation success"
+                }
+              },
+              {
+                "label": "Activation Failed",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Installation Flow.Activation.Activation Failed"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Installation Flow.Activation"
+            }
+          },
+          {
+            "label": "Setup Complete",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "Installation Flow.Setup Complete"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Installation Flow"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Search for product"
+      ],
+      "to": [
+        "Perform search"
+      ],
+      "event": "Search for product",
+      "guard": {
+        "expression": "has permission to search",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Search for product"
+      ],
+      "to": [
+        "Prompt for search permissions"
+      ],
+      "event": "Search for product"
+    },
+    {
+      "from": [
+        "Prompt for search permissions"
+      ],
+      "to": [
+        "Perform search"
+      ],
+      "event": "Search permission granted"
+    },
+    {
+      "from": [
+        "Prompt for search permissions"
+      ],
+      "to": [
+        "Prompt for search permissions"
+      ],
+      "event": "Search permission denied"
+    },
+    {
+      "from": [
+        "Perform search"
+      ],
+      "to": [
+        "Product list"
+      ],
+      "event": "Search results"
+    },
+    {
+      "from": [
+        "Product list"
+      ],
+      "to": [
+        "Connecting to Product"
+      ],
+      "event": "Connect to Product"
+    },
+    {
+      "from": [
+        "Connecting to Product"
+      ],
+      "to": [
+        "Connected to Product"
+      ],
+      "event": "Connection Complete",
+      "guard": {
+        "expression": "Successful Connection",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Connecting to Product"
+      ],
+      "to": [
+        "Connection Failed"
+      ],
+      "event": "Connection Complete",
+      "guard": {
+        "expression": "Connection Failed",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Connection Failed"
+      ],
+      "to": [
+        "Connecting to Product"
+      ],
+      "event": "Retry Connection"
+    },
+    {
+      "from": [
+        "Connected to Product"
+      ],
+      "to": [
+        "Setup Overview"
+      ],
+      "event": "Check Service Mode",
+      "guard": {
+        "expression": "service mode enabled",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Connected to Product"
+      ],
+      "to": [
+        "Enable Service Mode"
+      ],
+      "event": "Check Service Mode",
+      "guard": {
+        "expression": "service mode disabled",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Enable Service Mode"
+      ],
+      "to": [
+        "Enable Service Mode"
+      ],
+      "event": "Continue",
+      "guard": {
+        "expression": "service mode disabled",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Enable Service Mode"
+      ],
+      "to": [
+        "Setup Overview"
+      ],
+      "event": "Continue",
+      "guard": {
+        "expression": "service mode enabled",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Check Registration Status"
+      ],
+      "to": [
+        "Product Setup"
+      ],
+      "event": "Registration results",
+      "guard": {
+        "expression": "is registered",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Setup Overview"
+      ],
+      "to": [
+        "Product Setup"
+      ],
+      "event": "Continue"
+    },
+    {
+      "from": [
+        "Check Registration Status"
+      ],
+      "to": [
+        "Registration Required"
+      ],
+      "event": "Registration results",
+      "guard": {
+        "expression": "not registered",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Registration Required"
+      ],
+      "to": [
+        "Check Registration Status"
+      ],
+      "event": "Re-check Registration"
+    },
+    {
+      "from": [
+        "Registration Required"
+      ],
+      "to": [
+        "Registration page"
+      ],
+      "event": "Register"
+    },
+    {
+      "from": [
+        "Registration page"
+      ],
+      "to": [
+        "Check Registration Status"
+      ],
+      "event": "Registration page done"
+    },
+    {
+      "from": [
+        "Product Setup"
+      ],
+      "to": [
+        "Registration"
+      ],
+      "guard": {
+        "expression": "Product unregistered",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Product Setup"
+      ],
+      "to": [
+        "Default Settings"
+      ],
+      "guard": {
+        "expression": "Settings not confirmed",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Settings List"
+      ],
+      "to": [
+        "Product Setup"
+      ],
+      "event": "Continue",
+      "guard": {
+        "expression": "Valid Settings",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Settings List"
+      ],
+      "to": [
+        "Settings List"
+      ],
+      "event": "Continue"
+    },
+    {
+      "from": [
+        "Product Setup"
+      ],
+      "to": [
+        "Diagnostic Tests"
+      ],
+      "guard": {
+        "expression": "Basic diagnostics have not been run",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Product Setup"
+      ],
+      "to": [
+        "Activation"
+      ],
+      "guard": {
+        "expression": "product is not activated",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Product Setup"
+      ],
+      "to": [
+        "Setup Complete"
+      ]
+    },
+    {
+      "from": [
+        "Check Activation"
+      ],
+      "to": [
+        "Activation success"
+      ],
+      "event": "Activation result",
+      "guard": {
+        "expression": "success",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Check Activation"
+      ],
+      "to": [
+        "Activation Failed"
+      ],
+      "event": "Activation result"
+    },
+    {
+      "from": [
+        "Activation Failed"
+      ],
+      "to": [
+        "Check Activation"
+      ],
+      "event": "Retry Activation"
+    },
+    {
+      "from": [
+        "Activation success"
+      ],
+      "to": [
+        "Product Setup"
+      ]
+    },
+    {
+      "from": [
+        "Basic Diagnostics"
+      ],
+      "to": [
+        "Product Setup"
+      ],
+      "event": "Diagnostics Results",
+      "guard": {
+        "expression": "success",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Basic Diagnostics"
+      ],
+      "to": [
+        "Basic Diagnostics"
+      ],
+      "event": "Diagnostics Results"
+    }
+  ],
+  "events": [
+    {
+      "label": "Connection Complete"
+    },
+    {
+      "label": "Retry Connection"
+    },
+    {
+      "label": "Continue"
+    },
+    {
+      "label": "Activation result"
+    },
+    {
+      "label": "Retry Activation"
+    },
+    {
+      "label": "Search for product"
+    },
+    {
+      "label": "Registration results"
+    },
+    {
+      "label": "Re-check Registration"
+    },
+    {
+      "label": "Diagnostics Results"
+    },
+    {
+      "label": "Search permission granted"
+    },
+    {
+      "label": "Check Service Mode"
+    },
+    {
+      "label": "Connect to Product"
+    },
+    {
+      "label": "Register"
+    },
+    {
+      "label": "Registration page done"
+    },
+    {
+      "label": "Search permission denied"
+    },
+    {
+      "label": "Search results"
+    }
+  ]
+}

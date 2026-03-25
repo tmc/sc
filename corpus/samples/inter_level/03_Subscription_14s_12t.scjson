@@ -1,0 +1,257 @@
+{
+  "name": "Subscription",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Subscription",
+        "type": 2,
+        "children": [
+          {
+            "label": "Quick_simulation",
+            "type": 2,
+            "children": [
+              {
+                "label": "First_step",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Subscription.Quick_simulation.First_step"
+                }
+              },
+              {
+                "label": "Last_step",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Subscription.Quick_simulation.Last_step"
+                }
+              },
+              {
+                "label": "Loading",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "simulate",
+                      "kind": "named",
+                      "src": "simulate"
+                    }
+                  ],
+                  "stately_id": "Subscription.Quick_simulation.Loading"
+                }
+              },
+              {
+                "label": "Error",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Subscription.Quick_simulation.Error"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Subscription.Quick_simulation"
+            }
+          },
+          {
+            "label": "Contract_form",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.Contract_form"
+            }
+          },
+          {
+            "label": "Subscription_all",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.Subscription_all"
+            }
+          },
+          {
+            "label": "Upload_documents",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.Upload_documents"
+            }
+          },
+          {
+            "label": "Assistance_upsell",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.Assistance_upsell"
+            }
+          },
+          {
+            "label": "Delivery_address_form",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.Delivery_address_form"
+            }
+          },
+          {
+            "label": "assistance_choice",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.assistance_choice"
+            }
+          },
+          {
+            "label": "Recap",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Subscription.Recap"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Subscription"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "First_step"
+      ],
+      "to": [
+        "Loading"
+      ],
+      "event": "SIMULATE",
+      "guard": {
+        "expression": "form is valid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Last_step"
+      ],
+      "to": [
+        "First_step"
+      ],
+      "event": "Edit"
+    },
+    {
+      "from": [
+        "Last_step"
+      ],
+      "to": [
+        "Contract_form"
+      ],
+      "event": "SUBSCRIBE_RC"
+    },
+    {
+      "from": [
+        "Last_step"
+      ],
+      "to": [
+        "Subscription_all"
+      ],
+      "event": "SUBSCRIBE"
+    },
+    {
+      "from": [
+        "Contract_form"
+      ],
+      "to": [
+        "Upload_documents"
+      ],
+      "event": "NEXT",
+      "guard": {
+        "expression": "form is valid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Upload_documents"
+      ],
+      "to": [
+        "Assistance_upsell"
+      ],
+      "event": "NEXT",
+      "guard": {
+        "expression": "form is valid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Assistance_upsell"
+      ],
+      "to": [
+        "Delivery_address_form"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Delivery_address_form"
+      ],
+      "to": [
+        "assistance_choice"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "assistance_choice"
+      ],
+      "to": [
+        "Recap"
+      ],
+      "event": "Next"
+    },
+    {
+      "from": [
+        "Loading"
+      ],
+      "to": [
+        "Last_step"
+      ]
+    },
+    {
+      "from": [
+        "Loading"
+      ],
+      "to": [
+        "Error"
+      ]
+    },
+    {
+      "from": [
+        "Error"
+      ],
+      "to": [
+        "First_step"
+      ],
+      "event": "Close"
+    }
+  ],
+  "events": [
+    {
+      "label": "SUBSCRIBE"
+    },
+    {
+      "label": "NEXT"
+    },
+    {
+      "label": "Next"
+    },
+    {
+      "label": "Close"
+    },
+    {
+      "label": "SIMULATE"
+    },
+    {
+      "label": "Edit"
+    },
+    {
+      "label": "SUBSCRIBE_RC"
+    }
+  ]
+}

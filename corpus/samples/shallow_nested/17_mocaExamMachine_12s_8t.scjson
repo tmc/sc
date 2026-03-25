@@ -1,0 +1,296 @@
+{
+  "name": "mocaExamMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "mocaExamMachine",
+        "type": 2,
+        "children": [
+          {
+            "label": "questionFlow",
+            "type": 2,
+            "children": [
+              {
+                "label": "loadQuestion",
+                "type": 1,
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "loadCurrentQuestion",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "mocaExamMachine.questionFlow.loadQuestion"
+                }
+              },
+              {
+                "label": "selectModality",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "selectWeightedModality",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "mocaExamMachine.questionFlow.selectModality"
+                }
+              },
+              {
+                "label": "presentQuestion",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "presentQuestion",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "mocaExamMachine.questionFlow.presentQuestion"
+                }
+              },
+              {
+                "label": "evaluateResponse",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "captureAndEvaluateResponse",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "mocaExamMachine.questionFlow.evaluateResponse"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "mocaExamMachine.questionFlow"
+            }
+          },
+          {
+            "label": "resultFlow",
+            "type": 2,
+            "children": [
+              {
+                "label": "checkOutcome",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "mocaExamMachine.resultFlow.checkOutcome"
+                }
+              },
+              {
+                "label": "passed",
+                "type": 1,
+                "is_final": true,
+                "entry_actions": [
+                  {
+                    "label": "onExamPass",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "mocaExamMachine.resultFlow.passed"
+                }
+              },
+              {
+                "label": "failed",
+                "type": 1,
+                "is_final": true,
+                "entry_actions": [
+                  {
+                    "label": "onExamFail",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "mocaExamMachine.resultFlow.failed"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "mocaExamMachine.resultFlow"
+            }
+          },
+          {
+            "label": "canceled",
+            "type": 1,
+            "is_final": true,
+            "entry_actions": [
+              {
+                "label": "onExamCanceled",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "mocaExamMachine.canceled"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "mocaExamMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "loadQuestion"
+      ],
+      "to": [
+        "selectModality"
+      ],
+      "event": "QUESTION_LOADED"
+    },
+    {
+      "from": [
+        "selectModality"
+      ],
+      "to": [
+        "presentQuestion"
+      ],
+      "event": "MODALITY_SELECTED"
+    },
+    {
+      "from": [
+        "presentQuestion"
+      ],
+      "to": [
+        "evaluateResponse"
+      ],
+      "event": "QUESTION_ANSWERED"
+    },
+    {
+      "from": [
+        "evaluateResponse"
+      ],
+      "to": [
+        "loadQuestion"
+      ],
+      "event": "RESPONSE_EVALUATED",
+      "guard": {
+        "expression": "hasMoreQuestions",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "evaluateResponse"
+      ],
+      "to": [
+        "resultFlow"
+      ],
+      "event": "RESPONSE_EVALUATED"
+    },
+    {
+      "from": [
+        "checkOutcome"
+      ],
+      "to": [
+        "passed"
+      ],
+      "guard": {
+        "expression": "didPassExam",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "checkOutcome"
+      ],
+      "to": [
+        "failed"
+      ]
+    },
+    {
+      "from": [
+        "mocaExamMachine"
+      ],
+      "to": [
+        "canceled"
+      ],
+      "event": "CANCEL_EXAM"
+    }
+  ],
+  "events": [
+    {
+      "label": "CANCEL_EXAM"
+    },
+    {
+      "label": "QUESTION_LOADED"
+    },
+    {
+      "label": "MODALITY_SELECTED"
+    },
+    {
+      "label": "QUESTION_ANSWERED"
+    },
+    {
+      "label": "RESPONSE_EVALUATED"
+    }
+  ],
+  "variables": {
+    "attemptCount": 0,
+    "currentIndex": 0,
+    "currentQuestion": null,
+    "examScore": 0,
+    "maxAttempts": 2,
+    "mocaQuestions": [
+      {
+        "category": "Visuospatial/Executive",
+        "id": "visuospatial1",
+        "question": "Please draw a clock showing the time 10 past 11."
+      },
+      {
+        "category": "Naming",
+        "id": "naming1",
+        "question": "Identify the animal shown in the image (e.g., a lion)."
+      },
+      {
+        "category": "Memory",
+        "id": "memory1",
+        "question": "Remember these 5 words: Face, Velvet, Church, Daisy, Red."
+      },
+      {
+        "category": "Attention",
+        "id": "attention1",
+        "question": "Repeat the following digits: 2, 5, 8, 3, 6."
+      },
+      {
+        "category": "Language",
+        "id": "language1",
+        "question": "Repeat the sentence: 'The cat sat on the mat.'"
+      },
+      {
+        "category": "Abstraction",
+        "id": "abstraction1",
+        "question": "Explain what a banana and an orange have in common."
+      },
+      {
+        "category": "Delayed Recall",
+        "id": "delayedRecall1",
+        "question": "Recall the five words you were given earlier."
+      },
+      {
+        "category": "Orientation",
+        "id": "orientation1",
+        "question": "What is today’s date and where are you located?"
+      }
+    ],
+    "modalityDistribution": {
+      "agent": 20,
+      "text": 50,
+      "video": 30
+    },
+    "passingScore": 70,
+    "response": null,
+    "selectedModality": null,
+    "userStruggling": false
+  }
+}

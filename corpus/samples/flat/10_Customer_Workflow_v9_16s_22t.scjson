@@ -1,0 +1,702 @@
+{
+  "name": "Customer Workflow v9",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Customer Workflow v9",
+        "type": 2,
+        "children": [
+          {
+            "label": "cust_prospectCreated",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_prospectCreated"
+            }
+          },
+          {
+            "label": "cust_externalOnBoarding",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_externalOnBoarding"
+            }
+          },
+          {
+            "label": "cust_onBoarding",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_onBoarding"
+            }
+          },
+          {
+            "label": "cust_inOperationsReview",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_inOperationsReview"
+            }
+          },
+          {
+            "label": "cust_operationsAnalysis",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_operationsAnalysis"
+            }
+          },
+          {
+            "label": "cust_rateProposal",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_rateProposal"
+            }
+          },
+          {
+            "label": "cust_inLegalReview",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_inLegalReview"
+            }
+          },
+          {
+            "label": "cust_inUnderwriterReview",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_inUnderwriterReview"
+            }
+          },
+          {
+            "label": "cust_closedMissed",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_closedMissed"
+            }
+          },
+          {
+            "label": "cust_underwritingAnalysis",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_underwritingAnalysis"
+            }
+          },
+          {
+            "label": "cust_underwritingResult",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_underwritingResult"
+            }
+          },
+          {
+            "label": "cust_customerApproval",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_customerApproval"
+            }
+          },
+          {
+            "label": "cust_uploadContract",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_uploadContract"
+            }
+          },
+          {
+            "label": "cust_activate",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Customer Workflow v9.cust_activate"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Customer Workflow v9"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "cust_prospectCreated"
+      ],
+      "to": [
+        "cust_externalOnBoarding"
+      ],
+      "event": "GENERATE_ONBOARDING_LINK",
+      "actions": [
+        {
+          "label": "httpRequest:userCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:onboardingSend",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_prospectCreated"
+      ],
+      "to": [
+        "cust_onBoarding"
+      ],
+      "event": "GENERATE_ONBOARDING_BPM",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_externalOnBoarding"
+      ],
+      "to": [
+        "cust_inOperationsReview"
+      ],
+      "event": "SEND_FORM",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_inOperationsReview"
+      ],
+      "to": [
+        "cust_operationsAnalysis"
+      ],
+      "event": "APPROVE_ONBOARDING",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_onBoarding"
+      ],
+      "to": [
+        "cust_operationsAnalysis"
+      ],
+      "event": "SEND_ONBOARDING",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_operationsAnalysis"
+      ],
+      "to": [
+        "cust_rateProposal"
+      ],
+      "event": "SEND_OPERATIONS",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_rateProposal"
+      ],
+      "to": [
+        "cust_inLegalReview"
+      ],
+      "event": "SEND_PROPOSAL",
+      "actions": [
+        {
+          "label": "httpRequest:lineCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_inLegalReview"
+      ],
+      "to": [
+        "cust_inUnderwriterReview"
+      ],
+      "event": "APPROVE_DOCS",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_rateProposal"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_operationsAnalysis"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_inLegalReview"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_inUnderwriterReview"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_inUnderwriterReview"
+      ],
+      "to": [
+        "cust_underwritingAnalysis"
+      ],
+      "event": "APPROVE_DOCS",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_underwritingAnalysis"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_underwritingAnalysis"
+      ],
+      "to": [
+        "cust_underwritingResult"
+      ],
+      "event": "APPROVE_UW",
+      "actions": [
+        {
+          "label": "httpRequest:lineUpdate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_underwritingResult"
+      ],
+      "to": [
+        "cust_customerApproval"
+      ],
+      "event": "APPROVE",
+      "actions": [
+        {
+          "label": "httpRequest:lineUpdate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_customerApproval"
+      ],
+      "to": [
+        "cust_underwritingAnalysis"
+      ],
+      "event": "REJECT_CUSTOMER",
+      "actions": [
+        {
+          "label": "httpRequest:lineUpdate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_underwritingResult"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_customerApproval"
+      ],
+      "to": [
+        "cust_uploadContract"
+      ],
+      "event": "APPROVE_CUSTOMER",
+      "actions": [
+        {
+          "label": "httpRequest:lineUpdate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_uploadContract"
+      ],
+      "to": [
+        "cust_activate"
+      ],
+      "event": "SEND_CONTRACT",
+      "actions": [
+        {
+          "label": "httpRequest:lineUpdate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_onBoarding"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "cust_uploadContract"
+      ],
+      "to": [
+        "cust_closedMissed"
+      ],
+      "event": "REJECT",
+      "actions": [
+        {
+          "label": "httpRequest:commentCreate",
+          "language": "xstate"
+        },
+        {
+          "label": "httpRequest:customerUpdateStatus",
+          "language": "xstate"
+        },
+        {
+          "label": "historyLog",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "APPROVE_CUSTOMER"
+    },
+    {
+      "label": "SEND_CONTRACT"
+    },
+    {
+      "label": "GENERATE_ONBOARDING_LINK"
+    },
+    {
+      "label": "SEND_OPERATIONS"
+    },
+    {
+      "label": "APPROVE_DOCS"
+    },
+    {
+      "label": "APPROVE_UW"
+    },
+    {
+      "label": "APPROVE"
+    },
+    {
+      "label": "REJECT_CUSTOMER"
+    },
+    {
+      "label": "GENERATE_ONBOARDING_BPM"
+    },
+    {
+      "label": "SEND_FORM"
+    },
+    {
+      "label": "APPROVE_ONBOARDING"
+    },
+    {
+      "label": "SEND_ONBOARDING"
+    },
+    {
+      "label": "SEND_PROPOSAL"
+    },
+    {
+      "label": "REJECT"
+    }
+  ]
+}

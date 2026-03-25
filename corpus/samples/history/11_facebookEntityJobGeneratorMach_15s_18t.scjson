@@ -1,0 +1,492 @@
+{
+  "name": "facebookEntityJobGeneratorMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "facebookEntityJobGeneratorMachine",
+        "type": 2,
+        "children": [
+          {
+            "label": "finalState",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "description": "When all facebook_entity_jobs are completed.",
+              "meta_entries": [],
+              "stately_id": "facebookEntityJobGeneratorMachine.finalState"
+            }
+          },
+          {
+            "label": "generateJobsState",
+            "type": 2,
+            "children": [
+              {
+                "label": "getAdManagerAccountsState",
+                "type": 1,
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "setStatusAction",
+                    "language": "xstate",
+                    "parameters": {
+                      "status": "PROCESSING"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "description": "Calls facebook to get all ad manager accounts + campaigns/adsets/ads totals",
+                  "invoke": [
+                    {
+                      "id": "getAdManagerAccountsService",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "getAdManagerAccountsService"
+                    }
+                  ],
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState.getAdManagerAccountsState"
+                }
+              },
+              {
+                "label": "saveAdManagerAccountsState",
+                "type": 1,
+                "metadata": {
+                  "description": "Saves ad manager accounts to the ad_manager_accounts table",
+                  "invoke": [
+                    {
+                      "id": "saveAdManagerAccountsService",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "saveAdManagerAccountsService"
+                    }
+                  ],
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState.saveAdManagerAccountsState"
+                }
+              },
+              {
+                "label": "spawnEntityJobProcessingMachinesState",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "spawnEntityJobProcessingMachinesAction",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "description": "Spawns Facebook Entity Job Processing Machines. One machine for each ad manager account to process the downloading of its campaigns/adsets/ads. Remains in this state while the Facebook Entity Job Processing Machines are processing through the facebook_entity_jobs.",
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState.spawnEntityJobProcessingMachinesState"
+                }
+              },
+              {
+                "label": "saveEnityJobsState",
+                "type": 1,
+                "metadata": {
+                  "description": "Saves jobs to the facebook_entity_jobs table. Updates job status to GeneratingJobs.",
+                  "invoke": [
+                    {
+                      "id": "saveEntityJobsService",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "saveEntityJobsService"
+                    }
+                  ],
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState.saveEnityJobsState"
+                }
+              },
+              {
+                "label": "setFinalJobStatusDoneState",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "setStatusAction",
+                    "language": "xstate",
+                    "parameters": {
+                      "status": "DONE"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "description": "Update the job in the facebook_jobs table with the final DONE status.",
+                  "invoke": [
+                    {
+                      "id": "updateJob",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "updateJob"
+                    }
+                  ],
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState.setFinalJobStatusDoneState"
+                }
+              },
+              {
+                "label": "retryHistoryState",
+                "type": 1,
+                "is_history": true,
+                "history_type": 2,
+                "metadata": {
+                  "description": "Returns to the last state where an error occurred to retry it.",
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState.retryHistoryState"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "description": "State that processes the crea",
+              "meta_entries": [],
+              "stately_id": "facebookEntityJobGeneratorMachine.generateJobsState"
+            }
+          },
+          {
+            "label": "errorHandlerState",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "incrementRetriesAction",
+                "language": "xstate"
+              },
+              {
+                "label": "sendErrorAction",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "description": "Handles Errors from the generateJobsState",
+              "meta_entries": [],
+              "stately_id": "facebookEntityJobGeneratorMachine.errorHandlerState"
+            }
+          },
+          {
+            "label": "handleFinalErrorState",
+            "type": 2,
+            "children": [
+              {
+                "label": "finalErrorState",
+                "type": 1,
+                "is_final": true,
+                "entry_actions": [
+                  {
+                    "label": "sendError",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "description": "Enters this state when any terminal error is caught and all retries failed.",
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.handleFinalErrorState.finalErrorState"
+                }
+              },
+              {
+                "label": "setFinalJobStatusErrorState",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "setStatusAction",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "description": "Update the job in the facebook_jobs table with the final ERROR status.",
+                  "invoke": [
+                    {
+                      "id": "updateJob",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "updateJob"
+                    }
+                  ],
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.handleFinalErrorState.setFinalJobStatusErrorState"
+                }
+              },
+              {
+                "label": "idleState",
+                "type": 1,
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "incrementRetriesAction",
+                    "language": "xstate"
+                  },
+                  {
+                    "label": "sendErrorAction",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "facebookEntityJobGeneratorMachine.handleFinalErrorState.idleState"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "State that handles retry logic for writing the final error to the db.",
+              "meta_entries": [],
+              "stately_id": "facebookEntityJobGeneratorMachine.handleFinalErrorState"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "description": "This machine downloads ad manager accounts, saves them, generates jobs for the Facebook Entity Processing Machine, writes them to the facebook_entity_jobs table and spawns the Facebook Entity Processing Machines (one per ad manager account) to process the downloading of the camapigns/adsets/ads.",
+          "meta_entries": [],
+          "stately_id": "facebookEntityJobGeneratorMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "getAdManagerAccountsState"
+      ],
+      "to": [
+        "saveAdManagerAccountsState"
+      ],
+      "actions": [
+        {
+          "label": "resetRetriesAction",
+          "language": "xstate"
+        },
+        {
+          "label": "setAdManagerAccountsAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "getAdManagerAccountsState"
+      ],
+      "to": [
+        "errorHandlerState"
+      ]
+    },
+    {
+      "from": [
+        "saveAdManagerAccountsState"
+      ],
+      "to": [
+        "saveEnityJobsState"
+      ],
+      "actions": [
+        {
+          "label": "generateEntityJobsAction",
+          "language": "xstate"
+        },
+        {
+          "label": "resetRetriesAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "saveAdManagerAccountsState"
+      ],
+      "to": [
+        "errorHandlerState"
+      ]
+    },
+    {
+      "from": [
+        "spawnEntityJobProcessingMachinesState"
+      ],
+      "to": [
+        "setFinalJobStatusDoneState"
+      ],
+      "event": "child.final",
+      "guard": {
+        "expression": "areAllMachinesDone",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "spawnEntityJobProcessingMachinesState"
+      ],
+      "to": [
+        "spawnEntityJobProcessingMachinesState"
+      ],
+      "event": "child.final",
+      "actions": [
+        {
+          "label": "saveMachineDoneAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "spawnEntityJobProcessingMachinesState"
+      ],
+      "to": [
+        "spawnEntityJobProcessingMachinesState"
+      ],
+      "event": "child.getHeaders",
+      "actions": [
+        {
+          "label": "sendHeadersAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "saveEnityJobsState"
+      ],
+      "to": [
+        "spawnEntityJobProcessingMachinesState"
+      ],
+      "guard": {
+        "expression": "isPageCursorNull",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "resetRetriesAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "saveEnityJobsState"
+      ],
+      "to": [
+        "getAdManagerAccountsState"
+      ]
+    },
+    {
+      "from": [
+        "saveEnityJobsState"
+      ],
+      "to": [
+        "errorHandlerState"
+      ]
+    },
+    {
+      "from": [
+        "setFinalJobStatusDoneState"
+      ],
+      "to": [
+        "finalState"
+      ],
+      "actions": [
+        {
+          "label": "resetRetriesAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "setFinalJobStatusDoneState"
+      ],
+      "to": [
+        "errorHandlerState"
+      ]
+    },
+    {
+      "from": [
+        "errorHandlerState"
+      ],
+      "to": [
+        "retryHistoryState"
+      ],
+      "guard": {
+        "expression": "shouldRetry",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "errorHandlerState"
+      ],
+      "to": [
+        "setFinalJobStatusErrorState"
+      ],
+      "actions": [
+        {
+          "label": "resetRetriesAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "setFinalJobStatusErrorState"
+      ],
+      "to": [
+        "finalErrorState"
+      ],
+      "actions": [
+        {
+          "label": "resetRetriesAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "setFinalJobStatusErrorState"
+      ],
+      "to": [
+        "idleState"
+      ],
+      "actions": [
+        {
+          "label": "setFinalErrorRetryTrueAction",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "idleState"
+      ],
+      "to": [
+        "setFinalJobStatusErrorState"
+      ],
+      "guard": {
+        "expression": "shouldRetry",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "idleState"
+      ],
+      "to": [
+        "finalErrorState"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "child.final"
+    },
+    {
+      "label": "child.getHeaders"
+    }
+  ],
+  "variables": {
+    "headers": {},
+    "job": {},
+    "jobProcessingMachines": {},
+    "pageCursor": "",
+    "retries": 0,
+    "retryDelay": 1000
+  }
+}

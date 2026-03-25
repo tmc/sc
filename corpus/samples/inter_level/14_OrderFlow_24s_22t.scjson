@@ -1,0 +1,427 @@
+{
+  "name": "OrderFlow",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "OrderFlow",
+        "type": 2,
+        "children": [
+          {
+            "label": "OrderCreated",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "OrderFlow.OrderCreated"
+            }
+          },
+          {
+            "label": "OrderVerified",
+            "type": 1,
+            "metadata": {
+              "stately_id": "OrderFlow.OrderVerified"
+            }
+          },
+          {
+            "label": "OrderRejected",
+            "type": 1,
+            "metadata": {
+              "stately_id": "OrderFlow.OrderRejected"
+            }
+          },
+          {
+            "label": "PackageFlow",
+            "type": 2,
+            "children": [
+              {
+                "label": "PackageAwaiting",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageAwaiting"
+                }
+              },
+              {
+                "label": "PackageVerified",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageVerified"
+                }
+              },
+              {
+                "label": "PackageCreated",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageCreated"
+                }
+              },
+              {
+                "label": "PackageShipped",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageShipped"
+                }
+              },
+              {
+                "label": "PackageDelivered",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageDelivered"
+                }
+              },
+              {
+                "label": "PackageCancelled",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageCancelled"
+                }
+              },
+              {
+                "label": "PackagePicking",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackagePicking"
+                }
+              },
+              {
+                "label": "PackageInvoiced",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageInvoiced"
+                }
+              },
+              {
+                "label": "PackageUndelivered",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageUndelivered"
+                }
+              },
+              {
+                "label": "PackageReturned",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.PackageReturned"
+                }
+              },
+              {
+                "label": "ClaimFlow",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "ClaimCreated",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimCreated"
+                    }
+                  },
+                  {
+                    "label": "ClaimWaitingInAction",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimWaitingInAction"
+                    }
+                  },
+                  {
+                    "label": "ClaimUnResolved",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimUnResolved"
+                    }
+                  },
+                  {
+                    "label": "ClaimInAnalysis",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimInAnalysis"
+                    }
+                  },
+                  {
+                    "label": "ClaimCancelled",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimCancelled"
+                    }
+                  },
+                  {
+                    "label": "ClaimRejected",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimRejected"
+                    }
+                  },
+                  {
+                    "label": "ClaimAccepted",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "OrderFlow.PackageFlow.ClaimFlow.ClaimAccepted"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "OrderFlow.PackageFlow.ClaimFlow"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "OrderFlow.PackageFlow"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "OrderFlow"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "OrderCreated"
+      ],
+      "to": [
+        "PackageAwaiting"
+      ],
+      "event": "listen"
+    },
+    {
+      "from": [
+        "OrderCreated"
+      ],
+      "to": [
+        "OrderVerified"
+      ],
+      "event": "verify"
+    },
+    {
+      "from": [
+        "OrderCreated"
+      ],
+      "to": [
+        "OrderRejected"
+      ],
+      "event": "reject"
+    },
+    {
+      "from": [
+        "OrderVerified"
+      ],
+      "to": [
+        "PackageVerified"
+      ],
+      "event": "listen"
+    },
+    {
+      "from": [
+        "PackageAwaiting"
+      ],
+      "to": [
+        "PackageVerified"
+      ],
+      "event": "verify"
+    },
+    {
+      "from": [
+        "PackageVerified"
+      ],
+      "to": [
+        "PackageCreated"
+      ],
+      "event": "ready"
+    },
+    {
+      "from": [
+        "PackageCreated"
+      ],
+      "to": [
+        "PackageCancelled"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "PackageCreated"
+      ],
+      "to": [
+        "PackagePicking"
+      ],
+      "event": "pick"
+    },
+    {
+      "from": [
+        "PackageCreated"
+      ],
+      "to": [
+        "PackageInvoiced"
+      ],
+      "event": "invoice"
+    },
+    {
+      "from": [
+        "PackageCreated"
+      ],
+      "to": [
+        "PackageShipped"
+      ],
+      "event": "ship"
+    },
+    {
+      "from": [
+        "PackageCreated"
+      ],
+      "to": [
+        "PackageDelivered"
+      ],
+      "event": "deliver"
+    },
+    {
+      "from": [
+        "PackageShipped"
+      ],
+      "to": [
+        "PackageReturned"
+      ],
+      "event": "return"
+    },
+    {
+      "from": [
+        "PackageShipped"
+      ],
+      "to": [
+        "ClaimFlow"
+      ],
+      "event": "claim"
+    },
+    {
+      "from": [
+        "PackageReturned"
+      ],
+      "to": [
+        "ClaimFlow"
+      ],
+      "event": "claim"
+    },
+    {
+      "from": [
+        "ClaimCreated"
+      ],
+      "to": [
+        "ClaimWaitingInAction"
+      ],
+      "event": "waiting_in_action"
+    },
+    {
+      "from": [
+        "ClaimCreated"
+      ],
+      "to": [
+        "ClaimAccepted"
+      ],
+      "event": "accept"
+    },
+    {
+      "from": [
+        "ClaimWaitingInAction"
+      ],
+      "to": [
+        "ClaimAccepted"
+      ],
+      "event": "accept"
+    },
+    {
+      "from": [
+        "ClaimWaitingInAction"
+      ],
+      "to": [
+        "ClaimUnResolved"
+      ],
+      "event": "un_resolve"
+    },
+    {
+      "from": [
+        "ClaimUnResolved"
+      ],
+      "to": [
+        "ClaimInAnalysis"
+      ],
+      "event": "in_analysis"
+    },
+    {
+      "from": [
+        "ClaimInAnalysis"
+      ],
+      "to": [
+        "ClaimUnResolved"
+      ],
+      "event": "un_resolve"
+    },
+    {
+      "from": [
+        "ClaimInAnalysis"
+      ],
+      "to": [
+        "ClaimRejected"
+      ],
+      "event": "reject"
+    },
+    {
+      "from": [
+        "ClaimInAnalysis"
+      ],
+      "to": [
+        "ClaimAccepted"
+      ],
+      "event": "accept"
+    }
+  ],
+  "events": [
+    {
+      "label": "listen"
+    },
+    {
+      "label": "ready"
+    },
+    {
+      "label": "cancel"
+    },
+    {
+      "label": "deliver"
+    },
+    {
+      "label": "verify"
+    },
+    {
+      "label": "return"
+    },
+    {
+      "label": "waiting_in_action"
+    },
+    {
+      "label": "pick"
+    },
+    {
+      "label": "invoice"
+    },
+    {
+      "label": "ship"
+    },
+    {
+      "label": "claim"
+    },
+    {
+      "label": "reject"
+    },
+    {
+      "label": "accept"
+    },
+    {
+      "label": "un_resolve"
+    },
+    {
+      "label": "in_analysis"
+    }
+  ]
+}

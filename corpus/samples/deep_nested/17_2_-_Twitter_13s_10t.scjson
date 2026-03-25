@@ -1,0 +1,240 @@
+{
+  "name": "2 - Twitter",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "2 - Twitter",
+        "type": 2,
+        "children": [
+          {
+            "label": "Tweet unfocused",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "\n![](https://user-images.githubusercontent.com/1093738/276045786-bd1439bb-72bd-47e8-999e-5f331cdf8af7.png)",
+              "stately_id": "2 - Twitter.Tweet unfocused"
+            }
+          },
+          {
+            "label": "Tweet focused",
+            "type": 1,
+            "metadata": {
+              "description": "\n![](https://user-images.githubusercontent.com/1093738/276045785-a7b97483-0a44-4007-bd48-26ead9690da1.png)",
+              "stately_id": "2 - Twitter.Tweet focused"
+            }
+          },
+          {
+            "label": "Non-empty tweet",
+            "type": 1,
+            "metadata": {
+              "description": "\n![](https://user-images.githubusercontent.com/1093738/276045783-5090f50e-3fc0-4968-988b-bb8bc2614ec3.png)",
+              "meta_entries": [],
+              "stately_id": "2 - Twitter.Non-empty tweet"
+            }
+          },
+          {
+            "label": "Multiline tweet",
+            "type": 1,
+            "metadata": {
+              "description": "\n![](https://user-images.githubusercontent.com/1093738/276045779-44d514bd-724e-4da5-8f03-b2e150038a69.png)",
+              "meta_entries": [],
+              "stately_id": "2 - Twitter.Multiline tweet"
+            }
+          },
+          {
+            "label": "Popped out",
+            "type": 3,
+            "children": [
+              {
+                "label": "Main tweet",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Tweet almost too long",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "description": "\n![](https://user-images.githubusercontent.com/1093738/276045801-8a52c27b-97e8-45ef-a219-0ced5ef3a8a6.png)",
+                      "stately_id": "2 - Twitter.Popped out.Main tweet.Tweet almost too long"
+                    }
+                  },
+                  {
+                    "label": "Tweet too long",
+                    "type": 1,
+                    "metadata": {
+                      "description": "![](https://user-images.githubusercontent.com/1093738/276045807-a34b0962-9d43-4f44-8848-22775e56d153.png)",
+                      "meta_entries": [],
+                      "stately_id": "2 - Twitter.Popped out.Main tweet.Tweet too long"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "2 - Twitter.Popped out.Main tweet"
+                }
+              },
+              {
+                "label": "Who can reply?",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Open",
+                    "type": 1,
+                    "metadata": {
+                      "description": "\n![](https://user-images.githubusercontent.com/1093738/276045821-da638b22-da7c-47de-9434-27ddf0f07056.png)",
+                      "meta_entries": [],
+                      "stately_id": "2 - Twitter.Popped out.Who can reply?.Open"
+                    }
+                  },
+                  {
+                    "label": "Closed",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "2 - Twitter.Popped out.Who can reply?.Closed"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "2 - Twitter.Popped out.Who can reply?"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "2 - Twitter.Popped out"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "2 - Twitter"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Tweet unfocused"
+      ],
+      "to": [
+        "Tweet focused"
+      ],
+      "event": "focus"
+    },
+    {
+      "from": [
+        "Tweet focused"
+      ],
+      "to": [
+        "Non-empty tweet"
+      ],
+      "event": "Type"
+    },
+    {
+      "from": [
+        "Non-empty tweet"
+      ],
+      "to": [
+        "Multiline tweet"
+      ],
+      "event": "Multiline (shift enter)"
+    },
+    {
+      "from": [
+        "Tweet almost too long"
+      ],
+      "to": [
+        "Tweet too long"
+      ],
+      "event": "Type more than 280 characters"
+    },
+    {
+      "from": [
+        "Closed"
+      ],
+      "to": [
+        "Open"
+      ],
+      "event": "Click who can reply"
+    },
+    {
+      "from": [
+        "Multiline tweet"
+      ],
+      "to": [
+        "Popped out"
+      ],
+      "event": "Click +"
+    },
+    {
+      "from": [
+        "Tweet too long"
+      ],
+      "to": [
+        "Tweet almost too long"
+      ],
+      "event": "Type less than 280 characters"
+    },
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "Closed"
+      ],
+      "event": "Click outside"
+    },
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "Closed"
+      ],
+      "event": "Select who can reply"
+    },
+    {
+      "from": [
+        "Non-empty tweet"
+      ],
+      "to": [
+        "Tweet focused"
+      ],
+      "event": "Delete tweet"
+    }
+  ],
+  "events": [
+    {
+      "label": "Multiline (shift enter)"
+    },
+    {
+      "label": "Type more than 280 characters"
+    },
+    {
+      "label": "Type less than 280 characters"
+    },
+    {
+      "label": "Select who can reply"
+    },
+    {
+      "label": "Delete tweet"
+    },
+    {
+      "label": "focus"
+    },
+    {
+      "label": "Type"
+    },
+    {
+      "label": "Click who can reply"
+    },
+    {
+      "label": "Click +"
+    },
+    {
+      "label": "Click outside"
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "name": "discountCodeForm",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "discountCodeForm",
+        "type": 2,
+        "children": [
+          {
+            "label": "editing",
+            "type": 3,
+            "children": [
+              {
+                "label": "message",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "valid",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "discountCodeForm.editing.message.valid"
+                    }
+                  },
+                  {
+                    "label": "error",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "discountCodeForm.editing.message.error"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "discountCodeForm.editing.message"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "discountCodeForm.editing"
+            }
+          },
+          {
+            "label": "submitting",
+            "type": 1,
+            "metadata": {
+              "stately_id": "discountCodeForm.submitting"
+            }
+          },
+          {
+            "label": "success",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "discountCodeForm.success"
+            }
+          },
+          {
+            "label": "fetch_error",
+            "type": 1,
+            "metadata": {
+              "stately_id": "discountCodeForm.fetch_error"
+            }
+          },
+          {
+            "label": "failure",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "discountCodeForm.failure"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "description": "Describes the FSM for the standalone Discount Code form",
+          "stately_id": "discountCodeForm"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "editing"
+      ],
+      "event": "INPUT",
+      "actions": [
+        {
+          "label": "cache",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "submitting"
+      ],
+      "event": "SUBMIT",
+      "guard": {
+        "expression": "code.length \u003e 0",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "error"
+      ],
+      "event": "SUBMIT"
+    },
+    {
+      "from": [
+        "submitting"
+      ],
+      "to": [
+        "success"
+      ],
+      "event": "RESOLVE"
+    },
+    {
+      "from": [
+        "submitting"
+      ],
+      "to": [
+        "fetch_error"
+      ],
+      "event": "REJECT"
+    },
+    {
+      "from": [
+        "fetch_error"
+      ],
+      "to": [
+        "submitting"
+      ],
+      "event": "RETRY",
+      "guard": {
+        "expression": "retries \u003c 3",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "increase retries + 1",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "fetch_error"
+      ],
+      "to": [
+        "failure"
+      ],
+      "event": "RETRY"
+    }
+  ],
+  "events": [
+    {
+      "label": "INPUT"
+    },
+    {
+      "label": "SUBMIT"
+    },
+    {
+      "label": "RESOLVE"
+    },
+    {
+      "label": "REJECT"
+    },
+    {
+      "label": "RETRY"
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "name": "Connection analysis filter",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Connection analysis filter",
+        "type": 2,
+        "children": [
+          {
+            "label": "no stop selected",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Connection analysis filter.no stop selected"
+            }
+          },
+          {
+            "label": "Stops selected",
+            "type": 2,
+            "children": [
+              {
+                "label": "no filter",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Connection analysis filter.Stops selected.no filter"
+                }
+              },
+              {
+                "label": "filtered",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "no conflict",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Connection analysis filter.Stops selected.filtered.no conflict"
+                    }
+                  },
+                  {
+                    "label": "filtered with conflict",
+                    "type": 1,
+                    "metadata": {
+                      "description": "Alertbanner appears",
+                      "stately_id": "Connection analysis filter.Stops selected.filtered.filtered with conflict"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Connection analysis filter.Stops selected.filtered"
+                }
+              },
+              {
+                "label": "New note",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Connection analysis filter.Stops selected.New note",
+                  "stately_type": "annotation"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Connection analysis filter.Stops selected"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Connection analysis filter"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "no stop selected"
+      ],
+      "to": [
+        "Stops selected"
+      ],
+      "event": "Add stop"
+    },
+    {
+      "from": [
+        "no filter"
+      ],
+      "to": [
+        "filtered with conflict"
+      ],
+      "event": "set filter",
+      "guard": {
+        "expression": "Affect with stop",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Stops selected"
+      ],
+      "to": [
+        "Stops selected"
+      ],
+      "event": "Add stop"
+    },
+    {
+      "from": [
+        "Stops selected"
+      ],
+      "to": [
+        "Stops selected"
+      ],
+      "event": "Remove stop",
+      "guard": {
+        "expression": "Has stop selected?",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Stops selected"
+      ],
+      "to": [
+        "no stop selected"
+      ],
+      "event": "Remove stop"
+    },
+    {
+      "from": [
+        "filtered"
+      ],
+      "to": [
+        "no filter"
+      ],
+      "event": "clear filter"
+    },
+    {
+      "from": [
+        "filtered"
+      ],
+      "to": [
+        "filtered with conflict"
+      ],
+      "event": "set transportsystem and line filter",
+      "guard": {
+        "expression": "Affect with Stop",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "filtered"
+      ],
+      "to": [
+        "no conflict"
+      ],
+      "event": "set transportsystem and line filter"
+    },
+    {
+      "from": [
+        "no filter"
+      ],
+      "to": [
+        "no conflict"
+      ],
+      "event": "set filter"
+    },
+    {
+      "from": [
+        "filtered"
+      ],
+      "to": [
+        "filtered"
+      ],
+      "event": "Set filter"
+    }
+  ],
+  "events": [
+    {
+      "label": "set transportsystem and line filter"
+    },
+    {
+      "label": "Set filter"
+    },
+    {
+      "label": "Add stop"
+    },
+    {
+      "label": "set filter"
+    },
+    {
+      "label": "Remove stop"
+    },
+    {
+      "label": "clear filter"
+    }
+  ]
+}

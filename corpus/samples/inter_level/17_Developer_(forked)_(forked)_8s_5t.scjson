@@ -1,0 +1,131 @@
+{
+  "name": "Developer (forked) (forked)",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Developer (forked) (forked)",
+        "type": 2,
+        "children": [
+          {
+            "label": "Life Machine",
+            "type": 2,
+            "children": [
+              {
+                "label": "Eat",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Developer (forked) (forked).Life Machine.Eat"
+                }
+              },
+              {
+                "label": "Code",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Developer (forked) (forked).Life Machine.Code"
+                }
+              },
+              {
+                "label": "Sleep",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Developer (forked) (forked).Life Machine.Sleep"
+                }
+              },
+              {
+                "label": "new state 1",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "Developer (forked) (forked).Life Machine.new state 1"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Developer (forked) (forked).Life Machine"
+            }
+          },
+          {
+            "label": "Review Pull Requests",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Developer (forked) (forked).Review Pull Requests"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Developer (forked) (forked)"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Eat"
+      ],
+      "to": [
+        "Sleep"
+      ],
+      "event": "Tired"
+    },
+    {
+      "from": [
+        "Sleep"
+      ],
+      "to": [
+        "Code"
+      ],
+      "event": "Money"
+    },
+    {
+      "from": [
+        "Code"
+      ],
+      "to": [
+        "Eat"
+      ],
+      "event": "Hungry"
+    },
+    {
+      "from": [
+        "Life Machine"
+      ],
+      "to": [
+        "Review Pull Requests"
+      ],
+      "event": "Review Pull Requests"
+    },
+    {
+      "from": [
+        "Review Pull Requests"
+      ],
+      "to": [
+        "new state 1"
+      ],
+      "event": "Done"
+    }
+  ],
+  "events": [
+    {
+      "label": "Tired"
+    },
+    {
+      "label": "Money"
+    },
+    {
+      "label": "Hungry"
+    },
+    {
+      "label": "Review Pull Requests"
+    },
+    {
+      "label": "Done"
+    }
+  ]
+}

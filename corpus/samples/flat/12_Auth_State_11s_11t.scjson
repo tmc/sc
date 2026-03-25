@@ -1,0 +1,212 @@
+{
+  "name": "Auth State",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Auth State",
+        "type": 2,
+        "children": [
+          {
+            "label": "checkingSession",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Auth State.checkingSession"
+            }
+          },
+          {
+            "label": "needsAuthentication",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.needsAuthentication"
+            }
+          },
+          {
+            "label": "redirectingToOkta",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.redirectingToOkta"
+            }
+          },
+          {
+            "label": "processingCallback",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.processingCallback"
+            }
+          },
+          {
+            "label": "fetchingUserInfo",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.fetchingUserInfo"
+            }
+          },
+          {
+            "label": "settingUserState",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.settingUserState"
+            }
+          },
+          {
+            "label": "storingTokens",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.storingTokens"
+            }
+          },
+          {
+            "label": "authenticationError",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Auth State.authenticationError"
+            }
+          },
+          {
+            "label": "alreadyAuthenticated",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "Auth State.alreadyAuthenticated"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Auth State"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "checkingSession"
+      ],
+      "to": [
+        "needsAuthentication"
+      ],
+      "event": "NO_VALID_SESSION"
+    },
+    {
+      "from": [
+        "checkingSession"
+      ],
+      "to": [
+        "alreadyAuthenticated"
+      ],
+      "event": "VALID_SESSION_FOUND"
+    },
+    {
+      "from": [
+        "needsAuthentication"
+      ],
+      "to": [
+        "redirectingToOkta"
+      ],
+      "event": "START_LOGIN"
+    },
+    {
+      "from": [
+        "redirectingToOkta"
+      ],
+      "to": [
+        "processingCallback"
+      ],
+      "event": "USER_AUTHENTICATED"
+    },
+    {
+      "from": [
+        "processingCallback"
+      ],
+      "to": [
+        "fetchingUserInfo"
+      ],
+      "event": "AUTH_SUCCESS"
+    },
+    {
+      "from": [
+        "processingCallback"
+      ],
+      "to": [
+        "authenticationError"
+      ],
+      "event": "AUTH_FAILED"
+    },
+    {
+      "from": [
+        "fetchingUserInfo"
+      ],
+      "to": [
+        "settingUserState"
+      ],
+      "event": "USER_INFO_RECEIVED"
+    },
+    {
+      "from": [
+        "fetchingUserInfo"
+      ],
+      "to": [
+        "authenticationError"
+      ],
+      "event": "FETCH_FAILED"
+    },
+    {
+      "from": [
+        "settingUserState"
+      ],
+      "to": [
+        "storingTokens"
+      ]
+    },
+    {
+      "from": [
+        "storingTokens"
+      ],
+      "to": [
+        "alreadyAuthenticated"
+      ]
+    },
+    {
+      "from": [
+        "authenticationError"
+      ],
+      "to": [
+        "needsAuthentication"
+      ],
+      "event": "RETRY"
+    }
+  ],
+  "events": [
+    {
+      "label": "VALID_SESSION_FOUND"
+    },
+    {
+      "label": "AUTH_FAILED"
+    },
+    {
+      "label": "USER_INFO_RECEIVED"
+    },
+    {
+      "label": "FETCH_FAILED"
+    },
+    {
+      "label": "NO_VALID_SESSION"
+    },
+    {
+      "label": "START_LOGIN"
+    },
+    {
+      "label": "USER_AUTHENTICATED"
+    },
+    {
+      "label": "AUTH_SUCCESS"
+    },
+    {
+      "label": "RETRY"
+    }
+  ]
+}

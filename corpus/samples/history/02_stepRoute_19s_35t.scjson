@@ -1,0 +1,502 @@
+{
+  "name": "stepRoute",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "stepRoute",
+        "type": 2,
+        "children": [
+          {
+            "label": "BACK",
+            "type": 1,
+            "is_history": true,
+            "history_type": 2,
+            "metadata": {
+              "stately_id": "stepRoute.BACK"
+            }
+          },
+          {
+            "label": "/",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "stepRoute./"
+            }
+          },
+          {
+            "label": "initialStepWithMail",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.initialStepWithMail"
+            }
+          },
+          {
+            "label": "stepDontPayReason",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepDontPayReason"
+            }
+          },
+          {
+            "label": "stepLowChancesNotice",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepLowChancesNotice"
+            }
+          },
+          {
+            "label": "stepPayPartiallyReason",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepPayPartiallyReason"
+            }
+          },
+          {
+            "label": "stepRecalculateRoute",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepRecalculateRoute"
+            }
+          },
+          {
+            "label": "initialStepWithoutMail",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.initialStepWithoutMail"
+            }
+          },
+          {
+            "label": "stepFamiliarWithTollCompany",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepFamiliarWithTollCompany"
+            }
+          },
+          {
+            "label": "stepSelectTollingStation",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepSelectTollingStation"
+            }
+          },
+          {
+            "label": "stepSearchTollingStationInMap",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepSearchTollingStationInMap"
+            }
+          },
+          {
+            "label": "stepDoesUserKnowPaymentAmount",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.stepDoesUserKnowPaymentAmount"
+            }
+          },
+          {
+            "label": "endStepPayWithMail",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.endStepPayWithMail"
+            }
+          },
+          {
+            "label": "endStepPayWithoutMail",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.endStepPayWithoutMail"
+            }
+          },
+          {
+            "label": "endStepWriteLetter",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.endStepWriteLetter"
+            }
+          },
+          {
+            "label": "endStepConsulting",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.endStepConsulting"
+            }
+          },
+          {
+            "label": "endStepWait",
+            "type": 1,
+            "metadata": {
+              "stately_id": "stepRoute.endStepWait"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "stepRoute"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "/"
+      ],
+      "to": [
+        "initialStepWithMail"
+      ],
+      "event": "MAIL_RECEIVED"
+    },
+    {
+      "from": [
+        "/"
+      ],
+      "to": [
+        "initialStepWithoutMail"
+      ],
+      "event": "NO_MAIL_NO_TOLL"
+    },
+    {
+      "from": [
+        "initialStepWithMail"
+      ],
+      "to": [
+        "stepDontPayReason"
+      ],
+      "event": "DONT_PAY"
+    },
+    {
+      "from": [
+        "initialStepWithMail"
+      ],
+      "to": [
+        "endStepConsulting"
+      ],
+      "event": "CONSULTE"
+    },
+    {
+      "from": [
+        "initialStepWithMail"
+      ],
+      "to": [
+        "endStepPayWithMail"
+      ],
+      "event": "PAY"
+    },
+    {
+      "from": [
+        "initialStepWithMail"
+      ],
+      "to": [
+        "endStepWait"
+      ],
+      "event": "WAIT"
+    },
+    {
+      "from": [
+        "initialStepWithMail"
+      ],
+      "to": [
+        "stepPayPartiallyReason"
+      ],
+      "event": "PAY_PARTIALLY"
+    },
+    {
+      "from": [
+        "initialStepWithMail"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepDontPayReason"
+      ],
+      "to": [
+        "endStepWriteLetter"
+      ],
+      "event": "WRITE_LETTER"
+    },
+    {
+      "from": [
+        "stepDontPayReason"
+      ],
+      "to": [
+        "stepLowChancesNotice"
+      ],
+      "event": "LOW_CHANCES_NOTICE"
+    },
+    {
+      "from": [
+        "stepDontPayReason"
+      ],
+      "to": [
+        "endStepConsulting"
+      ],
+      "event": "CONSULTE"
+    },
+    {
+      "from": [
+        "stepDontPayReason"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepLowChancesNotice"
+      ],
+      "to": [
+        "endStepPayWithMail"
+      ],
+      "event": "PAY"
+    },
+    {
+      "from": [
+        "stepLowChancesNotice"
+      ],
+      "to": [
+        "endStepWriteLetter"
+      ],
+      "event": "WRITE_LETTER"
+    },
+    {
+      "from": [
+        "stepLowChancesNotice"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepPayPartiallyReason"
+      ],
+      "to": [
+        "endStepWriteLetter"
+      ],
+      "event": "WRITE_LETTER"
+    },
+    {
+      "from": [
+        "stepPayPartiallyReason"
+      ],
+      "to": [
+        "stepRecalculateRoute"
+      ],
+      "event": "RECALCULATE_ROUTE"
+    },
+    {
+      "from": [
+        "stepPayPartiallyReason"
+      ],
+      "to": [
+        "endStepConsulting"
+      ],
+      "event": "CONSULTE"
+    },
+    {
+      "from": [
+        "stepPayPartiallyReason"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepRecalculateRoute"
+      ],
+      "to": [
+        "endStepWriteLetter"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "stepRecalculateRoute"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "initialStepWithoutMail"
+      ],
+      "to": [
+        "stepFamiliarWithTollCompany"
+      ],
+      "event": "PAY"
+    },
+    {
+      "from": [
+        "initialStepWithoutMail"
+      ],
+      "to": [
+        "endStepConsulting"
+      ],
+      "event": "CONSULTE"
+    },
+    {
+      "from": [
+        "initialStepWithoutMail"
+      ],
+      "to": [
+        "endStepWait"
+      ],
+      "event": "WAIT"
+    },
+    {
+      "from": [
+        "initialStepWithoutMail"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepFamiliarWithTollCompany"
+      ],
+      "to": [
+        "stepSelectTollingStation"
+      ],
+      "event": "SELECT_TOLLING_STATION"
+    },
+    {
+      "from": [
+        "stepFamiliarWithTollCompany"
+      ],
+      "to": [
+        "stepSearchTollingStationInMap"
+      ],
+      "event": "SEARCH_TOLLING_STATION"
+    },
+    {
+      "from": [
+        "stepFamiliarWithTollCompany"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepSelectTollingStation"
+      ],
+      "to": [
+        "stepDoesUserKnowPaymentAmount"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "stepSelectTollingStation"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepSearchTollingStationInMap"
+      ],
+      "to": [
+        "stepDoesUserKnowPaymentAmount"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "stepSearchTollingStationInMap"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    },
+    {
+      "from": [
+        "stepDoesUserKnowPaymentAmount"
+      ],
+      "to": [
+        "endStepPayWithoutMail"
+      ],
+      "event": "PAY"
+    },
+    {
+      "from": [
+        "stepDoesUserKnowPaymentAmount"
+      ],
+      "to": [
+        "endStepWriteLetter"
+      ],
+      "event": "WRITE_LETTER"
+    },
+    {
+      "from": [
+        "stepDoesUserKnowPaymentAmount"
+      ],
+      "to": [
+        "BACK"
+      ],
+      "event": "BACK"
+    }
+  ],
+  "events": [
+    {
+      "label": "LOW_CHANCES_NOTICE"
+    },
+    {
+      "label": "RECALCULATE_ROUTE"
+    },
+    {
+      "label": "MAIL_RECEIVED"
+    },
+    {
+      "label": "DONT_PAY"
+    },
+    {
+      "label": "WRITE_LETTER"
+    },
+    {
+      "label": "NEXT"
+    },
+    {
+      "label": "SELECT_TOLLING_STATION"
+    },
+    {
+      "label": "SEARCH_TOLLING_STATION"
+    },
+    {
+      "label": "NO_MAIL_NO_TOLL"
+    },
+    {
+      "label": "CONSULTE"
+    },
+    {
+      "label": "PAY"
+    },
+    {
+      "label": "WAIT"
+    },
+    {
+      "label": "PAY_PARTIALLY"
+    },
+    {
+      "label": "BACK"
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "name": "uberButton",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "uberButton",
+        "type": 2,
+        "children": [
+          {
+            "label": "uberButtonVisible",
+            "type": 3,
+            "children": [
+              {
+                "label": "callToAction",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "connectMore",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "uberButton.uberButtonVisible.callToAction.connectMore"
+                    }
+                  },
+                  {
+                    "label": "allUpToDate",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "uberButton.uberButtonVisible.callToAction.allUpToDate"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "uberButton.uberButtonVisible.callToAction"
+                }
+              },
+              {
+                "label": "statuses",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "errors",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "someErrors",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "uberButton.uberButtonVisible.statuses.errors.someErrors"
+                        }
+                      },
+                      {
+                        "label": "noErrors",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "uberButton.uberButtonVisible.statuses.errors.noErrors"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "uberButton.uberButtonVisible.statuses.errors"
+                    }
+                  },
+                  {
+                    "label": "updates",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "hasUpdates",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "uberButton.uberButtonVisible.statuses.updates.hasUpdates"
+                        }
+                      },
+                      {
+                        "label": "noUpdates",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "uberButton.uberButtonVisible.statuses.updates.noUpdates"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "uberButton.uberButtonVisible.statuses.updates"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "uberButton.uberButtonVisible.statuses"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "uberButton.uberButtonVisible"
+            }
+          },
+          {
+            "label": "uberButtonInvisible",
+            "type": 1,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "uberButton.uberButtonInvisible"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "meta_entries": [],
+          "stately_id": "uberButton"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "connectMore"
+      ],
+      "to": [
+        "allUpToDate"
+      ],
+      "event": "FINISH_CONNECT"
+    },
+    {
+      "from": [
+        "someErrors"
+      ],
+      "to": [
+        "noErrors"
+      ],
+      "event": "CLEAR_ERRORS"
+    },
+    {
+      "from": [
+        "hasUpdates"
+      ],
+      "to": [
+        "noUpdates"
+      ],
+      "event": "DONE_UPDATING"
+    },
+    {
+      "from": [
+        "uberButtonVisible"
+      ],
+      "to": [
+        "uberButtonInvisible"
+      ],
+      "guard": {
+        "expression": "noContents",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "uberButtonInvisible"
+      ],
+      "to": [
+        "uberButtonVisible"
+      ],
+      "event": "SHOW_BUTTON"
+    }
+  ],
+  "events": [
+    {
+      "label": "SHOW_BUTTON"
+    },
+    {
+      "label": "FINISH_CONNECT"
+    },
+    {
+      "label": "CLEAR_ERRORS"
+    },
+    {
+      "label": "DONE_UPDATING"
+    }
+  ]
+}

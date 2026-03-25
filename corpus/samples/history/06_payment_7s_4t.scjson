@@ -1,0 +1,112 @@
+{
+  "name": "payment",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "payment",
+        "type": 2,
+        "children": [
+          {
+            "label": "method",
+            "type": 2,
+            "children": [
+              {
+                "label": "cash",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "payment.method.cash"
+                }
+              },
+              {
+                "label": "check",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "payment.method.check"
+                }
+              },
+              {
+                "label": "hist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "payment.method.hist"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "payment.method"
+            }
+          },
+          {
+            "label": "review",
+            "type": 1,
+            "metadata": {
+              "stately_id": "payment.review"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "payment"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "method"
+      ],
+      "to": [
+        "review"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "cash"
+      ],
+      "to": [
+        "check"
+      ],
+      "event": "SWITCH_CHECK"
+    },
+    {
+      "from": [
+        "check"
+      ],
+      "to": [
+        "cash"
+      ],
+      "event": "SWITCH_CASH"
+    },
+    {
+      "from": [
+        "review"
+      ],
+      "to": [
+        "hist"
+      ],
+      "event": "PREVIOUS"
+    }
+  ],
+  "events": [
+    {
+      "label": "NEXT"
+    },
+    {
+      "label": "SWITCH_CHECK"
+    },
+    {
+      "label": "SWITCH_CASH"
+    },
+    {
+      "label": "PREVIOUS"
+    }
+  ]
+}

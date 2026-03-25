@@ -1,0 +1,230 @@
+{
+  "name": "Untitled",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Untitled",
+        "type": 2,
+        "children": [
+          {
+            "label": "等待",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Untitled.等待"
+            }
+          },
+          {
+            "label": "on散步",
+            "type": 3,
+            "children": [
+              {
+                "label": "walk",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "走路中",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Untitled.on散步.walk.走路中"
+                    }
+                  },
+                  {
+                    "label": "奔跑中",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Untitled.on散步.walk.奔跑中"
+                    }
+                  },
+                  {
+                    "label": "停下来闻闻好闻的气味",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Untitled.on散步.walk.停下来闻闻好闻的气味"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Untitled.on散步.walk"
+                }
+              },
+              {
+                "label": "wagging",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "不摇动",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Untitled.on散步.wagging.不摇动"
+                    }
+                  },
+                  {
+                    "label": "摇动",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Untitled.on散步.wagging.摇动"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Untitled.on散步.wagging"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Untitled.on散步"
+            }
+          },
+          {
+            "label": "散步完成",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "Untitled.散步完成"
+            }
+          },
+          {
+            "label": "讨好",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Untitled.讨好"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Untitled"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "等待"
+      ],
+      "to": [
+        "on散步"
+      ],
+      "event": "leave home"
+    },
+    {
+      "from": [
+        "走路中"
+      ],
+      "to": [
+        "奔跑中"
+      ],
+      "event": "speed up"
+    },
+    {
+      "from": [
+        "走路中"
+      ],
+      "to": [
+        "停下来闻闻好闻的气味"
+      ],
+      "event": "stop"
+    },
+    {
+      "from": [
+        "奔跑中"
+      ],
+      "to": [
+        "走路中"
+      ],
+      "event": "slow down"
+    },
+    {
+      "from": [
+        "奔跑中"
+      ],
+      "to": [
+        "停下来闻闻好闻的气味"
+      ],
+      "event": "sudden stop"
+    },
+    {
+      "from": [
+        "停下来闻闻好闻的气味"
+      ],
+      "to": [
+        "奔跑中"
+      ],
+      "event": "sudden speed up"
+    },
+    {
+      "from": [
+        "不摇动"
+      ],
+      "to": [
+        "摇动"
+      ],
+      "event": "wagging start"
+    },
+    {
+      "from": [
+        "摇动"
+      ],
+      "to": [
+        "不摇动"
+      ],
+      "event": "wagging stop"
+    },
+    {
+      "from": [
+        "on散步"
+      ],
+      "to": [
+        "散步完成"
+      ],
+      "event": "arrive home"
+    },
+    {
+      "from": [
+        "讨好"
+      ],
+      "to": [
+        "讨好"
+      ],
+      "event": "gets treat"
+    }
+  ],
+  "events": [
+    {
+      "label": "sudden stop"
+    },
+    {
+      "label": "wagging start"
+    },
+    {
+      "label": "wagging stop"
+    },
+    {
+      "label": "arrive home"
+    },
+    {
+      "label": "leave home"
+    },
+    {
+      "label": "slow down"
+    },
+    {
+      "label": "sudden speed up"
+    },
+    {
+      "label": "gets treat"
+    },
+    {
+      "label": "speed up"
+    },
+    {
+      "label": "stop"
+    }
+  ]
+}

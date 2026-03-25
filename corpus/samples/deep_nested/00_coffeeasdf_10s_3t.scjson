@@ -1,0 +1,122 @@
+{
+  "name": "coffeeasdf",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "coffeeasdf",
+        "type": 2,
+        "children": [
+          {
+            "label": "preparing",
+            "type": 3,
+            "children": [
+              {
+                "label": "grindBeans",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "grindingBeans",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "coffee.preparing.grindBeans.grindingBeans"
+                    }
+                  },
+                  {
+                    "label": "beansGround",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "coffee.preparing.grindBeans.beansGround"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "coffee.preparing.grindBeans"
+                }
+              },
+              {
+                "label": "boilWater",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "boilingWater",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "coffee.preparing.boilWater.boilingWater"
+                    }
+                  },
+                  {
+                    "label": "waterBoiled",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "coffee.preparing.boilWater.waterBoiled"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "coffee.preparing.boilWater"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "coffee.preparing"
+            }
+          },
+          {
+            "label": "makingCoffee",
+            "type": 1,
+            "metadata": {
+              "stately_id": "coffee.makingCoffee"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "coffeeasdf"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "grindingBeans"
+      ],
+      "to": [
+        "beansGround"
+      ],
+      "event": "BEANS_GROUND"
+    },
+    {
+      "from": [
+        "boilingWater"
+      ],
+      "to": [
+        "waterBoiled"
+      ],
+      "event": "WATER_BOILED"
+    },
+    {
+      "from": [
+        "preparing"
+      ],
+      "to": [
+        "makingCoffee"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "BEANS_GROUND"
+    },
+    {
+      "label": "WATER_BOILED"
+    }
+  ]
+}

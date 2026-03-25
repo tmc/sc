@@ -1,0 +1,301 @@
+{
+  "name": "Untitled (copy) (copy)",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Untitled (copy) (copy)",
+        "type": 2,
+        "children": [
+          {
+            "label": "Onboarding",
+            "type": 2,
+            "children": [
+              {
+                "label": "Choosing project",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Selecting project",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Untitled (copy) (copy).Onboarding.Choosing project.Selecting project"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "Untitled (copy) (copy).Onboarding.Choosing project"
+                }
+              },
+              {
+                "label": "Creating project",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "Editing",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "Address",
+                        "type": 1,
+                        "is_initial": true,
+                        "entry_actions": [
+                          {
+                            "label": "validateAddress",
+                            "language": "xstate"
+                          }
+                        ],
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Address"
+                        }
+                      },
+                      {
+                        "label": "Login",
+                        "type": 1,
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Login"
+                        }
+                      },
+                      {
+                        "label": "Fuel type",
+                        "type": 1,
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Fuel type"
+                        }
+                      },
+                      {
+                        "label": "Heating type",
+                        "type": 1,
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Heating type"
+                        }
+                      },
+                      {
+                        "label": "Cooling type",
+                        "type": 1,
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Cooling type"
+                        }
+                      },
+                      {
+                        "label": "Vehicle",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Vehicle"
+                        }
+                      },
+                      {
+                        "label": "Home details",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Home details"
+                        }
+                      },
+                      {
+                        "label": "Household details",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.Household details"
+                        }
+                      },
+                      {
+                        "label": "History",
+                        "type": 1,
+                        "is_history": true,
+                        "history_type": 1,
+                        "metadata": {
+                          "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing.History"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Editing"
+                    }
+                  },
+                  {
+                    "label": "Validating",
+                    "type": 1,
+                    "is_final": true,
+                    "entry_actions": [
+                      {
+                        "label": "validateProjectData",
+                        "language": "xstate"
+                      }
+                    ],
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Validating"
+                    }
+                  },
+                  {
+                    "label": "Saving",
+                    "type": 1,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Untitled (copy) (copy).Onboarding.Creating project.Saving"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "Untitled (copy) (copy).Onboarding.Creating project"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "Untitled (copy) (copy).Onboarding"
+            }
+          },
+          {
+            "label": "Add project to plan",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "addProjectToPlan"
+                }
+              ],
+              "meta_entries": [],
+              "stately_id": "Untitled (copy) (copy).Add project to plan"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Untitled (copy) (copy)"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Onboarding"
+      ],
+      "to": [
+        "Add project to plan"
+      ]
+    },
+    {
+      "from": [
+        "Choosing project"
+      ],
+      "to": [
+        "Creating project"
+      ],
+      "event": "CREATE_PROJECT"
+    },
+    {
+      "from": [
+        "Address"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Login"
+      ],
+      "to": [
+        "Fuel type"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Editing"
+      ],
+      "to": [
+        "Saving"
+      ],
+      "event": "SAVE_DATA"
+    },
+    {
+      "from": [
+        "Fuel type"
+      ],
+      "to": [
+        "Heating type"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Heating type"
+      ],
+      "to": [
+        "Cooling type"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Cooling type"
+      ],
+      "to": [
+        "Vehicle"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Vehicle"
+      ],
+      "to": [
+        "Home details"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Home details"
+      ],
+      "to": [
+        "Household details"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "Saving"
+      ],
+      "to": [
+        "History"
+      ],
+      "event": "Event 1"
+    }
+  ],
+  "events": [
+    {
+      "label": "Event 1"
+    },
+    {
+      "label": "CREATE_PROJECT"
+    },
+    {
+      "label": "NEXT"
+    },
+    {
+      "label": "SAVE_DATA"
+    }
+  ]
+}

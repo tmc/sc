@@ -1,0 +1,98 @@
+{
+  "name": "Navigation stack flow",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Navigation stack flow",
+        "type": 2,
+        "children": [
+          {
+            "label": "Tab loaded",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Navigation stack flow.Tab loaded"
+            }
+          },
+          {
+            "label": "Update navigation stack in context",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Navigation stack flow.Update navigation stack in context"
+            }
+          },
+          {
+            "label": "Switch to tab",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Navigation stack flow.Switch to tab"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Navigation stack flow"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Tab loaded"
+      ],
+      "to": [
+        "Update navigation stack in context"
+      ],
+      "event": "User clicks item"
+    },
+    {
+      "from": [
+        "Update navigation stack in context"
+      ],
+      "to": [
+        "Switch to tab"
+      ],
+      "event": "Navigate",
+      "guard": {
+        "expression": "Tab",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Update navigation stack in context"
+      ],
+      "to": [
+        "Switch to tab"
+      ],
+      "event": "Navigate",
+      "guard": {
+        "expression": "Tab -\u003e Details with props",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Switch to tab"
+      ],
+      "to": [
+        "Tab loaded"
+      ],
+      "event": "Check props"
+    }
+  ],
+  "events": [
+    {
+      "label": "User clicks item"
+    },
+    {
+      "label": "Navigate"
+    },
+    {
+      "label": "Check props"
+    }
+  ]
+}

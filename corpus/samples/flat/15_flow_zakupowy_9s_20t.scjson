@@ -1,0 +1,275 @@
+{
+  "name": "flow zakupowy",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "flow zakupowy",
+        "type": 2,
+        "children": [
+          {
+            "label": "cart",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "flow zakupowy.cart"
+            }
+          },
+          {
+            "label": "addressed",
+            "type": 1,
+            "metadata": {
+              "stately_id": "flow zakupowy.addressed"
+            }
+          },
+          {
+            "label": "shipping_skipped",
+            "type": 1,
+            "metadata": {
+              "stately_id": "flow zakupowy.shipping_skipped"
+            }
+          },
+          {
+            "label": "shipping_selected",
+            "type": 1,
+            "metadata": {
+              "stately_id": "flow zakupowy.shipping_selected"
+            }
+          },
+          {
+            "label": "payment_skipped",
+            "type": 1,
+            "metadata": {
+              "stately_id": "flow zakupowy.payment_skipped"
+            }
+          },
+          {
+            "label": "payment_selected",
+            "type": 1,
+            "metadata": {
+              "stately_id": "flow zakupowy.payment_selected"
+            }
+          },
+          {
+            "label": "completed",
+            "type": 1,
+            "metadata": {
+              "stately_id": "flow zakupowy.completed"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "flow zakupowy"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "cart"
+      ],
+      "to": [
+        "addressed"
+      ],
+      "event": "address"
+    },
+    {
+      "from": [
+        "addressed"
+      ],
+      "to": [
+        "shipping_skipped"
+      ],
+      "event": "skip_shipping"
+    },
+    {
+      "from": [
+        "addressed"
+      ],
+      "to": [
+        "shipping_selected"
+      ],
+      "event": "select_shipping"
+    },
+    {
+      "from": [
+        "addressed"
+      ],
+      "to": [
+        "addressed"
+      ],
+      "event": "address"
+    },
+    {
+      "from": [
+        "shipping_skipped"
+      ],
+      "to": [
+        "payment_skipped"
+      ],
+      "event": "skip_payment"
+    },
+    {
+      "from": [
+        "shipping_skipped"
+      ],
+      "to": [
+        "addressed"
+      ],
+      "event": "address"
+    },
+    {
+      "from": [
+        "shipping_skipped"
+      ],
+      "to": [
+        "payment_selected"
+      ],
+      "event": "select_payment"
+    },
+    {
+      "from": [
+        "shipping_selected"
+      ],
+      "to": [
+        "addressed"
+      ],
+      "event": "address"
+    },
+    {
+      "from": [
+        "shipping_selected"
+      ],
+      "to": [
+        "payment_selected"
+      ],
+      "event": "select_payment"
+    },
+    {
+      "from": [
+        "shipping_selected"
+      ],
+      "to": [
+        "payment_skipped"
+      ],
+      "event": "skip_payment"
+    },
+    {
+      "from": [
+        "shipping_selected"
+      ],
+      "to": [
+        "shipping_selected"
+      ],
+      "event": "select_shipping"
+    },
+    {
+      "from": [
+        "payment_skipped"
+      ],
+      "to": [
+        "completed"
+      ],
+      "event": "complete"
+    },
+    {
+      "from": [
+        "payment_skipped"
+      ],
+      "to": [
+        "addressed"
+      ],
+      "event": "address"
+    },
+    {
+      "from": [
+        "payment_skipped"
+      ],
+      "to": [
+        "shipping_skipped"
+      ],
+      "event": "skip_shipping"
+    },
+    {
+      "from": [
+        "payment_skipped"
+      ],
+      "to": [
+        "shipping_selected"
+      ],
+      "event": "select_shipping"
+    },
+    {
+      "from": [
+        "payment_selected"
+      ],
+      "to": [
+        "completed"
+      ],
+      "event": "complete"
+    },
+    {
+      "from": [
+        "payment_selected"
+      ],
+      "to": [
+        "addressed"
+      ],
+      "event": "address"
+    },
+    {
+      "from": [
+        "payment_selected"
+      ],
+      "to": [
+        "shipping_selected"
+      ],
+      "event": "select_shipping"
+    },
+    {
+      "from": [
+        "payment_selected"
+      ],
+      "to": [
+        "shipping_skipped"
+      ],
+      "event": "skip_shipping"
+    },
+    {
+      "from": [
+        "payment_selected"
+      ],
+      "to": [
+        "payment_selected"
+      ],
+      "event": "select_payment"
+    }
+  ],
+  "events": [
+    {
+      "label": "skip_payment"
+    },
+    {
+      "label": "select_payment"
+    },
+    {
+      "label": "complete"
+    },
+    {
+      "label": "address"
+    },
+    {
+      "label": "skip_shipping"
+    },
+    {
+      "label": "select_shipping"
+    }
+  ],
+  "variables": {
+    "address": null,
+    "cart": []
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "name": "omniPanel",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "omniPanel",
+        "type": 2,
+        "children": [
+          {
+            "label": "open",
+            "type": 2,
+            "children": [
+              {
+                "label": "background",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "omniPanel.open.background"
+                }
+              },
+              {
+                "label": "media",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "omniPanel.open.media"
+                }
+              },
+              {
+                "label": "music",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "omniPanel.open.music"
+                }
+              },
+              {
+                "label": "properties",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "omniPanel.open.properties"
+                }
+              },
+              {
+                "label": "transcript",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "omniPanel.open.transcript"
+                }
+              },
+              {
+                "label": "transitions",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "omniPanel.open.transitions"
+                }
+              },
+              {
+                "label": "previous",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "omniPanel.open.previous"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "omniPanel.open"
+            }
+          },
+          {
+            "label": "closed",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "omniPanel.closed"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "omniPanel"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "open"
+      ],
+      "to": [
+        "closed"
+      ],
+      "event": "CLOSE"
+    },
+    {
+      "from": [
+        "open"
+      ],
+      "to": [
+        "closed"
+      ],
+      "event": "TOGGLE"
+    },
+    {
+      "from": [
+        "closed"
+      ],
+      "to": [
+        "previous"
+      ],
+      "event": "TOGGLE"
+    },
+    {
+      "from": [
+        "omniPanel"
+      ],
+      "to": [
+        "background"
+      ],
+      "event": "OPEN_BACKGROUND"
+    },
+    {
+      "from": [
+        "omniPanel"
+      ],
+      "to": [
+        "media"
+      ],
+      "event": "OPEN_MEDIA"
+    },
+    {
+      "from": [
+        "omniPanel"
+      ],
+      "to": [
+        "music"
+      ],
+      "event": "OPEN_MUSIC"
+    },
+    {
+      "from": [
+        "omniPanel"
+      ],
+      "to": [
+        "properties"
+      ],
+      "event": "OPEN_PROPERTIES"
+    },
+    {
+      "from": [
+        "omniPanel"
+      ],
+      "to": [
+        "transcript"
+      ],
+      "event": "OPEN_TRANSCRIPT"
+    },
+    {
+      "from": [
+        "omniPanel"
+      ],
+      "to": [
+        "transitions"
+      ],
+      "event": "OPEN_TRANSITIONS"
+    }
+  ],
+  "events": [
+    {
+      "label": "OPEN_MUSIC"
+    },
+    {
+      "label": "OPEN_PROPERTIES"
+    },
+    {
+      "label": "OPEN_TRANSCRIPT"
+    },
+    {
+      "label": "OPEN_TRANSITIONS"
+    },
+    {
+      "label": "CLOSE"
+    },
+    {
+      "label": "TOGGLE"
+    },
+    {
+      "label": "OPEN_BACKGROUND"
+    },
+    {
+      "label": "OPEN_MEDIA"
+    }
+  ]
+}

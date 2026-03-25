@@ -1,0 +1,343 @@
+{
+  "name": "videoPalyerMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "videoPalyerMachine",
+        "type": 3,
+        "children": [
+          {
+            "label": "player",
+            "type": 2,
+            "children": [
+              {
+                "label": "ready",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "paused",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "videoPalyerMachine.player.ready.paused"
+                    }
+                  },
+                  {
+                    "label": "playing",
+                    "type": 1,
+                    "entry_actions": [
+                      {
+                        "label": "'actionEntryPlayAudio'",
+                        "language": "xstate"
+                      }
+                    ],
+                    "exit_actions": [
+                      {
+                        "label": "'actionExitPlayAudio'",
+                        "language": "xstate"
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "videoPalyerMachine.player.ready.playing"
+                    }
+                  },
+                  {
+                    "label": "hist",
+                    "type": 1,
+                    "is_history": true,
+                    "history_type": 1,
+                    "metadata": {
+                      "description": "preservamos el último estado",
+                      "stately_id": "videoPalyerMachine.player.ready.hist"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "videoPalyerMachine.player.ready"
+                }
+              },
+              {
+                "label": "loading",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "videoPalyerMachine.player.loading:invocation[0]",
+                      "kind": "named",
+                      "src": "songLoader"
+                    }
+                  ],
+                  "stately_id": "videoPalyerMachine.player.loading"
+                }
+              },
+              {
+                "label": "finished",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "videoPalyerMachine.player.finished"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "videoPalyerMachine.player"
+            }
+          },
+          {
+            "label": "volume",
+            "type": 2,
+            "children": [
+              {
+                "label": "unmuted",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "videoPalyerMachine.volume.unmuted"
+                }
+              },
+              {
+                "label": "muted",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "videoPalyerMachine.volume.muted"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "videoPalyerMachine.volume"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "videoPalyerMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "loading"
+      ]
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "player"
+      ],
+      "event": "DISLIKE",
+      "actions": [
+        {
+          "label": "'actionDislikeSong'",
+          "language": "xstate"
+        },
+        {
+          "label": "xstate.raise",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "player"
+      ],
+      "event": "AUDIO.TIME",
+      "actions": [
+        {
+          "label": "'actionAssignTime'",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "player"
+      ],
+      "event": "LIKE.TOGGLE",
+      "guard": {
+        "expression": "guardIsLike",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "xstate.raise",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "player"
+      ],
+      "event": "LIKE.TOGGLE",
+      "guard": {
+        "expression": "guardIsUnlike",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "xstate.raise",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "player"
+      ],
+      "event": "LIKE",
+      "actions": [
+        {
+          "label": "'actionLikeSong'",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "player"
+      ],
+      "event": "UNLIKE",
+      "actions": [
+        {
+          "label": "'actionUnlikeSong'",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "ready"
+      ],
+      "to": [
+        "finished"
+      ],
+      "guard": {
+        "expression": "guardElapsedMoreThanDuration",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "paused"
+      ],
+      "to": [
+        "playing"
+      ],
+      "event": "PLAY"
+    },
+    {
+      "from": [
+        "playing"
+      ],
+      "to": [
+        "paused"
+      ],
+      "event": "PAUSE"
+    },
+    {
+      "from": [
+        "loading"
+      ],
+      "to": [
+        "hist"
+      ],
+      "actions": [
+        {
+          "label": "'actionAssingSongData'",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "volume"
+      ],
+      "to": [
+        "volume"
+      ],
+      "event": "VOLUME",
+      "guard": {
+        "expression": "guardVolumeWithinRange",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "'actionAssignVolume'",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "unmuted"
+      ],
+      "to": [
+        "muted"
+      ],
+      "event": "VOLUME.TOGGLE"
+    },
+    {
+      "from": [
+        "muted"
+      ],
+      "to": [
+        "unmuted"
+      ],
+      "event": "VOLUME.TOGGLE"
+    }
+  ],
+  "events": [
+    {
+      "label": "AUDIO.TIME"
+    },
+    {
+      "label": "LIKE.TOGGLE"
+    },
+    {
+      "label": "UNLIKE"
+    },
+    {
+      "label": "PAUSE"
+    },
+    {
+      "label": "VOLUME"
+    },
+    {
+      "label": "VOLUME.TOGGLE"
+    },
+    {
+      "label": "DISLIKE"
+    },
+    {
+      "label": "LIKE"
+    },
+    {
+      "label": "PLAY"
+    }
+  ]
+}

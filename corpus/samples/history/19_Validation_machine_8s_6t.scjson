@@ -1,0 +1,173 @@
+{
+  "name": "Validation machine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Validation machine",
+        "type": 2,
+        "children": [
+          {
+            "label": "Not submitted",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Validation machine.Not submitted"
+            }
+          },
+          {
+            "label": "Waiting validation",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "UpdateStatus",
+                "language": "xstate",
+                "parameters": {
+                  "status": "Waiting validation"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Validation machine.Waiting validation"
+            }
+          },
+          {
+            "label": "Validated",
+            "type": 1,
+            "is_final": true,
+            "entry_actions": [
+              {
+                "label": "UpdateStatus",
+                "language": "xstate",
+                "parameters": {
+                  "status": "Validated"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Validation machine.Validated"
+            }
+          },
+          {
+            "label": "Waiting financial Validation",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "UpdateStatus",
+                "language": "xstate",
+                "parameters": {
+                  "status": "Waiting financial Validation"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Validation machine.Waiting financial Validation"
+            }
+          },
+          {
+            "label": "Refused",
+            "type": 1,
+            "is_final": true,
+            "entry_actions": [
+              {
+                "label": "UpdateStatus",
+                "language": "xstate",
+                "parameters": {
+                  "status": "Refused"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Validation machine.Refused"
+            }
+          },
+          {
+            "label": "hist",
+            "type": 1,
+            "is_history": true,
+            "history_type": 2,
+            "metadata": {
+              "stately_id": "Validation machine.hist"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Validation machine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Not submitted"
+      ],
+      "to": [
+        "Waiting validation"
+      ],
+      "event": "Submit"
+    },
+    {
+      "from": [
+        "Waiting validation"
+      ],
+      "to": [
+        "Validated"
+      ],
+      "event": "Approved",
+      "guard": {
+        "expression": "amount \u003c 1000",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Waiting validation"
+      ],
+      "to": [
+        "Waiting financial Validation"
+      ],
+      "event": "Approved"
+    },
+    {
+      "from": [
+        "Waiting validation"
+      ],
+      "to": [
+        "Refused"
+      ],
+      "event": "Refused"
+    },
+    {
+      "from": [
+        "Waiting financial Validation"
+      ],
+      "to": [
+        "Refused"
+      ],
+      "event": "Refused"
+    },
+    {
+      "from": [
+        "Waiting financial Validation"
+      ],
+      "to": [
+        "Validated"
+      ],
+      "event": "Approved"
+    }
+  ],
+  "events": [
+    {
+      "label": "Refused"
+    },
+    {
+      "label": "Submit"
+    },
+    {
+      "label": "Approved"
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "name": "espresso",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "espresso",
+        "type": 2,
+        "children": [
+          {
+            "label": "idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "meta_entries": [
+                [
+                  "message",
+                  "Coffee not made yet"
+                ]
+              ],
+              "stately_id": "espresso.idle"
+            }
+          },
+          {
+            "label": "preparing ingredients",
+            "type": 2,
+            "children": [
+              {
+                "label": "beans",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "whole",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "espresso.preparing ingredients.beans.whole"
+                    }
+                  },
+                  {
+                    "label": "grinding",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "espresso.preparing ingredients.beans.grinding"
+                    }
+                  },
+                  {
+                    "label": "ground",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "espresso.preparing ingredients.beans.ground"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "espresso.preparing ingredients.beans"
+                }
+              },
+              {
+                "label": "water",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "start",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "espresso.preparing ingredients.water.start"
+                    }
+                  },
+                  {
+                    "label": "heating",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "espresso.preparing ingredients.water.heating"
+                    }
+                  },
+                  {
+                    "label": "heated",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "espresso.preparing ingredients.water.heated"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "espresso.preparing ingredients.water"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "espresso.preparing ingredients"
+            }
+          },
+          {
+            "label": "frothing milk",
+            "type": 1,
+            "metadata": {
+              "stately_id": "espresso.frothing milk"
+            }
+          },
+          {
+            "label": "milk frothed",
+            "type": 1,
+            "metadata": {
+              "stately_id": "espresso.milk frothed"
+            }
+          },
+          {
+            "label": "combining espresso and milk",
+            "type": 1,
+            "metadata": {
+              "stately_id": "espresso.combining espresso and milk"
+            }
+          },
+          {
+            "label": "ready",
+            "type": 1,
+            "metadata": {
+              "stately_id": "espresso.ready"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "espresso"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "beans"
+      ],
+      "event": "start"
+    },
+    {
+      "from": [
+        "whole"
+      ],
+      "to": [
+        "grinding"
+      ],
+      "event": "grind"
+    },
+    {
+      "from": [
+        "grinding"
+      ],
+      "to": [
+        "ground"
+      ]
+    },
+    {
+      "from": [
+        "beans"
+      ],
+      "to": [
+        "water"
+      ]
+    },
+    {
+      "from": [
+        "start"
+      ],
+      "to": [
+        "heating"
+      ],
+      "event": "heat"
+    },
+    {
+      "from": [
+        "heating"
+      ],
+      "to": [
+        "heated"
+      ]
+    },
+    {
+      "from": [
+        "frothing milk"
+      ],
+      "to": [
+        "milk frothed"
+      ]
+    },
+    {
+      "from": [
+        "milk frothed"
+      ],
+      "to": [
+        "combining espresso and milk"
+      ],
+      "event": "combine milk and espresso"
+    },
+    {
+      "from": [
+        "combining espresso and milk"
+      ],
+      "to": [
+        "ready"
+      ],
+      "actions": [
+        {
+          "label": "xstate.assign",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "start"
+    },
+    {
+      "label": "grind"
+    },
+    {
+      "label": "heat"
+    },
+    {
+      "label": "combine milk and espresso"
+    }
+  ]
+}

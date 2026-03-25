@@ -1,0 +1,362 @@
+{
+  "name": "Simulation lifecycle",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Simulation lifecycle",
+        "type": 2,
+        "children": [
+          {
+            "label": "configuring",
+            "type": 1,
+            "is_initial": true,
+            "entry_actions": [
+              {
+                "label": "reset",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "Simulation lifecycle.configuring"
+            }
+          },
+          {
+            "label": "configured",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "Simulation lifecycle.configured:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "create simulation"
+                }
+              ],
+              "stately_id": "Simulation lifecycle.configured"
+            }
+          },
+          {
+            "label": "microphone configuration",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "Simulation lifecycle.microphone configuration:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "configure microphone device"
+                }
+              ],
+              "stately_id": "Simulation lifecycle.microphone configuration"
+            }
+          },
+          {
+            "label": "ready",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Simulation lifecycle.ready"
+            }
+          },
+          {
+            "label": "error",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Simulation lifecycle.error"
+            }
+          },
+          {
+            "label": "started",
+            "type": 2,
+            "children": [
+              {
+                "label": "checking simulator mode",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Simulation lifecycle.started.checking simulator mode"
+                }
+              },
+              {
+                "label": "video simulator",
+                "type": 1,
+                "exit_actions": [
+                  {
+                    "label": "clear video simulator",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "video simulator",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "video simulator"
+                    }
+                  ],
+                  "stately_id": "Simulation lifecycle.started.video simulator"
+                }
+              },
+              {
+                "label": "audio simulator",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "audio simulator",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "audio simulator"
+                    }
+                  ],
+                  "stately_id": "Simulation lifecycle.started.audio simulator"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Simulation lifecycle.started"
+            }
+          },
+          {
+            "label": "stopped",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Simulation lifecycle.stopped"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Simulation lifecycle"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "configuring"
+      ],
+      "to": [
+        "configured"
+      ],
+      "event": "confirm configuration",
+      "actions": [
+        {
+          "label": "set configuration",
+          "language": "xstate"
+        },
+        {
+          "label": "navigate to simulator",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "configured"
+      ],
+      "to": [
+        "configuring"
+      ],
+      "event": "reset"
+    },
+    {
+      "from": [
+        "configured"
+      ],
+      "to": [
+        "microphone configuration"
+      ],
+      "actions": [
+        {
+          "label": "inline:Simulation lifecycle.configured#done.invoke.Simulation lifecycle.configured:invocation[0][-1]#transition[0]",
+          "language": "xstate"
+        },
+        {
+          "label": "inline:Simulation lifecycle.configured#done.invoke.Simulation lifecycle.configured:invocation[0][-1]#transition[1]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "configured"
+      ],
+      "to": [
+        "error"
+      ],
+      "actions": [
+        {
+          "label": "inline:Simulation lifecycle.configured#error.platform.Simulation lifecycle.configured:invocation[0][-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "microphone configuration"
+      ],
+      "to": [
+        "ready"
+      ],
+      "actions": [
+        {
+          "label": "inline:Simulation lifecycle.microphone configuration#done.invoke.Simulation lifecycle.microphone configuration:invocation[0][-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "microphone configuration"
+      ],
+      "to": [
+        "error"
+      ],
+      "actions": [
+        {
+          "label": "inline:Simulation lifecycle.microphone configuration#error.platform.Simulation lifecycle.microphone configuration:invocation[0][-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "ready"
+      ],
+      "to": [
+        "started"
+      ],
+      "event": "start"
+    },
+    {
+      "from": [
+        "ready"
+      ],
+      "to": [
+        "configuring"
+      ],
+      "event": "reset"
+    },
+    {
+      "from": [
+        "error"
+      ],
+      "to": [
+        "configuring"
+      ],
+      "event": "reset"
+    },
+    {
+      "from": [
+        "checking simulator mode"
+      ],
+      "to": [
+        "video simulator"
+      ],
+      "guard": {
+        "expression": "if simulator mode is video",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "checking simulator mode"
+      ],
+      "to": [
+        "audio simulator"
+      ]
+    },
+    {
+      "from": [
+        "video simulator"
+      ],
+      "to": [
+        "error"
+      ],
+      "actions": [
+        {
+          "label": "inline:Simulation lifecycle.started.video simulator#error.platform.video simulator[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "audio simulator"
+      ],
+      "to": [
+        "error"
+      ],
+      "actions": [
+        {
+          "label": "inline:Simulation lifecycle.started.audio simulator#error.platform.audio simulator[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "started"
+      ],
+      "to": [
+        "stopped"
+      ],
+      "event": "stop"
+    },
+    {
+      "from": [
+        "started"
+      ],
+      "to": [
+        "configured"
+      ],
+      "event": "restart"
+    },
+    {
+      "from": [
+        "started"
+      ],
+      "to": [
+        "configuring"
+      ],
+      "event": "reset"
+    },
+    {
+      "from": [
+        "stopped"
+      ],
+      "to": [
+        "configuring"
+      ],
+      "event": "reset"
+    }
+  ],
+  "events": [
+    {
+      "label": "confirm configuration"
+    },
+    {
+      "label": "reset"
+    },
+    {
+      "label": "start"
+    },
+    {
+      "label": "stop"
+    },
+    {
+      "label": "restart"
+    }
+  ],
+  "variables": {
+    "__js_template__": "initialContext"
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "name": "ModalMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "ModalMachine",
+        "type": 2,
+        "children": [
+          {
+            "label": "Closed",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "We are in the closed state",
+              "stately_id": "ModalMachine.Closed"
+            }
+          },
+          {
+            "label": "Open",
+            "type": 2,
+            "children": [
+              {
+                "label": "Idle",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "ModalMachine.Open.Idle"
+                }
+              },
+              {
+                "label": "Submitting",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": ":invocation:fqlijd934",
+                      "kind": "named",
+                      "src": "Submit username to backend"
+                    }
+                  ],
+                  "stately_id": "ModalMachine.Open.Submitting"
+                }
+              },
+              {
+                "label": "Complete",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "ModalMachine.Open.Complete"
+                }
+              }
+            ],
+            "entry_actions": [
+              {
+                "label": "Console log",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "ModalMachine.Open"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "ModalMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Closed"
+      ],
+      "to": [
+        "Open"
+      ],
+      "event": "Open"
+    },
+    {
+      "from": [
+        "Open"
+      ],
+      "to": [
+        "Closed"
+      ],
+      "event": "Close",
+      "actions": [
+        {
+          "label": "Console log",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Submitting"
+      ],
+      "event": "Change Username"
+    },
+    {
+      "from": [
+        "Submitting"
+      ],
+      "to": [
+        "Complete"
+      ]
+    },
+    {
+      "from": [
+        "Submitting"
+      ],
+      "to": [
+        "Idle"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "Change Username"
+    },
+    {
+      "label": "Open"
+    },
+    {
+      "label": "Close"
+    }
+  ]
+}

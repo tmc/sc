@@ -1,0 +1,371 @@
+{
+  "name": "request-handler",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "request-handler",
+        "type": 2,
+        "children": [
+          {
+            "label": "IDLE",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "request-handler.IDLE"
+            }
+          },
+          {
+            "label": "HOME",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "request-handler.HOME:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "HOME.requestHandler"
+                }
+              ],
+              "meta_entries": [],
+              "stately_id": "request-handler.HOME"
+            }
+          },
+          {
+            "label": "NOT_FOUND",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "request-handler.NOT_FOUND:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "NOT_FOUND.requestHandler"
+                }
+              ],
+              "stately_id": "request-handler.NOT_FOUND"
+            }
+          },
+          {
+            "label": "HOME_SUCCESS",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "request-handler.HOME_SUCCESS"
+            }
+          },
+          {
+            "label": "HOME_FAILED",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "request-handler.HOME_FAILED"
+            }
+          },
+          {
+            "label": "NOT_FOUND_SUCCESS",
+            "type": 1,
+            "is_final": true,
+            "entry_actions": [
+              {
+                "label": "NOT_FOUND.success",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "request-handler.NOT_FOUND_SUCCESS"
+            }
+          },
+          {
+            "label": "NOT_FOUND_FAILED",
+            "type": 1,
+            "is_final": true,
+            "entry_actions": [
+              {
+                "label": "NOT_FOUND.failed",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "request-handler.NOT_FOUND_FAILED"
+            }
+          },
+          {
+            "label": "HOME_RESOURCES",
+            "type": 3,
+            "children": [
+              {
+                "label": "CSS_RESET",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "REQUEST_CSS_RESET",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "invoke": [
+                        {
+                          "id": "",
+                          "input": {},
+                          "kind": "named",
+                          "settings": {},
+                          "src": "requestCSSReset"
+                        }
+                      ],
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.CSS_RESET.REQUEST_CSS_RESET"
+                    }
+                  },
+                  {
+                    "label": "CSS_RESET_SUCCESS",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.CSS_RESET.CSS_RESET_SUCCESS"
+                    }
+                  },
+                  {
+                    "label": "CSS_RESET_FAILED",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.CSS_RESET.CSS_RESET_FAILED"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "request-handler.HOME_RESOURCES.CSS_RESET"
+                }
+              },
+              {
+                "label": "HOME_STYLE",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "REQUEST_HOME_STYLE",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "invoke": [
+                        {
+                          "id": "",
+                          "input": {},
+                          "kind": "named",
+                          "settings": {},
+                          "src": "requestHomeStyle"
+                        }
+                      ],
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.HOME_STYLE.REQUEST_HOME_STYLE"
+                    }
+                  },
+                  {
+                    "label": "HOME_STYLE_SUCCESS",
+                    "type": 1,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.HOME_STYLE.HOME_STYLE_SUCCESS"
+                    }
+                  },
+                  {
+                    "label": "HOME_STYLE_FAILURE",
+                    "type": 1,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.HOME_STYLE.HOME_STYLE_FAILURE"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "request-handler.HOME_RESOURCES.HOME_STYLE"
+                }
+              },
+              {
+                "label": "HOME_SCRIPT",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "REQUEST_HOME_SCRIPT",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.HOME_SCRIPT.REQUEST_HOME_SCRIPT"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "request-handler.HOME_RESOURCES.HOME_SCRIPT"
+                }
+              },
+              {
+                "label": "FAVICON",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "REQUEST_FAVICON",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "request-handler.HOME_RESOURCES.FAVICON.REQUEST_FAVICON"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "request-handler.HOME_RESOURCES.FAVICON"
+                }
+              }
+            ],
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "request-handler.HOME_RESOURCES"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "request-handler"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "IDLE"
+      ],
+      "to": [
+        "HOME"
+      ],
+      "event": "/"
+    },
+    {
+      "from": [
+        "IDLE"
+      ],
+      "to": [
+        "NOT_FOUND"
+      ],
+      "event": "/404"
+    },
+    {
+      "from": [
+        "HOME"
+      ],
+      "to": [
+        "HOME_RESOURCES"
+      ],
+      "actions": [
+        {
+          "label": "inline:request-handler.HOME#done.invoke.request-handler.HOME:invocation[0][-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "HOME"
+      ],
+      "to": [
+        "HOME_FAILED"
+      ],
+      "actions": [
+        {
+          "label": "inline:request-handler.HOME#error.platform.request-handler.HOME:invocation[0][-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "NOT_FOUND"
+      ],
+      "to": [
+        "NOT_FOUND_SUCCESS"
+      ]
+    },
+    {
+      "from": [
+        "NOT_FOUND"
+      ],
+      "to": [
+        "NOT_FOUND_FAILED"
+      ]
+    },
+    {
+      "from": [
+        "HOME_RESOURCES"
+      ],
+      "to": [
+        "HOME_SUCCESS"
+      ]
+    },
+    {
+      "from": [
+        "REQUEST_CSS_RESET"
+      ],
+      "to": [
+        "CSS_RESET_SUCCESS"
+      ]
+    },
+    {
+      "from": [
+        "REQUEST_CSS_RESET"
+      ],
+      "to": [
+        "CSS_RESET_FAILED"
+      ]
+    },
+    {
+      "from": [
+        "REQUEST_HOME_STYLE"
+      ],
+      "to": [
+        "HOME_STYLE_SUCCESS"
+      ]
+    },
+    {
+      "from": [
+        "REQUEST_HOME_STYLE"
+      ],
+      "to": [
+        "HOME_STYLE_FAILURE"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "/"
+    },
+    {
+      "label": "/404"
+    }
+  ],
+  "variables": {
+    "HOME": {
+      "body": "",
+      "headers": {
+        "content-type": "text/html"
+      },
+      "status": 200
+    },
+    "NOT_FOUND": {
+      "body": "",
+      "headers": {
+        "content-type": "text/html"
+      },
+      "status": 404
+    }
+  }
+}

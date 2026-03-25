@@ -1,0 +1,244 @@
+{
+  "name": "Quickstart",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Quickstart",
+        "type": 3,
+        "children": [
+          {
+            "label": "Project",
+            "type": 2,
+            "children": [
+              {
+                "label": "Select or create project",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Quickstart.Project.Select or create project"
+                }
+              },
+              {
+                "label": "Create project",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Quickstart.Project.Create project"
+                }
+              },
+              {
+                "label": "Select project",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Quickstart.Project.Select project"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Quickstart.Project"
+            }
+          },
+          {
+            "label": "Import data",
+            "type": 2,
+            "children": [
+              {
+                "label": "Select data import type",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Quickstart.Import data.Select data import type"
+                }
+              },
+              {
+                "label": "Import CSV",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Upload CSV",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Quickstart.Import data.Import CSV.Upload CSV"
+                    }
+                  },
+                  {
+                    "label": "Fix CSV headers",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Quickstart.Import data.Import CSV.Fix CSV headers"
+                    }
+                  },
+                  {
+                    "label": "View results",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "Quickstart.Import data.Import CSV.View results"
+                    }
+                  },
+                  {
+                    "label": "Check results",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Quickstart.Import data.Import CSV.Check results"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Quickstart.Import data.Import CSV"
+                }
+              },
+              {
+                "label": "Sandbox",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Quickstart.Import data.Sandbox"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Quickstart.Import data"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Quickstart"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Select or create project"
+      ],
+      "to": [
+        "Create project"
+      ],
+      "event": "Create new project"
+    },
+    {
+      "from": [
+        "Select or create project"
+      ],
+      "to": [
+        "Select project"
+      ],
+      "event": "Select project"
+    },
+    {
+      "from": [
+        "Select data import type"
+      ],
+      "to": [
+        "Import CSV"
+      ],
+      "event": "CSV"
+    },
+    {
+      "from": [
+        "Upload CSV"
+      ],
+      "to": [
+        "Fix CSV headers"
+      ],
+      "event": "Incorrect CSV headers"
+    },
+    {
+      "from": [
+        "Upload CSV"
+      ],
+      "to": [
+        "Check results"
+      ],
+      "event": "Correct CSV headers"
+    },
+    {
+      "from": [
+        "Fix CSV headers"
+      ],
+      "to": [
+        "Fix CSV headers"
+      ],
+      "event": "Incorrect CSV headers"
+    },
+    {
+      "from": [
+        "Fix CSV headers"
+      ],
+      "to": [
+        "Check results"
+      ],
+      "event": "Correct CSV headers"
+    },
+    {
+      "from": [
+        "Check results"
+      ],
+      "to": [
+        "View results"
+      ],
+      "event": "Results correct"
+    },
+    {
+      "from": [
+        "Quickstart"
+      ],
+      "to": [
+        "Project"
+      ],
+      "event": "Select or create project"
+    },
+    {
+      "from": [
+        "Quickstart"
+      ],
+      "to": [
+        "Select data import type"
+      ],
+      "event": "Select data import type"
+    },
+    {
+      "from": [
+        "Select data import type"
+      ],
+      "to": [
+        "Sandbox"
+      ],
+      "event": "Sandbox"
+    }
+  ],
+  "events": [
+    {
+      "label": "Create new project"
+    },
+    {
+      "label": "Correct CSV headers"
+    },
+    {
+      "label": "Results correct"
+    },
+    {
+      "label": "Select or create project"
+    },
+    {
+      "label": "Select data import type"
+    },
+    {
+      "label": "Select project"
+    },
+    {
+      "label": "CSV"
+    },
+    {
+      "label": "Incorrect CSV headers"
+    },
+    {
+      "label": "Sandbox"
+    }
+  ]
+}

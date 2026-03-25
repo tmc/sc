@@ -1,0 +1,266 @@
+{
+  "name": "Tpbp",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Tpbp",
+        "type": 2,
+        "children": [
+          {
+            "label": "authentication",
+            "type": 2,
+            "children": [
+              {
+                "label": "logged out",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": ":invocation:c008p46kpsu",
+                      "kind": "named",
+                      "src": "check sso token"
+                    }
+                  ],
+                  "stately_id": "Tpbp.authentication.logged out"
+                }
+              },
+              {
+                "label": "logged in",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.logged in"
+                }
+              },
+              {
+                "label": "don't have sso token",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": ":invocation:dd3p4kjhbxo",
+                      "kind": "named",
+                      "src": "check token in storage"
+                    }
+                  ],
+                  "stately_id": "Tpbp.authentication.don't have sso token"
+                }
+              },
+              {
+                "label": "login error",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.login error"
+                }
+              },
+              {
+                "label": "should login",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "go to login page",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.should login"
+                }
+              },
+              {
+                "label": "full app access",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.full app access"
+                }
+              },
+              {
+                "label": "need situation validation",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.need situation validation"
+                }
+              },
+              {
+                "label": "need patrimony validation",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.need patrimony validation"
+                }
+              },
+              {
+                "label": "need budget validation",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.need budget validation"
+                }
+              },
+              {
+                "label": "need investor profile validation",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Tpbp.authentication.need investor profile validation"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Tpbp.authentication"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Tpbp"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "logged out"
+      ],
+      "to": [
+        "logged in"
+      ]
+    },
+    {
+      "from": [
+        "logged out"
+      ],
+      "to": [
+        "don't have sso token"
+      ],
+      "guard": {
+        "expression": "env !== prod",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "logged out"
+      ],
+      "to": [
+        "login error"
+      ]
+    },
+    {
+      "from": [
+        "don't have sso token"
+      ],
+      "to": [
+        "logged in"
+      ]
+    },
+    {
+      "from": [
+        "should login"
+      ],
+      "to": [
+        "logged in"
+      ],
+      "event": "login success"
+    },
+    {
+      "from": [
+        "don't have sso token"
+      ],
+      "to": [
+        "should login"
+      ]
+    },
+    {
+      "from": [
+        "logged in"
+      ],
+      "to": [
+        "need situation validation"
+      ],
+      "event": "check user status",
+      "guard": {
+        "expression": "user is an advisor",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "logged in"
+      ],
+      "to": [
+        "full app access"
+      ],
+      "event": "check user status"
+    },
+    {
+      "from": [
+        "logged in"
+      ],
+      "to": [
+        "logged out"
+      ],
+      "event": "logout"
+    },
+    {
+      "from": [
+        "need situation validation"
+      ],
+      "to": [
+        "need patrimony validation"
+      ],
+      "event": "situation validated"
+    },
+    {
+      "from": [
+        "need patrimony validation"
+      ],
+      "to": [
+        "need budget validation"
+      ],
+      "event": "patrimony validated"
+    },
+    {
+      "from": [
+        "need budget validation"
+      ],
+      "to": [
+        "need investor profile validation"
+      ],
+      "event": "budget validated"
+    },
+    {
+      "from": [
+        "need investor profile validation"
+      ],
+      "to": [
+        "full app access"
+      ],
+      "event": "investor profil validated"
+    }
+  ],
+  "events": [
+    {
+      "label": "login success"
+    },
+    {
+      "label": "check user status"
+    },
+    {
+      "label": "logout"
+    },
+    {
+      "label": "situation validated"
+    },
+    {
+      "label": "patrimony validated"
+    },
+    {
+      "label": "budget validated"
+    },
+    {
+      "label": "investor profil validated"
+    }
+  ]
+}

@@ -1,0 +1,306 @@
+{
+  "name": "ChartMenu",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "ChartMenu",
+        "type": 2,
+        "children": [
+          {
+            "label": "settings",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "ChartMenu.settings"
+            }
+          },
+          {
+            "label": "add dimension: choose new or existing",
+            "type": 1,
+            "metadata": {
+              "stately_id": "ChartMenu.add dimension: choose new or existing"
+            }
+          },
+          {
+            "label": "add dimension: choose datasource",
+            "type": 1,
+            "metadata": {
+              "stately_id": "ChartMenu.add dimension: choose datasource"
+            }
+          },
+          {
+            "label": "add dimension: choose calculation",
+            "type": 1,
+            "metadata": {
+              "stately_id": "ChartMenu.add dimension: choose calculation"
+            }
+          },
+          {
+            "label": "add dimension: choose filters",
+            "type": 1,
+            "metadata": {
+              "stately_id": "ChartMenu.add dimension: choose filters"
+            }
+          },
+          {
+            "label": "edit dimension",
+            "type": 1,
+            "metadata": {
+              "stately_id": "ChartMenu.edit dimension"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "ChartMenu"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "settings"
+      ],
+      "to": [
+        "add dimension: choose new or existing"
+      ],
+      "event": "add dimension"
+    },
+    {
+      "from": [
+        "settings"
+      ],
+      "to": [
+        "edit dimension"
+      ],
+      "event": "edit dimension",
+      "actions": [
+        {
+          "label": "setSelectedDimension",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "add dimension: choose new or existing"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "existing"
+    },
+    {
+      "from": [
+        "add dimension: choose new or existing"
+      ],
+      "to": [
+        "add dimension: choose datasource"
+      ],
+      "event": "new",
+      "actions": [
+        {
+          "label": "setNewDimension",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "add dimension: choose new or existing"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "back"
+    },
+    {
+      "from": [
+        "add dimension: choose datasource"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "add dimension: choose datasource"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "done"
+    },
+    {
+      "from": [
+        "add dimension: choose datasource"
+      ],
+      "to": [
+        "add dimension: choose new or existing"
+      ],
+      "event": "back"
+    },
+    {
+      "from": [
+        "add dimension: choose datasource"
+      ],
+      "to": [
+        "add dimension: choose filters"
+      ],
+      "event": "set filter"
+    },
+    {
+      "from": [
+        "add dimension: choose datasource"
+      ],
+      "to": [
+        "add dimension: choose datasource"
+      ],
+      "event": "mergeNewDimension",
+      "actions": [
+        {
+          "label": "mergeNewDimension",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "add dimension: choose calculation"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "add dimension: choose calculation"
+      ],
+      "to": [
+        "add dimension: choose filters"
+      ],
+      "event": "back"
+    },
+    {
+      "from": [
+        "add dimension: choose calculation"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "done"
+    },
+    {
+      "from": [
+        "add dimension: choose calculation"
+      ],
+      "to": [
+        "add dimension: choose calculation"
+      ],
+      "event": "mergeNewDimension",
+      "actions": [
+        {
+          "label": "mergeNewDimension",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "add dimension: choose filters"
+      ],
+      "to": [
+        "add dimension: choose datasource"
+      ],
+      "event": "back"
+    },
+    {
+      "from": [
+        "add dimension: choose filters"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "done"
+    },
+    {
+      "from": [
+        "add dimension: choose filters"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "add dimension: choose filters"
+      ],
+      "to": [
+        "add dimension: choose calculation"
+      ],
+      "event": "set calculation"
+    },
+    {
+      "from": [
+        "add dimension: choose filters"
+      ],
+      "to": [
+        "add dimension: choose filters"
+      ],
+      "event": "mergeNewDimension",
+      "actions": [
+        {
+          "label": "mergeNewDimension",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "edit dimension"
+      ],
+      "to": [
+        "settings"
+      ],
+      "event": "done"
+    }
+  ],
+  "events": [
+    {
+      "label": "done"
+    },
+    {
+      "label": "edit dimension"
+    },
+    {
+      "label": "existing"
+    },
+    {
+      "label": "set filter"
+    },
+    {
+      "label": "mergeNewDimension"
+    },
+    {
+      "label": "set calculation"
+    },
+    {
+      "label": "add dimension"
+    },
+    {
+      "label": "new"
+    },
+    {
+      "label": "back"
+    },
+    {
+      "label": "cancel"
+    }
+  ]
+}

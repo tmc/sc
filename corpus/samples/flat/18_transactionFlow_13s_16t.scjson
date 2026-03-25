@@ -1,0 +1,314 @@
+{
+  "name": "transactionFlow",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "transactionFlow",
+        "type": 2,
+        "children": [
+          {
+            "label": "idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "transactionFlow.idle"
+            }
+          },
+          {
+            "label": "startChainedActions",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "fetchInitialData",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "fetchInitialData"
+                }
+              ],
+              "stately_id": "transactionFlow.startChainedActions"
+            }
+          },
+          {
+            "label": "determineStep",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "getNextStep",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "getNextStep"
+                }
+              ],
+              "stately_id": "transactionFlow.determineStep"
+            }
+          },
+          {
+            "label": "transitionToNextStep",
+            "type": 1,
+            "metadata": {
+              "stately_id": "transactionFlow.transitionToNextStep"
+            }
+          },
+          {
+            "label": "revoke",
+            "type": 1,
+            "metadata": {
+              "stately_id": "transactionFlow.revoke"
+            }
+          },
+          {
+            "label": "approve",
+            "type": 1,
+            "metadata": {
+              "stately_id": "transactionFlow.approve"
+            }
+          },
+          {
+            "label": "sendTx",
+            "type": 1,
+            "metadata": {
+              "stately_id": "transactionFlow.sendTx"
+            }
+          },
+          {
+            "label": "stepComplete",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "updateTrade",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "updateTrade"
+                }
+              ],
+              "stately_id": "transactionFlow.stepComplete"
+            }
+          },
+          {
+            "label": "pollForTradeStatus",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "pollForTradeStatus",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "pollForTradeStatus"
+                }
+              ],
+              "stately_id": "transactionFlow.pollForTradeStatus"
+            }
+          },
+          {
+            "label": "allComplete",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "transactionFlow.allComplete"
+            }
+          },
+          {
+            "label": "fail",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "transactionFlow.fail"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "transactionFlow"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "startChainedActions"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "startChainedActions"
+      ],
+      "to": [
+        "determineStep"
+      ],
+      "actions": [
+        {
+          "label": "inline:transactionFlow.startChainedActions#done.invoke.fetchInitialData[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "determineStep"
+      ],
+      "to": [
+        "transitionToNextStep"
+      ],
+      "actions": [
+        {
+          "label": "inline:transactionFlow.determineStep#done.invoke.getNextStep[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "transitionToNextStep"
+      ],
+      "to": [
+        "approve"
+      ],
+      "guard": {
+        "expression": "inline:transactionFlow.transitionToNextStep#always[-1]#guard",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "transitionToNextStep"
+      ],
+      "to": [
+        "revoke"
+      ],
+      "guard": {
+        "expression": "inline:transactionFlow.transitionToNextStep#always[-1]#guard",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "transitionToNextStep"
+      ],
+      "to": [
+        "sendTx"
+      ],
+      "guard": {
+        "expression": "inline:transactionFlow.transitionToNextStep#always[-1]#guard",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "transitionToNextStep"
+      ],
+      "to": [
+        "allComplete"
+      ],
+      "guard": {
+        "expression": "inline:transactionFlow.transitionToNextStep#always[-1]#guard",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "transitionToNextStep"
+      ],
+      "to": [
+        "fail"
+      ]
+    },
+    {
+      "from": [
+        "revoke"
+      ],
+      "to": [
+        "stepComplete"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "revoke"
+      ],
+      "to": [
+        "fail"
+      ],
+      "event": "FAIL"
+    },
+    {
+      "from": [
+        "approve"
+      ],
+      "to": [
+        "stepComplete"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "approve"
+      ],
+      "to": [
+        "fail"
+      ],
+      "event": "FAIL"
+    },
+    {
+      "from": [
+        "sendTx"
+      ],
+      "to": [
+        "stepComplete"
+      ],
+      "event": "NEXT"
+    },
+    {
+      "from": [
+        "sendTx"
+      ],
+      "to": [
+        "fail"
+      ],
+      "event": "FAIL"
+    },
+    {
+      "from": [
+        "stepComplete"
+      ],
+      "to": [
+        "pollForTradeStatus"
+      ]
+    },
+    {
+      "from": [
+        "pollForTradeStatus"
+      ],
+      "to": [
+        "determineStep"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "START"
+    },
+    {
+      "label": "NEXT"
+    },
+    {
+      "label": "FAIL"
+    }
+  ],
+  "variables": {
+    "isDone": false
+  }
+}

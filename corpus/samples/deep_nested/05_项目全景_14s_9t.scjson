@@ -1,0 +1,236 @@
+{
+  "name": "项目全景",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "项目全景",
+        "type": 2,
+        "children": [
+          {
+            "label": "加载项目树",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:zr38jqh2d",
+                  "kind": "named",
+                  "src": "invoke_加载项目树"
+                }
+              ],
+              "stately_id": "项目全景.加载项目树"
+            }
+          },
+          {
+            "label": "加载项目树完成",
+            "type": 2,
+            "children": [
+              {
+                "label": "项目树条内容判断",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "项目全景.加载项目树完成.项目树条内容判断"
+                }
+              },
+              {
+                "label": "有项目树",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "加载项目表格",
+                    "type": 1,
+                    "metadata": {
+                      "invoke": [
+                        {
+                          "id": ":invocation:2eew3xoq6",
+                          "kind": "named",
+                          "src": "invoke_加载项目表格"
+                        }
+                      ],
+                      "stately_id": "项目全景.加载项目树完成.有项目树.加载项目表格"
+                    }
+                  },
+                  {
+                    "label": "项目表格加载失败",
+                    "type": 1,
+                    "metadata": {
+                      "description": "接口错误的交互界面？",
+                      "stately_id": "项目全景.加载项目树完成.有项目树.项目表格加载失败"
+                    }
+                  },
+                  {
+                    "label": "项目表格加载完成",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "项目表格内容判断",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "项目全景.加载项目树完成.有项目树.项目表格加载完成.项目表格内容判断"
+                        }
+                      },
+                      {
+                        "label": "new state 1",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "项目全景.加载项目树完成.有项目树.项目表格加载完成.new state 1"
+                        }
+                      },
+                      {
+                        "label": "new state 2",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "项目全景.加载项目树完成.有项目树.项目表格加载完成.new state 2"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "项目全景.加载项目树完成.有项目树.项目表格加载完成"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "项目全景.加载项目树完成.有项目树"
+                }
+              },
+              {
+                "label": "无项目树",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "项目全景.加载项目树完成.无项目树"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "项目全景.加载项目树完成"
+            }
+          },
+          {
+            "label": "加载项目树失败",
+            "type": 1,
+            "metadata": {
+              "description": "这里应该有两种：\n- 接口错误\n- 无权限？",
+              "stately_id": "项目全景.加载项目树失败"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "项目全景"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "加载项目树"
+      ],
+      "to": [
+        "加载项目树完成"
+      ],
+      "actions": [
+        {
+          "label": "action_设置默认项目树",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "加载项目树"
+      ],
+      "to": [
+        "加载项目树失败"
+      ]
+    },
+    {
+      "from": [
+        "项目树条内容判断"
+      ],
+      "to": [
+        "有项目树"
+      ],
+      "guard": {
+        "expression": "有项目树",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "项目树条内容判断"
+      ],
+      "to": [
+        "无项目树"
+      ],
+      "guard": {
+        "expression": "无项目树",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "无项目树"
+      ],
+      "to": [
+        "无项目树"
+      ],
+      "event": "申请",
+      "actions": [
+        {
+          "label": "action_前往申请",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "加载项目表格"
+      ],
+      "to": [
+        "项目表格加载失败"
+      ]
+    },
+    {
+      "from": [
+        "加载项目表格"
+      ],
+      "to": [
+        "项目表格加载完成"
+      ]
+    },
+    {
+      "from": [
+        "项目表格内容判断"
+      ],
+      "to": [
+        "new state 1"
+      ],
+      "guard": {
+        "expression": "有项目表格",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "项目表格内容判断"
+      ],
+      "to": [
+        "new state 2"
+      ],
+      "guard": {
+        "expression": "无项目表格",
+        "language": "xstate"
+      }
+    }
+  ],
+  "events": [
+    {
+      "label": "申请"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "name": "What is a state machine?",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "What is a state machine?",
+        "type": 2,
+        "children": [
+          {
+            "label": "Class",
+            "type": 1,
+            "is_initial": true,
+            "entry_actions": [
+              {
+                "label": "Adfsd",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "What is a state machine?.Class"
+            }
+          },
+          {
+            "label": "Opened",
+            "type": 2,
+            "children": [
+              {
+                "label": "Playing",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "What is a state machine?.Opened.Playing"
+                }
+              },
+              {
+                "label": "Paused",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "What is a state machine?.Opened.Paused"
+                }
+              },
+              {
+                "label": "Stopped",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "What is a state machine?.Opened.Stopped"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "Fullscreen mode",
+              "invoke": [
+                {
+                  "id": ":invocation:6ov1ringm",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "startVideo"
+                }
+              ],
+              "stately_id": "What is a state machine?.Opened"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "description": "Video player",
+          "stately_id": "What is a state machine?"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Class"
+      ],
+      "to": [
+        "Opened"
+      ],
+      "event": "PLAY"
+    },
+    {
+      "from": [
+        "Playing"
+      ],
+      "to": [
+        "Paused"
+      ],
+      "event": "PAUSE"
+    },
+    {
+      "from": [
+        "Paused"
+      ],
+      "to": [
+        "Playing"
+      ],
+      "event": "PLAY"
+    },
+    {
+      "from": [
+        "Stopped"
+      ],
+      "to": [
+        "Class"
+      ]
+    },
+    {
+      "from": [
+        "Opened"
+      ],
+      "to": [
+        "Stopped"
+      ],
+      "event": "STOP"
+    }
+  ],
+  "events": [
+    {
+      "label": "STOP"
+    },
+    {
+      "label": "PLAY"
+    },
+    {
+      "label": "PAUSE"
+    }
+  ]
+}

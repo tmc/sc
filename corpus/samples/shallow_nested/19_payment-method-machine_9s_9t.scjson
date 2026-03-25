@@ -1,0 +1,225 @@
+{
+  "name": "payment-method-machine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "payment-method-machine",
+        "type": 2,
+        "children": [
+          {
+            "label": "initializing",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "setup-intent",
+                  "kind": "named",
+                  "src": "getSetupIntent"
+                }
+              ],
+              "stately_id": "payment-method-machine.initializing"
+            }
+          },
+          {
+            "label": "payment_collection",
+            "type": 2,
+            "children": [
+              {
+                "label": "idle",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "payment-method-machine.payment_collection.idle"
+                }
+              },
+              {
+                "label": "valid",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "submitPayment",
+                      "kind": "named",
+                      "src": "submitPayment"
+                    }
+                  ],
+                  "stately_id": "payment-method-machine.payment_collection.valid"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "payment-method-machine.payment_collection"
+            }
+          },
+          {
+            "label": "payment_source",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "attach-as-payment-method",
+                  "kind": "named",
+                  "src": "attachAsPaymentMethod"
+                }
+              ],
+              "stately_id": "payment-method-machine.payment_source"
+            }
+          },
+          {
+            "label": "success",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "payment-method-machine.success"
+            }
+          },
+          {
+            "label": "error",
+            "type": 1,
+            "metadata": {
+              "stately_id": "payment-method-machine.error"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "payment-method-machine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "initializing"
+      ],
+      "to": [
+        "payment_source"
+      ],
+      "guard": {
+        "expression": "setupIntentSucceeded",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "assignSetupIntent",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "initializing"
+      ],
+      "to": [
+        "payment_collection"
+      ],
+      "actions": [
+        {
+          "label": "assignSetupIntent",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "valid"
+      ],
+      "event": "PAYMENT_CHANGED",
+      "guard": {
+        "expression": "paymentValid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "valid"
+      ],
+      "to": [
+        "idle"
+      ],
+      "actions": [
+        {
+          "label": "setError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "payment_source"
+      ],
+      "to": [
+        "success"
+      ],
+      "actions": [
+        {
+          "label": "assignPaymentSource",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "payment_source"
+      ],
+      "to": [
+        "payment_collection"
+      ],
+      "actions": [
+        {
+          "label": "assignError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "initializing"
+      ],
+      "to": [
+        "error"
+      ]
+    },
+    {
+      "from": [
+        "error"
+      ],
+      "to": [
+        "initializing"
+      ],
+      "event": "REINITIALIZE",
+      "actions": [
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "valid"
+      ],
+      "to": [
+        "initializing"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "PAYMENT_CHANGED"
+    },
+    {
+      "label": "REINITIALIZE"
+    }
+  ],
+  "variables": {
+    "setupIntent": null
+  }
+}

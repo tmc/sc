@@ -1,0 +1,117 @@
+{
+  "name": "solutionViewer",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "solutionViewer",
+        "type": 2,
+        "children": [
+          {
+            "label": "setting_dates",
+            "type": 1,
+            "is_initial": true,
+            "entry_actions": [
+              {
+                "label": "set_max_date",
+                "language": "xstate"
+              },
+              {
+                "label": "set_min_date",
+                "language": "xstate"
+              },
+              {
+                "label": "set_initial_date_range",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "solutionViewer.setting_dates"
+            }
+          },
+          {
+            "label": "updatingLoaded",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "set_loaded_single_dates",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "solutionViewer.updatingLoaded"
+            }
+          },
+          {
+            "label": "loaded",
+            "type": 1,
+            "metadata": {
+              "stately_id": "solutionViewer.loaded"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "solutionViewer"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "loaded"
+      ],
+      "to": [
+        "updatingLoaded"
+      ],
+      "event": "DATE_RANGE",
+      "actions": [
+        {
+          "label": "set_date_range",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "updatingLoaded"
+      ],
+      "to": [
+        "loaded"
+      ]
+    },
+    {
+      "from": [
+        "setting_dates"
+      ],
+      "to": [
+        "updatingLoaded"
+      ]
+    },
+    {
+      "from": [
+        "solutionViewer"
+      ],
+      "to": [
+        "setting_dates"
+      ],
+      "event": "RESET",
+      "actions": [
+        {
+          "label": "set_solution",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "DATE_RANGE"
+    },
+    {
+      "label": "RESET"
+    }
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "name": "BLUFF_IT",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "BLUFF_IT",
+        "type": 2,
+        "children": [
+          {
+            "label": "HOME_SCREEN",
+            "type": 2,
+            "children": [
+              {
+                "label": "WAITING_FOR_PLAYERS",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "BLUFF_IT.HOME_SCREEN.WAITING_FOR_PLAYERS"
+                }
+              },
+              {
+                "label": "WAITING_FOR_CONFIRMATION",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "BLUFF_IT.HOME_SCREEN.WAITING_FOR_CONFIRMATION"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "BLUFF_IT.HOME_SCREEN"
+            }
+          },
+          {
+            "label": "GAME",
+            "type": 2,
+            "children": [
+              {
+                "label": "DEALING_CARDS",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "BLUFF_IT.GAME.DEALING_CARDS"
+                }
+              },
+              {
+                "label": "TURN",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "WAIT_FOR_TURN",
+                    "type": 1,
+                    "is_initial": true,
+                    "entry_actions": [
+                      {
+                        "label": "next_player",
+                        "language": "xstate"
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "BLUFF_IT.GAME.TURN.WAIT_FOR_TURN"
+                    }
+                  },
+                  {
+                    "label": "WAIT_FOR_CALL",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "BLUFF_IT.GAME.TURN.WAIT_FOR_CALL"
+                    }
+                  },
+                  {
+                    "label": "turn_check",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "BLUFF_IT.GAME.TURN.turn_check"
+                    }
+                  },
+                  {
+                    "label": "removing_player",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "BLUFF_IT.GAME.TURN.removing_player"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "BLUFF_IT.GAME.TURN"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "BLUFF_IT.GAME"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "BLUFF_IT"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "WAITING_FOR_PLAYERS"
+      ],
+      "to": [
+        "WAITING_FOR_CONFIRMATION"
+      ],
+      "event": "PLR_ADD",
+      "guard": {
+        "expression": "enough_players",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "add_player",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WAITING_FOR_PLAYERS"
+      ],
+      "to": [
+        "WAITING_FOR_PLAYERS"
+      ],
+      "event": "PLR_ADD",
+      "actions": [
+        {
+          "label": "add_player",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "DEALING_CARDS"
+      ],
+      "to": [
+        "TURN"
+      ],
+      "actions": [
+        {
+          "label": "deal_cards",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WAIT_FOR_TURN"
+      ],
+      "to": [
+        "WAIT_FOR_CALL"
+      ],
+      "event": "PLACE",
+      "actions": [
+        {
+          "label": "place_cards",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WAIT_FOR_CALL"
+      ],
+      "to": [
+        "turn_check"
+      ]
+    },
+    {
+      "from": [
+        "WAIT_FOR_CALL"
+      ],
+      "to": [
+        "turn_check"
+      ],
+      "event": "BLUFF",
+      "guard": {
+        "expression": "valid_claim",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "flush_stack_to_placer",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WAIT_FOR_CALL"
+      ],
+      "to": [
+        "turn_check"
+      ],
+      "event": "BLUFF",
+      "actions": [
+        {
+          "label": "flush_stack_to_caller",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WAITING_FOR_CONFIRMATION"
+      ],
+      "to": [
+        "GAME"
+      ],
+      "event": "START"
+    },
+    {
+      "from": [
+        "WAIT_FOR_TURN"
+      ],
+      "to": [
+        "turn_check"
+      ]
+    },
+    {
+      "from": [
+        "WAIT_FOR_TURN"
+      ],
+      "to": [
+        "turn_check"
+      ],
+      "event": "SKIP"
+    },
+    {
+      "from": [
+        "turn_check"
+      ],
+      "to": [
+        "TURN"
+      ],
+      "guard": {
+        "expression": "valid_hand",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "turn_check"
+      ],
+      "to": [
+        "removing_player"
+      ]
+    },
+    {
+      "from": [
+        "removing_player"
+      ],
+      "to": [
+        "TURN"
+      ],
+      "actions": [
+        {
+          "label": "remove_player",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WAITING_FOR_CONFIRMATION"
+      ],
+      "to": [
+        "WAITING_FOR_CONFIRMATION"
+      ],
+      "event": "PLR_ADD",
+      "actions": [
+        {
+          "label": "add_player",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "PLR_ADD"
+    },
+    {
+      "label": "PLACE"
+    },
+    {
+      "label": "BLUFF"
+    },
+    {
+      "label": "START"
+    },
+    {
+      "label": "SKIP"
+    }
+  ],
+  "variables": {
+    "currentPlayer": -1,
+    "players": [],
+    "playloop": [],
+    "stack": []
+  }
+}

@@ -1,0 +1,666 @@
+{
+  "name": "TimeLocket",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "TimeLocket",
+        "type": 2,
+        "children": [
+          {
+            "label": "TimeLocket View",
+            "type": 2,
+            "children": [
+              {
+                "label": "TimeLocket Primary Page",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "TimeLocket.TimeLocket View.TimeLocket Primary Page"
+                }
+              },
+              {
+                "label": "Project Phases and Tasks Overview Screen",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Project Phase(s) + Task(s) List",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "TimeLocket.TimeLocket View.Project Phases and Tasks Overview Screen.Project Phase(s) + Task(s) List"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "TimeLocket.TimeLocket View.Project Phases and Tasks Overview Screen"
+                }
+              },
+              {
+                "label": "Project Materials: MTOL",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Material Takeoff List",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.Material Takeoff List"
+                    }
+                  },
+                  {
+                    "label": "Selected Material: Takeoff Details Screen",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.Selected Material: Takeoff Details Screen"
+                    }
+                  },
+                  {
+                    "label": "Confirm Material Screen",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.Confirm Material Screen"
+                    }
+                  },
+                  {
+                    "label": "\"Assign to Task?\" Screen",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.\"Assign to Task?\" Screen"
+                    }
+                  },
+                  {
+                    "label": "Cart",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "My Cart",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.Cart.My Cart"
+                        }
+                      },
+                      {
+                        "label": "Order Confirmed Screen",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.Cart.Order Confirmed Screen"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL.Cart"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "TimeLocket.TimeLocket View.Project Materials: MTOL"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "TimeLocket.TimeLocket View"
+            }
+          },
+          {
+            "label": "Subscription / Transfer Ownership",
+            "type": 2,
+            "children": [
+              {
+                "label": "Subscription Status + Ownership Transfer",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "TimeLocket.Subscription / Transfer Ownership.Subscription Status + Ownership Transfer"
+                }
+              },
+              {
+                "label": "Transfer Ownership - New",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "TimeLocket.Subscription / Transfer Ownership.Transfer Ownership - New"
+                }
+              },
+              {
+                "label": "Ownership Transfer Details",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "TimeLocket.Subscription / Transfer Ownership.Ownership Transfer Details"
+                }
+              },
+              {
+                "label": "View Transfer Details",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "TimeLocket.Subscription / Transfer Ownership.View Transfer Details"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "TimeLocket.Subscription / Transfer Ownership"
+            }
+          },
+          {
+            "label": "Invoices (Order History)",
+            "type": 2,
+            "children": [
+              {
+                "label": "List of User's (contractor or subcontractor) Purchases for all Projects",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "TimeLocket.Invoices (Order History).List of User's (contractor or subcontractor) Purchases for all Projects"
+                }
+              },
+              {
+                "label": "Payment Pending Invoice",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "TimeLocket.Invoices (Order History).Payment Pending Invoice"
+                }
+              },
+              {
+                "label": "Completed Invoice Details Saved",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "TimeLocket.Invoices (Order History).Completed Invoice Details Saved"
+                }
+              },
+              {
+                "label": "All Purchases and Details for selected Project",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "TimeLocket.Invoices (Order History).All Purchases and Details for selected Project"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "TimeLocket.Invoices (Order History)"
+            }
+          },
+          {
+            "label": "Project Name",
+            "type": 1,
+            "metadata": {
+              "stately_id": "TimeLocket.Project Name"
+            }
+          },
+          {
+            "label": "Project w/ Images, Description, Relevant Files",
+            "type": 1,
+            "metadata": {
+              "stately_id": "TimeLocket.Project w/ Images, Description, Relevant Files"
+            }
+          },
+          {
+            "label": "Review Project Details Screen",
+            "type": 1,
+            "metadata": {
+              "stately_id": "TimeLocket.Review Project Details Screen"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "TimeLocket"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "TimeLocket"
+      ],
+      "to": [
+        "TimeLocket View"
+      ],
+      "event": "User Clicks Project to View"
+    },
+    {
+      "from": [
+        "Project Phase(s) + Task(s) List"
+      ],
+      "to": [
+        "Project Phase(s) + Task(s) List"
+      ],
+      "event": "Add Task to Project Phase"
+    },
+    {
+      "from": [
+        "Project Phase(s) + Task(s) List"
+      ],
+      "to": [
+        "Project Phase(s) + Task(s) List"
+      ],
+      "event": "Add/Edit/Delete Phase(s)"
+    },
+    {
+      "from": [
+        "Material Takeoff List"
+      ],
+      "to": [
+        "Selected Material: Takeoff Details Screen"
+      ],
+      "event": "Search + Add Material to List"
+    },
+    {
+      "from": [
+        "Selected Material: Takeoff Details Screen"
+      ],
+      "to": [
+        "Material Takeoff List"
+      ],
+      "event": "Enter Details (dimensions/quantity/etc) + Save"
+    },
+    {
+      "from": [
+        "Material Takeoff List"
+      ],
+      "to": [
+        "Confirm Material Screen"
+      ],
+      "event": "Click to add Material to Cart"
+    },
+    {
+      "from": [
+        "Confirm Material Screen"
+      ],
+      "to": [
+        "Material Takeoff List"
+      ],
+      "event": "Return to List"
+    },
+    {
+      "from": [
+        "Confirm Material Screen"
+      ],
+      "to": [
+        "\"Assign to Task?\" Screen"
+      ],
+      "event": "Confirm quantity, dimensions, etc."
+    },
+    {
+      "from": [
+        "\"Assign to Task?\" Screen"
+      ],
+      "to": [
+        "Project Phases and Tasks Overview Screen"
+      ],
+      "event": "Yes"
+    },
+    {
+      "from": [
+        "\"Assign to Task?\" Screen"
+      ],
+      "to": [
+        "Cart"
+      ],
+      "event": "No"
+    },
+    {
+      "from": [
+        "Project Phases and Tasks Overview Screen"
+      ],
+      "to": [
+        "Cart"
+      ],
+      "event": "Select Project Phase Task to Assign to \u0026 Proceed"
+    },
+    {
+      "from": [
+        "My Cart"
+      ],
+      "to": [
+        "Order Confirmed Screen"
+      ],
+      "event": "Confirm Details + Place Order"
+    },
+    {
+      "from": [
+        "My Cart"
+      ],
+      "to": [
+        "My Cart"
+      ],
+      "event": "Edit/Remove Cart Items"
+    },
+    {
+      "from": [
+        "Order Confirmed Screen"
+      ],
+      "to": [
+        "Subscription / Transfer Ownership"
+      ],
+      "event": "Add to Calendar"
+    },
+    {
+      "from": [
+        "Project Phase(s) + Task(s) List"
+      ],
+      "to": [
+        "Subscription / Transfer Ownership"
+      ],
+      "event": "Display Phases + Tasks in Calendar"
+    },
+    {
+      "from": [
+        "Order Confirmed Screen"
+      ],
+      "to": [
+        "Invoices (Order History)"
+      ],
+      "event": "Store Order Details in Project Invoice (Order history)"
+    },
+    {
+      "from": [
+        "List of User's (contractor or subcontractor) Purchases for all Projects"
+      ],
+      "to": [
+        "Payment Pending Invoice"
+      ],
+      "event": "Click \"Request Payment\"",
+      "guard": {
+        "expression": "Project + All Tasks are Completed",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Payment Pending Invoice"
+      ],
+      "to": [
+        "Completed Invoice Details Saved"
+      ],
+      "event": "Payment Received"
+    },
+    {
+      "from": [
+        "Completed Invoice Details Saved"
+      ],
+      "to": [
+        "List of User's (contractor or subcontractor) Purchases for all Projects"
+      ],
+      "event": "Return to Invoices Screen"
+    },
+    {
+      "from": [
+        "List of User's (contractor or subcontractor) Purchases for all Projects"
+      ],
+      "to": [
+        "All Purchases and Details for selected Project"
+      ],
+      "event": "Click Project/Invoice"
+    },
+    {
+      "from": [
+        "All Purchases and Details for selected Project"
+      ],
+      "to": [
+        "List of User's (contractor or subcontractor) Purchases for all Projects"
+      ],
+      "event": "Return to Invoices Screen"
+    },
+    {
+      "from": [
+        "TimeLocket"
+      ],
+      "to": [
+        "Project Name"
+      ],
+      "event": "User creates, and names, a New Project"
+    },
+    {
+      "from": [
+        "Project Name"
+      ],
+      "to": [
+        "Project w/ Images, Description, Relevant Files"
+      ],
+      "event": "Enter General Details"
+    },
+    {
+      "from": [
+        "Project w/ Images, Description, Relevant Files"
+      ],
+      "to": [
+        "Review Project Details Screen"
+      ],
+      "event": "Enter Project Phases and Tasks (optional)"
+    },
+    {
+      "from": [
+        "Project w/ Images, Description, Relevant Files"
+      ],
+      "to": [
+        "Project w/ Images, Description, Relevant Files"
+      ],
+      "event": "Add Project Members or Skip \u0026 Add Later"
+    },
+    {
+      "from": [
+        "Review Project Details Screen"
+      ],
+      "to": [
+        "TimeLocket View"
+      ],
+      "event": "SAVE"
+    },
+    {
+      "from": [
+        "TimeLocket Primary Page"
+      ],
+      "to": [
+        "Project Phases and Tasks Overview Screen"
+      ],
+      "event": "Click \"People\""
+    },
+    {
+      "from": [
+        "TimeLocket Primary Page"
+      ],
+      "to": [
+        "Project Materials: MTOL"
+      ],
+      "event": "Click \"Add Media\""
+    },
+    {
+      "from": [
+        "Subscription Status + Ownership Transfer"
+      ],
+      "to": [
+        "Transfer Ownership - New"
+      ],
+      "event": "Click \"Transfer Ownership\"",
+      "guard": {
+        "expression": "No current Ownership transfer set",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Transfer Ownership - New"
+      ],
+      "to": [
+        "View Transfer Details"
+      ],
+      "event": "Select person from in-app friends list + select date of transfer"
+    },
+    {
+      "from": [
+        "TimeLocket View"
+      ],
+      "to": [
+        "Invoices (Order History)"
+      ],
+      "event": "Navigate to Profile --\u003e Invoices (Order History)"
+    },
+    {
+      "from": [
+        "TimeLocket Primary Page"
+      ],
+      "to": [
+        "Subscription / Transfer Ownership"
+      ],
+      "event": "Click \"Subscription\""
+    },
+    {
+      "from": [
+        "Subscription Status + Ownership Transfer"
+      ],
+      "to": [
+        "Ownership Transfer Details"
+      ],
+      "event": "Click \"Modify Ownership Transfer\""
+    },
+    {
+      "from": [
+        "View Transfer Details"
+      ],
+      "to": [
+        "Subscription Status + Ownership Transfer"
+      ],
+      "event": "Click Confirm button"
+    },
+    {
+      "from": [
+        "Ownership Transfer Details"
+      ],
+      "to": [
+        "Ownership Transfer Details"
+      ],
+      "event": "Modify Transfer Date"
+    },
+    {
+      "from": [
+        "Ownership Transfer Details"
+      ],
+      "to": [
+        "Subscription Status + Ownership Transfer"
+      ],
+      "event": "Cancel Transfer"
+    },
+    {
+      "from": [
+        "Ownership Transfer Details"
+      ],
+      "to": [
+        "Transfer Ownership - New"
+      ],
+      "event": "Modify Transfer Recipient"
+    }
+  ],
+  "events": [
+    {
+      "label": "Enter Project Phases and Tasks (optional)"
+    },
+    {
+      "label": "Yes"
+    },
+    {
+      "label": "Select Project Phase Task to Assign to \u0026 Proceed"
+    },
+    {
+      "label": "Edit/Remove Cart Items"
+    },
+    {
+      "label": "Click Confirm button"
+    },
+    {
+      "label": "Add Project Members or Skip \u0026 Add Later"
+    },
+    {
+      "label": "Click \"Add Media\""
+    },
+    {
+      "label": "Modify Transfer Date"
+    },
+    {
+      "label": "Enter Details (dimensions/quantity/etc) + Save"
+    },
+    {
+      "label": "Display Phases + Tasks in Calendar"
+    },
+    {
+      "label": "User creates, and names, a New Project"
+    },
+    {
+      "label": "Click \"People\""
+    },
+    {
+      "label": "SAVE"
+    },
+    {
+      "label": "Add/Edit/Delete Phase(s)"
+    },
+    {
+      "label": "Search + Add Material to List"
+    },
+    {
+      "label": "No"
+    },
+    {
+      "label": "Confirm Details + Place Order"
+    },
+    {
+      "label": "Add to Calendar"
+    },
+    {
+      "label": "Return to Invoices Screen"
+    },
+    {
+      "label": "Click Project/Invoice"
+    },
+    {
+      "label": "User Clicks Project to View"
+    },
+    {
+      "label": "Enter General Details"
+    },
+    {
+      "label": "Select person from in-app friends list + select date of transfer"
+    },
+    {
+      "label": "Navigate to Profile --\u003e Invoices (Order History)"
+    },
+    {
+      "label": "Click \"Subscription\""
+    },
+    {
+      "label": "Cancel Transfer"
+    },
+    {
+      "label": "Click to add Material to Cart"
+    },
+    {
+      "label": "Click \"Request Payment\""
+    },
+    {
+      "label": "Payment Received"
+    },
+    {
+      "label": "Click \"Transfer Ownership\""
+    },
+    {
+      "label": "Add Task to Project Phase"
+    },
+    {
+      "label": "Return to List"
+    },
+    {
+      "label": "Confirm quantity, dimensions, etc."
+    },
+    {
+      "label": "Store Order Details in Project Invoice (Order history)"
+    },
+    {
+      "label": "Click \"Modify Ownership Transfer\""
+    },
+    {
+      "label": "Modify Transfer Recipient"
+    }
+  ]
+}

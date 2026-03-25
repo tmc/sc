@@ -1,0 +1,158 @@
+{
+  "name": "Pair conversation",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Pair conversation",
+        "type": 2,
+        "children": [
+          {
+            "label": "pairConversation",
+            "type": 3,
+            "children": [
+              {
+                "label": "presentTopicOptions_A",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.presentTopicOptions_A"
+                }
+              },
+              {
+                "label": "presentQuestionOptions_A",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.presentQuestionOptions_A"
+                }
+              },
+              {
+                "label": "questionSent_A",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.questionSent_A"
+                }
+              },
+              {
+                "label": "presentTopicOptions_B",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.presentTopicOptions_B"
+                }
+              },
+              {
+                "label": "presentQuestionOptions_B",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.presentQuestionOptions_B"
+                }
+              },
+              {
+                "label": "getQuestion_B",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.getQuestion_B"
+                }
+              },
+              {
+                "label": "fillInAnswer_B",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.fillInAnswer_B"
+                }
+              },
+              {
+                "label": "getFeedback_B",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Pair conversation.pairConversation.getFeedback_B"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Pair conversation.pairConversation"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Pair conversation"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "presentTopicOptions_A"
+      ],
+      "to": [
+        "presentQuestionOptions_A"
+      ],
+      "event": "chooseTopics"
+    },
+    {
+      "from": [
+        "presentQuestionOptions_A"
+      ],
+      "to": [
+        "questionSent_A"
+      ],
+      "event": "chooseQ_A"
+    },
+    {
+      "from": [
+        "presentTopicOptions_B"
+      ],
+      "to": [
+        "presentQuestionOptions_B"
+      ],
+      "event": "chooseTopics"
+    },
+    {
+      "from": [
+        "presentQuestionOptions_B"
+      ],
+      "to": [
+        "getQuestion_B"
+      ],
+      "event": "choosePreferredQ_B"
+    },
+    {
+      "from": [
+        "getQuestion_B"
+      ],
+      "to": [
+        "fillInAnswer_B"
+      ],
+      "event": "receiveQuestion"
+    },
+    {
+      "from": [
+        "fillInAnswer_B"
+      ],
+      "to": [
+        "getFeedback_B"
+      ],
+      "event": "receiveFeedback"
+    }
+  ],
+  "events": [
+    {
+      "label": "chooseTopics"
+    },
+    {
+      "label": "chooseQ_A"
+    },
+    {
+      "label": "choosePreferredQ_B"
+    },
+    {
+      "label": "receiveQuestion"
+    },
+    {
+      "label": "receiveFeedback"
+    }
+  ]
+}

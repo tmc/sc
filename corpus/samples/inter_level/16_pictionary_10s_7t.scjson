@@ -1,0 +1,206 @@
+{
+  "name": "pictionary",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "pictionary",
+        "type": 2,
+        "children": [
+          {
+            "label": "gameStart",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "pictionary.gameStart"
+            }
+          },
+          {
+            "label": "playing",
+            "type": 2,
+            "children": [
+              {
+                "label": "round",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "turn",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "drawing",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "pictionary.playing.round.turn.drawing"
+                        }
+                      },
+                      {
+                        "label": "turnEnd",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "pictionary.playing.round.turn.turnEnd"
+                        }
+                      }
+                    ],
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "pictionary.playing.round.turn"
+                    }
+                  },
+                  {
+                    "label": "roundEnd",
+                    "type": 1,
+                    "is_final": true,
+                    "entry_actions": [
+                      {
+                        "label": "inline:pictionary.playing.round.roundEnd#entry[0]",
+                        "language": "xstate"
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "pictionary.playing.round.roundEnd"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "inline:pictionary.playing.round#entry[0]",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "pictionary.playing.round"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "pictionary.playing"
+            }
+          },
+          {
+            "label": "gameEnd",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "pictionary.gameEnd"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "pictionary"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "gameStart"
+      ],
+      "to": [
+        "playing"
+      ],
+      "event": "START_GAME"
+    },
+    {
+      "from": [
+        "drawing"
+      ],
+      "to": [
+        "turnEnd"
+      ],
+      "event": "CORRECT_GUESS"
+    },
+    {
+      "from": [
+        "drawing"
+      ],
+      "to": [
+        "turnEnd"
+      ],
+      "event": "TIME_UP"
+    },
+    {
+      "from": [
+        "turnEnd"
+      ],
+      "to": [
+        "drawing"
+      ],
+      "guard": {
+        "expression": "inline:pictionary.playing.round.turn.turnEnd#always[-1]#guard",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "inline:pictionary.playing.round.turn.turnEnd#always[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "turnEnd"
+      ],
+      "to": [
+        "roundEnd"
+      ]
+    },
+    {
+      "from": [
+        "round"
+      ],
+      "to": [
+        "round"
+      ],
+      "event": "END_ROUND",
+      "guard": {
+        "expression": "inline:pictionary.playing.round#END_ROUND[-1]#guard",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "inline:pictionary.playing.round#END_ROUND[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "round"
+      ],
+      "to": [
+        "gameEnd"
+      ],
+      "event": "END_ROUND"
+    }
+  ],
+  "events": [
+    {
+      "label": "START_GAME"
+    },
+    {
+      "label": "CORRECT_GUESS"
+    },
+    {
+      "label": "TIME_UP"
+    },
+    {
+      "label": "END_ROUND"
+    }
+  ],
+  "variables": {
+    "currentPlayerIndex": 0,
+    "currentRound": 1,
+    "players": [
+      "Player1",
+      "Player2",
+      "Player3"
+    ],
+    "totalRounds": 3
+  }
+}

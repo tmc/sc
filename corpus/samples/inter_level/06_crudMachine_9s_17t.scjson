@@ -1,0 +1,325 @@
+{
+  "name": "crudMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "crudMachine",
+        "type": 2,
+        "children": [
+          {
+            "label": "Idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "The machine is in the idle state, waiting for an operation to be invoked.",
+              "stately_id": "crudMachine.Idle"
+            }
+          },
+          {
+            "label": "Loading",
+            "type": 1,
+            "metadata": {
+              "description": "The machine is in the loading state, fetching a specific entity.",
+              "stately_id": "crudMachine.Loading"
+            }
+          },
+          {
+            "label": "Listing",
+            "type": 1,
+            "metadata": {
+              "description": "The machine is in the listing state, fetching and displaying all entities.",
+              "stately_id": "crudMachine.Listing"
+            }
+          },
+          {
+            "label": "Creating",
+            "type": 1,
+            "metadata": {
+              "description": "The machine is in the creating state, creating a new entity with provided fields.",
+              "stately_id": "crudMachine.Creating"
+            }
+          },
+          {
+            "label": "Updating",
+            "type": 1,
+            "metadata": {
+              "description": "The machine is in the updating state, updating an existing entity with new values for its fields.",
+              "stately_id": "crudMachine.Updating"
+            }
+          },
+          {
+            "label": "ConfirmRemove",
+            "type": 1,
+            "metadata": {
+              "description": "The machine is in the confirm remove state, waiting for confirmation to remove an entity.",
+              "stately_id": "crudMachine.ConfirmRemove"
+            }
+          },
+          {
+            "label": "Removing",
+            "type": 1,
+            "metadata": {
+              "description": "The machine is in the removing state, removing an entity after confirmation.",
+              "stately_id": "crudMachine.Removing"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "crudMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Loading"
+      ],
+      "event": "load"
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Listing"
+      ],
+      "event": "list"
+    },
+    {
+      "from": [
+        "Idle"
+      ],
+      "to": [
+        "Creating"
+      ],
+      "event": "create"
+    },
+    {
+      "from": [
+        "Loading"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "displayEntity",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Loading"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "displayError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Listing"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "displayEntities",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Listing"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "displayError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Creating"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "addEntity",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Creating"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "displayError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "updateEntity",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Updating"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "displayError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "ConfirmRemove"
+      ],
+      "to": [
+        "Removing"
+      ],
+      "event": "confirm"
+    },
+    {
+      "from": [
+        "ConfirmRemove"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "Removing"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "success",
+      "actions": [
+        {
+          "label": "removeEntity",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Removing"
+      ],
+      "to": [
+        "Idle"
+      ],
+      "event": "failure",
+      "actions": [
+        {
+          "label": "displayError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "crudMachine"
+      ],
+      "to": [
+        "Updating"
+      ],
+      "event": "update"
+    },
+    {
+      "from": [
+        "crudMachine"
+      ],
+      "to": [
+        "ConfirmRemove"
+      ],
+      "event": "remove"
+    }
+  ],
+  "events": [
+    {
+      "label": "load"
+    },
+    {
+      "label": "list"
+    },
+    {
+      "label": "create"
+    },
+    {
+      "label": "failure"
+    },
+    {
+      "label": "success"
+    },
+    {
+      "label": "confirm"
+    },
+    {
+      "label": "cancel"
+    },
+    {
+      "label": "update"
+    },
+    {
+      "label": "remove"
+    }
+  ],
+  "variables": {
+    "entities": [],
+    "entity": null,
+    "error": null
+  }
+}

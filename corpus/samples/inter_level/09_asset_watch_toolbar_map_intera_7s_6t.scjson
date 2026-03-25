@@ -1,0 +1,134 @@
+{
+  "name": "asset watch toolbar/map interactions",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "asset watch toolbar/map interactions",
+        "type": 2,
+        "children": [
+          {
+            "label": "idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "asset watch toolbar/map interactions.idle"
+            }
+          },
+          {
+            "label": "active asset",
+            "type": 2,
+            "children": [
+              {
+                "label": "following",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "asset watch toolbar/map interactions.active asset.following"
+                }
+              },
+              {
+                "label": "roaming",
+                "type": 1,
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "asset watch toolbar/map interactions.active asset.roaming"
+                }
+              },
+              {
+                "label": "fit full history",
+                "type": 1,
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "asset watch toolbar/map interactions.active asset.fit full history"
+                }
+              }
+            ],
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "asset watch toolbar/map interactions.active asset"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "meta_entries": [],
+          "stately_id": "asset watch toolbar/map interactions"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "active asset"
+      ],
+      "event": "select asset"
+    },
+    {
+      "from": [
+        "following"
+      ],
+      "to": [
+        "roaming"
+      ],
+      "event": "drag map"
+    },
+    {
+      "from": [
+        "roaming"
+      ],
+      "to": [
+        "following"
+      ],
+      "event": "recenter"
+    },
+    {
+      "from": [
+        "active asset"
+      ],
+      "to": [
+        "fit full history"
+      ],
+      "event": "intentional hover on timeline"
+    },
+    {
+      "from": [
+        "fit full history"
+      ],
+      "to": [
+        "following"
+      ],
+      "event": "recenter"
+    },
+    {
+      "from": [
+        "fit full history"
+      ],
+      "to": [
+        "roaming"
+      ],
+      "event": "drag map"
+    }
+  ],
+  "events": [
+    {
+      "label": "recenter"
+    },
+    {
+      "label": "intentional hover on timeline"
+    },
+    {
+      "label": "select asset"
+    },
+    {
+      "label": "drag map"
+    }
+  ]
+}

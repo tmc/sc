@@ -1,0 +1,170 @@
+{
+  "name": "Untitled",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Untitled",
+        "type": 2,
+        "children": [
+          {
+            "label": "healthy",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "Untitled.healthy"
+            }
+          },
+          {
+            "label": "bleeding",
+            "type": 3,
+            "children": [
+              {
+                "label": "New state 2",
+                "type": 1,
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "Untitled.bleeding.New state 2"
+                }
+              },
+              {
+                "label": "New state 1",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Untitled.bleeding.New state 1"
+                }
+              }
+            ],
+            "entry_actions": [
+              {
+                "label": "startBleed",
+                "language": "xstate",
+                "parameters": {
+                  "DoTBleed": "5/s"
+                }
+              }
+            ],
+            "exit_actions": [
+              {
+                "label": "stopBleed",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "Untitled.bleeding"
+            }
+          },
+          {
+            "label": "sick",
+            "type": 1,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "Untitled.sick"
+            }
+          },
+          {
+            "label": "starving",
+            "type": 1,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "Untitled.starving"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "meta_entries": [],
+          "stately_id": "Untitled"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "healthy"
+      ],
+      "to": [
+        "bleeding"
+      ],
+      "event": "cut"
+    },
+    {
+      "from": [
+        "healthy"
+      ],
+      "to": [
+        "sick"
+      ],
+      "event": "poison"
+    },
+    {
+      "from": [
+        "healthy"
+      ],
+      "to": [
+        "starving"
+      ],
+      "event": "hunger"
+    },
+    {
+      "from": [
+        "bleeding"
+      ],
+      "to": [
+        "healthy"
+      ],
+      "event": "bandage"
+    },
+    {
+      "from": [
+        "starving"
+      ],
+      "to": [
+        "healthy"
+      ],
+      "event": "eating"
+    },
+    {
+      "from": [
+        "sick"
+      ],
+      "to": [
+        "healthy"
+      ],
+      "event": "taken antidote"
+    },
+    {
+      "from": [
+        "New state 2"
+      ],
+      "to": [
+        "New state 1"
+      ],
+      "event": "poison"
+    }
+  ],
+  "events": [
+    {
+      "label": "eating"
+    },
+    {
+      "label": "taken antidote"
+    },
+    {
+      "label": "cut"
+    },
+    {
+      "label": "poison"
+    },
+    {
+      "label": "hunger"
+    },
+    {
+      "label": "bandage"
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "name": "EncryptedField",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "EncryptedField",
+        "type": 2,
+        "children": [
+          {
+            "label": "initial",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "EncryptedField.initial"
+            }
+          },
+          {
+            "label": "encrypted",
+            "type": 1,
+            "metadata": {
+              "stately_id": "EncryptedField.encrypted"
+            }
+          },
+          {
+            "label": "editing",
+            "type": 2,
+            "children": [
+              {
+                "label": "hidden",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "EncryptedField.editing.hidden"
+                }
+              },
+              {
+                "label": "visible",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "EncryptedField.editing.visible"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "EncryptedField.editing"
+            }
+          },
+          {
+            "label": "encrypting",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "encrypt",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "encrypt"
+                }
+              ],
+              "stately_id": "EncryptedField.encrypting"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "EncryptedField"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "encrypted"
+      ],
+      "guard": {
+        "expression": "hasInitialValue",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "editing"
+      ]
+    },
+    {
+      "from": [
+        "encrypted"
+      ],
+      "to": [
+        "editing"
+      ],
+      "event": "edit"
+    },
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "editing"
+      ],
+      "event": "onChange",
+      "actions": [
+        {
+          "label": "setPlaintext",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "encrypting"
+      ],
+      "event": "confirm"
+    },
+    {
+      "from": [
+        "encrypting"
+      ],
+      "to": [
+        "encrypted"
+      ],
+      "actions": [
+        {
+          "label": "onSuccess",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "encrypted"
+      ],
+      "event": "cancel"
+    },
+    {
+      "from": [
+        "hidden"
+      ],
+      "to": [
+        "visible"
+      ],
+      "event": "toggle.visibility"
+    },
+    {
+      "from": [
+        "visible"
+      ],
+      "to": [
+        "hidden"
+      ],
+      "event": "toggle.visibility"
+    }
+  ],
+  "events": [
+    {
+      "label": "edit"
+    },
+    {
+      "label": "onChange"
+    },
+    {
+      "label": "confirm"
+    },
+    {
+      "label": "cancel"
+    },
+    {
+      "label": "toggle.visibility"
+    }
+  ]
+}

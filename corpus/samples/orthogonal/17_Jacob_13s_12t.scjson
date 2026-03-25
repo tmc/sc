@@ -1,0 +1,250 @@
+{
+  "name": "Jacob",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Jacob",
+        "type": 2,
+        "children": [
+          {
+            "label": "Sleeping",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Jacob.Sleeping"
+            }
+          },
+          {
+            "label": "Hungry",
+            "type": 2,
+            "children": [
+              {
+                "label": "Nice About It",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Jacob.Hungry.Nice About It"
+                }
+              },
+              {
+                "label": "Mean About It",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Jacob.Hungry.Mean About It"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Jacob.Hungry"
+            }
+          },
+          {
+            "label": "Chilling",
+            "type": 2,
+            "children": [
+              {
+                "label": "Curling up in a ball",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "Thinking of crimes",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Jacob.Chilling.Curling up in a ball.Thinking of crimes"
+                    }
+                  },
+                  {
+                    "label": "Claw",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Jacob.Chilling.Curling up in a ball.Claw"
+                    }
+                  },
+                  {
+                    "label": "New state 1",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Jacob.Chilling.Curling up in a ball.New state 1"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Jacob.Chilling.Curling up in a ball"
+                }
+              },
+              {
+                "label": "Making so many noises",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Jacob.Chilling.Making so many noises"
+                }
+              },
+              {
+                "label": "Playing with his toys",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Jacob.Chilling.Playing with his toys"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Jacob.Chilling"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Jacob"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Sleeping"
+      ],
+      "to": [
+        "Hungry"
+      ],
+      "event": "Time Passes"
+    },
+    {
+      "from": [
+        "Nice About It"
+      ],
+      "to": [
+        "Mean About It"
+      ],
+      "event": "Time Passes"
+    },
+    {
+      "from": [
+        "Hungry"
+      ],
+      "to": [
+        "Chilling"
+      ],
+      "event": "Eats"
+    },
+    {
+      "from": [
+        "Curling up in a ball"
+      ],
+      "to": [
+        "Making so many noises"
+      ],
+      "event": "Random Tick 1"
+    },
+    {
+      "from": [
+        "Curling up in a ball"
+      ],
+      "to": [
+        "Playing with his toys"
+      ],
+      "event": "Random Tick 2"
+    },
+    {
+      "from": [
+        "Playing with his toys"
+      ],
+      "to": [
+        "Making so many noises"
+      ],
+      "event": "Random Tick 3"
+    },
+    {
+      "from": [
+        "Chilling"
+      ],
+      "to": [
+        "Sleeping"
+      ],
+      "event": "20 minutes later"
+    },
+    {
+      "from": [
+        "Making so many noises"
+      ],
+      "to": [
+        "Curling up in a ball"
+      ],
+      "event": "Random Tick 4"
+    },
+    {
+      "from": [
+        "Making so many noises"
+      ],
+      "to": [
+        "Playing with his toys"
+      ],
+      "event": "Random Tick 5"
+    },
+    {
+      "from": [
+        "Playing with his toys"
+      ],
+      "to": [
+        "Curling up in a ball"
+      ],
+      "event": "Random Tick 6"
+    },
+    {
+      "from": [
+        "Claw"
+      ],
+      "to": [
+        "New state 1"
+      ],
+      "event": "Friendly Time"
+    },
+    {
+      "from": [
+        "New state 1"
+      ],
+      "to": [
+        "Claw"
+      ],
+      "event": "Event 1"
+    }
+  ],
+  "events": [
+    {
+      "label": "Random Tick 2"
+    },
+    {
+      "label": "Random Tick 3"
+    },
+    {
+      "label": "20 minutes later"
+    },
+    {
+      "label": "Random Tick 5"
+    },
+    {
+      "label": "Time Passes"
+    },
+    {
+      "label": "Eats"
+    },
+    {
+      "label": "Random Tick 4"
+    },
+    {
+      "label": "Random Tick 6"
+    },
+    {
+      "label": "Friendly Time"
+    },
+    {
+      "label": "Event 1"
+    },
+    {
+      "label": "Random Tick 1"
+    }
+  ]
+}

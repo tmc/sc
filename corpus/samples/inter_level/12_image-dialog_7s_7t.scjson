@@ -1,0 +1,140 @@
+{
+  "name": "image-dialog",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "image-dialog",
+        "type": 2,
+        "children": [
+          {
+            "label": "idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "image-dialog.idle"
+            }
+          },
+          {
+            "label": "intial",
+            "type": 1,
+            "metadata": {
+              "stately_id": "image-dialog.intial"
+            }
+          },
+          {
+            "label": "editing",
+            "type": 1,
+            "metadata": {
+              "stately_id": "image-dialog.editing"
+            }
+          },
+          {
+            "label": "insert image",
+            "type": 1,
+            "metadata": {
+              "stately_id": "image-dialog.insert image"
+            }
+          },
+          {
+            "label": "mutate image",
+            "type": 1,
+            "metadata": {
+              "stately_id": "image-dialog.mutate image"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "image-dialog"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "intial"
+      ],
+      "event": "COMMENCE"
+    },
+    {
+      "from": [
+        "intial"
+      ],
+      "to": [
+        "editing"
+      ],
+      "event": "EDIT"
+    },
+    {
+      "from": [
+        "image-dialog"
+      ],
+      "to": [
+        "idle"
+      ],
+      "event": "TO-IDLE"
+    },
+    {
+      "from": [
+        "intial"
+      ],
+      "to": [
+        "insert image"
+      ],
+      "event": "INSERT"
+    },
+    {
+      "from": [
+        "insert image"
+      ],
+      "to": [
+        "editing"
+      ],
+      "event": "EDIT"
+    },
+    {
+      "from": [
+        "editing"
+      ],
+      "to": [
+        "mutate image"
+      ],
+      "event": "MUTATE"
+    },
+    {
+      "from": [
+        "mutate image"
+      ],
+      "to": [
+        "editing"
+      ],
+      "event": "BACK"
+    }
+  ],
+  "events": [
+    {
+      "label": "EDIT"
+    },
+    {
+      "label": "TO-IDLE"
+    },
+    {
+      "label": "INSERT"
+    },
+    {
+      "label": "MUTATE"
+    },
+    {
+      "label": "BACK"
+    },
+    {
+      "label": "COMMENCE"
+    }
+  ]
+}

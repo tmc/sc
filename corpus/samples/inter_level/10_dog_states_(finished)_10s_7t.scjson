@@ -1,0 +1,176 @@
+{
+  "name": "dog states (finished)",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "dog states (finished)",
+        "type": 2,
+        "children": [
+          {
+            "label": "asleep",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "![sleeping puppy](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/asleep.svg)",
+              "stately_id": "dog states (finished).asleep"
+            }
+          },
+          {
+            "label": "awake",
+            "type": 2,
+            "children": [
+              {
+                "label": "waiting",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "description": "![puppy patiently waiting](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/waiting.svg)",
+                  "stately_id": "dog states (finished).awake.waiting"
+                }
+              },
+              {
+                "label": "on a walk",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "walking",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "description": "![happy walking puppy](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/walking.svg)",
+                      "stately_id": "dog states (finished).awake.on a walk.walking"
+                    }
+                  },
+                  {
+                    "label": "running",
+                    "type": 1,
+                    "metadata": {
+                      "description": "![puppy running bouncily](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/running.svg)",
+                      "meta_entries": [],
+                      "stately_id": "dog states (finished).awake.on a walk.running"
+                    }
+                  },
+                  {
+                    "label": "walk complete",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "description": "![sleeping puppy](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/asleep.svg)",
+                      "stately_id": "dog states (finished).awake.on a walk.walk complete"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "dog states (finished).awake.on a walk"
+                }
+              },
+              {
+                "label": "resting",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "description": "![puppy patiently waiting](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/waiting.svg)",
+                  "stately_id": "dog states (finished).awake.resting"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "![happy awake puppy](https://raw.githubusercontent.com/statelyai/assets/main/example-images/dogs/walking.svg)",
+              "stately_id": "dog states (finished).awake"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "dog states (finished)"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "asleep"
+      ],
+      "to": [
+        "awake"
+      ],
+      "event": "wakes up"
+    },
+    {
+      "from": [
+        "awake"
+      ],
+      "to": [
+        "asleep"
+      ]
+    },
+    {
+      "from": [
+        "walking"
+      ],
+      "to": [
+        "running"
+      ],
+      "event": "speed up"
+    },
+    {
+      "from": [
+        "running"
+      ],
+      "to": [
+        "walking"
+      ],
+      "event": "slow down"
+    },
+    {
+      "from": [
+        "waiting"
+      ],
+      "to": [
+        "walking"
+      ],
+      "event": "walk"
+    },
+    {
+      "from": [
+        "on a walk"
+      ],
+      "to": [
+        "walk complete"
+      ],
+      "event": "stop"
+    },
+    {
+      "from": [
+        "on a walk"
+      ],
+      "to": [
+        "resting"
+      ],
+      "event": "rest"
+    }
+  ],
+  "events": [
+    {
+      "label": "walk"
+    },
+    {
+      "label": "stop"
+    },
+    {
+      "label": "rest"
+    },
+    {
+      "label": "wakes up"
+    },
+    {
+      "label": "speed up"
+    },
+    {
+      "label": "slow down"
+    }
+  ]
+}

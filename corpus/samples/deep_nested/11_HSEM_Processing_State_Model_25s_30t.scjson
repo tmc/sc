@@ -1,0 +1,565 @@
+{
+  "name": "HSEM Processing State Model",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "HSEM Processing State Model",
+        "type": 2,
+        "children": [
+          {
+            "label": "INIT",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "HSEM Processing State Model.INIT"
+            }
+          },
+          {
+            "label": "IDLE",
+            "type": 1,
+            "metadata": {
+              "stately_id": "HSEM Processing State Model.IDLE"
+            }
+          },
+          {
+            "label": "ABORTED",
+            "type": 1,
+            "metadata": {
+              "stately_id": "HSEM Processing State Model.ABORTED"
+            }
+          },
+          {
+            "label": "PROCESS ACTIVE",
+            "type": 2,
+            "children": [
+              {
+                "label": "PROCESS",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "SETTING UP",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.SETTING UP"
+                    }
+                  },
+                  {
+                    "label": "READY",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.READY"
+                    }
+                  },
+                  {
+                    "label": "PRELOADING",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.PRELOADING"
+                    }
+                  },
+                  {
+                    "label": "EXECUTING",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "LOADING",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.EXECUTING.LOADING"
+                        }
+                      },
+                      {
+                        "label": "WORKING",
+                        "type": 2,
+                        "children": [
+                          {
+                            "label": "AWAITING COMMAND",
+                            "type": 1,
+                            "is_initial": true,
+                            "metadata": {
+                              "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.EXECUTING.WORKING.AWAITING COMMAND"
+                            }
+                          },
+                          {
+                            "label": "CONTACTOR OPEN",
+                            "type": 1,
+                            "metadata": {
+                              "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.EXECUTING.WORKING.CONTACTOR OPEN"
+                            }
+                          }
+                        ],
+                        "metadata": {
+                          "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.EXECUTING.WORKING"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.EXECUTING"
+                    }
+                  },
+                  {
+                    "label": "C",
+                    "type": 1,
+                    "is_history": true,
+                    "history_type": 1,
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS.C"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PROCESS"
+                }
+              },
+              {
+                "label": "ABORTING",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.ABORTING"
+                }
+              },
+              {
+                "label": "PAUSE",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "PROCESS PAUSE",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "CHECKING",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PAUSE.PROCESS PAUSE.CHECKING"
+                        }
+                      },
+                      {
+                        "label": "PAUSED",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PAUSE.PROCESS PAUSE.PAUSED"
+                        }
+                      },
+                      {
+                        "label": "PAUSING",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PAUSE.PROCESS PAUSE.PAUSING"
+                        }
+                      }
+                    ],
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PAUSE.PROCESS PAUSE"
+                    }
+                  },
+                  {
+                    "label": "ALARM PAUSED",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PAUSE.ALARM PAUSED"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.PAUSE"
+                }
+              },
+              {
+                "label": "STOPPING",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "HSEM Processing State Model.PROCESS ACTIVE.STOPPING"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "HSEM Processing State Model.PROCESS ACTIVE"
+            }
+          },
+          {
+            "label": "IDLE with ALARM",
+            "type": 1,
+            "metadata": {
+              "stately_id": "HSEM Processing State Model.IDLE with ALARM"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "HSEM Processing State Model"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "INIT"
+      ],
+      "to": [
+        "IDLE"
+      ],
+      "event": "e1"
+    },
+    {
+      "from": [
+        "ABORTED"
+      ],
+      "to": [
+        "IDLE"
+      ],
+      "event": "e28"
+    },
+    {
+      "from": [
+        "IDLE"
+      ],
+      "to": [
+        "PROCESS ACTIVE"
+      ],
+      "event": "e2"
+    },
+    {
+      "from": [
+        "ABORTING"
+      ],
+      "to": [
+        "ABORTED"
+      ],
+      "event": "e27"
+    },
+    {
+      "from": [
+        "SETTING UP"
+      ],
+      "to": [
+        "READY"
+      ],
+      "event": "e3"
+    },
+    {
+      "from": [
+        "READY"
+      ],
+      "to": [
+        "PRELOADING"
+      ],
+      "event": "e4"
+    },
+    {
+      "from": [
+        "PRELOADING"
+      ],
+      "to": [
+        "READY"
+      ],
+      "event": "e5"
+    },
+    {
+      "from": [
+        "READY"
+      ],
+      "to": [
+        "EXECUTING"
+      ],
+      "event": "e6"
+    },
+    {
+      "from": [
+        "LOADING"
+      ],
+      "to": [
+        "READY"
+      ],
+      "event": "e11"
+    },
+    {
+      "from": [
+        "LOADING"
+      ],
+      "to": [
+        "WORKING"
+      ],
+      "event": "e7"
+    },
+    {
+      "from": [
+        "WORKING"
+      ],
+      "to": [
+        "LOADING"
+      ],
+      "event": "e8"
+    },
+    {
+      "from": [
+        "AWAITING COMMAND"
+      ],
+      "to": [
+        "CONTACTOR OPEN"
+      ],
+      "event": "e9"
+    },
+    {
+      "from": [
+        "CONTACTOR OPEN"
+      ],
+      "to": [
+        "AWAITING COMMAND"
+      ],
+      "event": "e10"
+    },
+    {
+      "from": [
+        "PROCESS"
+      ],
+      "to": [
+        "ABORTING"
+      ],
+      "event": "e26"
+    },
+    {
+      "from": [
+        "PROCESS"
+      ],
+      "to": [
+        "STOPPING"
+      ],
+      "event": "e12"
+    },
+    {
+      "from": [
+        "STOPPING"
+      ],
+      "to": [
+        "ABORTING"
+      ],
+      "event": "e24"
+    },
+    {
+      "from": [
+        "STOPPING"
+      ],
+      "to": [
+        "IDLE"
+      ],
+      "event": "e13"
+    },
+    {
+      "from": [
+        "PAUSE"
+      ],
+      "to": [
+        "ABORTING"
+      ],
+      "event": "e25"
+    },
+    {
+      "from": [
+        "PROCESS PAUSE"
+      ],
+      "to": [
+        "ALARM PAUSED"
+      ],
+      "event": "e21"
+    },
+    {
+      "from": [
+        "PAUSE"
+      ],
+      "to": [
+        "STOPPING"
+      ],
+      "event": "e23"
+    },
+    {
+      "from": [
+        "CHECKING"
+      ],
+      "to": [
+        "PAUSED"
+      ],
+      "event": "e19"
+    },
+    {
+      "from": [
+        "PAUSED"
+      ],
+      "to": [
+        "CHECKING"
+      ],
+      "event": "e18"
+    },
+    {
+      "from": [
+        "PAUSING"
+      ],
+      "to": [
+        "PAUSED"
+      ],
+      "event": "e16"
+    },
+    {
+      "from": [
+        "PROCESS"
+      ],
+      "to": [
+        "PAUSING"
+      ],
+      "event": "e15"
+    },
+    {
+      "from": [
+        "CHECKING"
+      ],
+      "to": [
+        "C"
+      ],
+      "event": "e20"
+    },
+    {
+      "from": [
+        "PROCESS PAUSE"
+      ],
+      "to": [
+        "C"
+      ],
+      "event": "e17"
+    },
+    {
+      "from": [
+        "PROCESS"
+      ],
+      "to": [
+        "ALARM PAUSED"
+      ],
+      "event": "e14"
+    },
+    {
+      "from": [
+        "IDLE"
+      ],
+      "to": [
+        "IDLE with ALARM"
+      ],
+      "event": "e29"
+    },
+    {
+      "from": [
+        "IDLE with ALARM"
+      ],
+      "to": [
+        "IDLE"
+      ],
+      "event": "e30"
+    },
+    {
+      "from": [
+        "ALARM PAUSED"
+      ],
+      "to": [
+        "PAUSED"
+      ],
+      "event": "e22"
+    }
+  ],
+  "events": [
+    {
+      "label": "e8"
+    },
+    {
+      "label": "e14"
+    },
+    {
+      "label": "e9"
+    },
+    {
+      "label": "e23"
+    },
+    {
+      "label": "e29"
+    },
+    {
+      "label": "e30"
+    },
+    {
+      "label": "e28"
+    },
+    {
+      "label": "e27"
+    },
+    {
+      "label": "e10"
+    },
+    {
+      "label": "e24"
+    },
+    {
+      "label": "e25"
+    },
+    {
+      "label": "e18"
+    },
+    {
+      "label": "e15"
+    },
+    {
+      "label": "e2"
+    },
+    {
+      "label": "e20"
+    },
+    {
+      "label": "e26"
+    },
+    {
+      "label": "e12"
+    },
+    {
+      "label": "e5"
+    },
+    {
+      "label": "e21"
+    },
+    {
+      "label": "e6"
+    },
+    {
+      "label": "e19"
+    },
+    {
+      "label": "e16"
+    },
+    {
+      "label": "e22"
+    },
+    {
+      "label": "e4"
+    },
+    {
+      "label": "e11"
+    },
+    {
+      "label": "e7"
+    },
+    {
+      "label": "e13"
+    },
+    {
+      "label": "e17"
+    },
+    {
+      "label": "e1"
+    },
+    {
+      "label": "e3"
+    }
+  ]
+}

@@ -1,0 +1,405 @@
+{
+  "name": "auth",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "auth",
+        "type": 3,
+        "children": [
+          {
+            "label": "device",
+            "type": 2,
+            "children": [
+              {
+                "label": "checking",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "checkDevice",
+                      "input": {},
+                      "kind": "inline",
+                      "settings": {},
+                      "src": "inline:auth.device.checking#actor[0]"
+                    }
+                  ],
+                  "stately_id": "auth.device.checking"
+                }
+              },
+              {
+                "label": "unregistered",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "auth.device.unregistered"
+                }
+              },
+              {
+                "label": "registering",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "registerDevice",
+                      "input": {},
+                      "kind": "inline",
+                      "settings": {},
+                      "src": "inline:auth.device.registering#actor[0]"
+                    }
+                  ],
+                  "stately_id": "auth.device.registering"
+                }
+              },
+              {
+                "label": "registered",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "auth.device.registered",
+                  "tags": [
+                    "device.registered"
+                  ]
+                }
+              },
+              {
+                "label": "deregistering",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "deregisterDevice",
+                      "input": {},
+                      "kind": "inline",
+                      "settings": {},
+                      "src": "inline:auth.device.deregistering#actor[0]"
+                    }
+                  ],
+                  "stately_id": "auth.device.deregistering"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "auth.device"
+            }
+          },
+          {
+            "label": "session",
+            "type": 2,
+            "children": [
+              {
+                "label": "loggedOut",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "auth.session.loggedOut"
+                }
+              },
+              {
+                "label": "loggingIn",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "performLogin",
+                      "input": {},
+                      "kind": "inline",
+                      "settings": {},
+                      "src": "inline:auth.session.loggingIn#actor[0]"
+                    }
+                  ],
+                  "stately_id": "auth.session.loggingIn"
+                }
+              },
+              {
+                "label": "locked",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "auth.session.locked"
+                }
+              },
+              {
+                "label": "authenticated",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "auth.session.authenticated",
+                  "tags": [
+                    "authenticated"
+                  ]
+                }
+              },
+              {
+                "label": "refreshing",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "refreshToken",
+                      "input": {},
+                      "kind": "inline",
+                      "settings": {},
+                      "src": "inline:auth.session.refreshing#actor[0]"
+                    }
+                  ],
+                  "stately_id": "auth.session.refreshing"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "auth.session"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "auth"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "checking"
+      ],
+      "to": [
+        "registered"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.device.checking#done.invoke.checkDevice[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "checking"
+      ],
+      "to": [
+        "unregistered"
+      ]
+    },
+    {
+      "from": [
+        "unregistered"
+      ],
+      "to": [
+        "registering"
+      ],
+      "event": "DEVICE_REGISTER"
+    },
+    {
+      "from": [
+        "registering"
+      ],
+      "to": [
+        "registered"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.device.registering#done.invoke.registerDevice[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "registering"
+      ],
+      "to": [
+        "unregistered"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.device.registering#error.platform.registerDevice[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "registered"
+      ],
+      "to": [
+        "deregistering"
+      ],
+      "event": "DEREGISTER_DEVICE"
+    },
+    {
+      "from": [
+        "deregistering"
+      ],
+      "to": [
+        "unregistered"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.device.deregistering#done.invoke.deregisterDevice[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "deregistering"
+      ],
+      "to": [
+        "registered"
+      ]
+    },
+    {
+      "from": [
+        "loggedOut"
+      ],
+      "to": [
+        "loggingIn"
+      ],
+      "event": "LOGIN",
+      "guard": {
+        "expression": "inline:auth.session.loggedOut#LOGIN[-1]#guard",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "loggingIn"
+      ],
+      "to": [
+        "authenticated"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.session.loggingIn#done.invoke.performLogin[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loggingIn"
+      ],
+      "to": [
+        "locked"
+      ],
+      "guard": {
+        "expression": "inline:auth.session.loggingIn#error.platform.performLogin[-1]#guard",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "inline:auth.session.loggingIn#error.platform.performLogin[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "loggingIn"
+      ],
+      "to": [
+        "loggedOut"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.session.loggingIn#error.platform.performLogin[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "authenticated"
+      ],
+      "to": [
+        "loggedOut"
+      ],
+      "event": "TOKEN_EXPIRED",
+      "actions": [
+        {
+          "label": "inline:auth.session.authenticated#TOKEN_EXPIRED[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "authenticated"
+      ],
+      "to": [
+        "refreshing"
+      ],
+      "event": "REFRESH_TOKEN"
+    },
+    {
+      "from": [
+        "refreshing"
+      ],
+      "to": [
+        "authenticated"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.session.refreshing#done.invoke.refreshToken[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "refreshing"
+      ],
+      "to": [
+        "loggedOut"
+      ],
+      "actions": [
+        {
+          "label": "inline:auth.session.refreshing#error.platform.refreshToken[-1]#transition[0]",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "auth"
+      ],
+      "to": [
+        "loggedOut"
+      ],
+      "event": "LOGOUT",
+      "actions": [
+        {
+          "label": "inline:auth#LOGOUT[-1]#transition[0]",
+          "language": "xstate"
+        },
+        {
+          "label": "logLogout",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "LOGIN"
+    },
+    {
+      "label": "TOKEN_EXPIRED"
+    },
+    {
+      "label": "REFRESH_TOKEN"
+    },
+    {
+      "label": "LOGOUT"
+    },
+    {
+      "label": "DEVICE_REGISTER"
+    },
+    {
+      "label": "DEREGISTER_DEVICE"
+    }
+  ],
+  "variables": {
+    "loginRetries": 0
+  }
+}

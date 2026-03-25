@@ -1,0 +1,332 @@
+{
+  "name": "Car inspection",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Car inspection",
+        "type": 3,
+        "children": [
+          {
+            "label": "Car inspection (Host)",
+            "type": 2,
+            "children": [
+              {
+                "label": "inspection not started",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).inspection not started"
+                }
+              },
+              {
+                "label": "can start inspection",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).can start inspection"
+                }
+              },
+              {
+                "label": "inspection started",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).inspection started"
+                }
+              },
+              {
+                "label": "uploading photos",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "start uploading front car photo",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Car inspection.Car inspection (Host).uploading photos.start uploading front car photo"
+                    }
+                  },
+                  {
+                    "label": "front car photo uploaded",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Car inspection.Car inspection (Host).uploading photos.front car photo uploaded"
+                    }
+                  },
+                  {
+                    "label": "back car photo uploaded",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Car inspection.Car inspection (Host).uploading photos.back car photo uploaded"
+                    }
+                  },
+                  {
+                    "label": "driver side photo uploaded",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Car inspection.Car inspection (Host).uploading photos.driver side photo uploaded"
+                    }
+                  },
+                  {
+                    "label": "passenger side photo uploaded",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Car inspection.Car inspection (Host).uploading photos.passenger side photo uploaded"
+                    }
+                  },
+                  {
+                    "label": "interior photo uploaded",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "Car inspection.Car inspection (Host).uploading photos.interior photo uploaded"
+                    }
+                  }
+                ],
+                "exit_actions": [
+                  {
+                    "label": "transition to record mileage",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).uploading photos"
+                }
+              },
+              {
+                "label": "mileage submitted",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).mileage submitted"
+                }
+              },
+              {
+                "label": "fuel level submitted",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).fuel level submitted"
+                }
+              },
+              {
+                "label": "inspection completed",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).inspection completed"
+                }
+              },
+              {
+                "label": "too late to start inspection",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Car inspection.Car inspection (Host).too late to start inspection"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Car inspection.Car inspection (Host)"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Car inspection"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "uploading photos"
+      ],
+      "to": [
+        "mileage submitted"
+      ],
+      "event": "record mileage"
+    },
+    {
+      "from": [
+        "inspection not started"
+      ],
+      "to": [
+        "can start inspection"
+      ],
+      "guard": {
+        "expression": "IS_WITHIN_TIMEFRAME",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "mileage submitted"
+      ],
+      "to": [
+        "fuel level submitted"
+      ],
+      "event": "record fuel level"
+    },
+    {
+      "from": [
+        "inspection not started"
+      ],
+      "to": [
+        "inspection not started"
+      ],
+      "guard": {
+        "expression": "TOO_EARLY",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "fuel level submitted"
+      ],
+      "to": [
+        "inspection completed"
+      ],
+      "event": "submit inspection"
+    },
+    {
+      "from": [
+        "inspection not started"
+      ],
+      "to": [
+        "too late to start inspection"
+      ],
+      "guard": {
+        "expression": "TOO_LATE",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "can start inspection"
+      ],
+      "to": [
+        "inspection started"
+      ],
+      "event": "START_INSPECTION"
+    },
+    {
+      "from": [
+        "inspection started"
+      ],
+      "to": [
+        "uploading photos"
+      ],
+      "event": "START_UPLOADING_PHOTOS"
+    },
+    {
+      "from": [
+        "start uploading front car photo"
+      ],
+      "to": [
+        "front car photo uploaded"
+      ],
+      "event": "upload front car photo",
+      "guard": {
+        "expression": "succeeded",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "front car photo uploaded"
+      ],
+      "to": [
+        "back car photo uploaded"
+      ],
+      "event": "upload back car photo",
+      "guard": {
+        "expression": "succeeded",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "back car photo uploaded"
+      ],
+      "to": [
+        "driver side photo uploaded"
+      ],
+      "event": "upload driver side photo"
+    },
+    {
+      "from": [
+        "driver side photo uploaded"
+      ],
+      "to": [
+        "passenger side photo uploaded"
+      ],
+      "event": "upload passenger side photo"
+    },
+    {
+      "from": [
+        "passenger side photo uploaded"
+      ],
+      "to": [
+        "interior photo uploaded"
+      ],
+      "event": "upload interior photo"
+    },
+    {
+      "from": [
+        "start uploading front car photo"
+      ],
+      "to": [
+        "start uploading front car photo"
+      ],
+      "event": "upload front car photo",
+      "guard": {
+        "expression": "not succeded",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "front car photo uploaded"
+      ],
+      "to": [
+        "front car photo uploaded"
+      ],
+      "event": "upload back car photo",
+      "guard": {
+        "expression": "not succeeded",
+        "language": "xstate"
+      }
+    }
+  ],
+  "events": [
+    {
+      "label": "START_UPLOADING_PHOTOS"
+    },
+    {
+      "label": "upload front car photo"
+    },
+    {
+      "label": "upload driver side photo"
+    },
+    {
+      "label": "upload passenger side photo"
+    },
+    {
+      "label": "upload back car photo"
+    },
+    {
+      "label": "upload interior photo"
+    },
+    {
+      "label": "record mileage"
+    },
+    {
+      "label": "record fuel level"
+    },
+    {
+      "label": "submit inspection"
+    },
+    {
+      "label": "START_INSPECTION"
+    }
+  ]
+}

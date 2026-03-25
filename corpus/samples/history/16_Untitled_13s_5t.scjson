@@ -1,0 +1,166 @@
+{
+  "name": "Untitled",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Untitled",
+        "type": 2,
+        "children": [
+          {
+            "label": "player",
+            "type": 3,
+            "children": [
+              {
+                "label": "fullscreen",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Untitled.player.fullscreen"
+                }
+              },
+              {
+                "label": "osd",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "visble",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Untitled.player.osd.visble"
+                    }
+                  },
+                  {
+                    "label": "invisble",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Untitled.player.osd.invisble"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Untitled.player.osd"
+                }
+              },
+              {
+                "label": "volume",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "unmuted",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Untitled.player.volume.unmuted"
+                    }
+                  },
+                  {
+                    "label": "muted",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Untitled.player.volume.muted"
+                    }
+                  },
+                  {
+                    "label": "hist",
+                    "type": 1,
+                    "is_history": true,
+                    "history_type": 1,
+                    "metadata": {
+                      "stately_id": "Untitled.player.volume.hist"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Untitled.player.volume"
+                }
+              },
+              {
+                "label": "hist*",
+                "type": 1,
+                "is_history": true,
+                "history_type": 2,
+                "metadata": {
+                  "stately_id": "Untitled.player.hist*"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Untitled.player"
+            }
+          },
+          {
+            "label": "list",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Untitled.list"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Untitled"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "visble"
+      ],
+      "to": [
+        "invisble"
+      ]
+    },
+    {
+      "from": [
+        "unmuted"
+      ],
+      "to": [
+        "muted"
+      ],
+      "event": "mute"
+    },
+    {
+      "from": [
+        "muted"
+      ],
+      "to": [
+        "unmuted"
+      ],
+      "event": "unmute"
+    },
+    {
+      "from": [
+        "player"
+      ],
+      "to": [
+        "list"
+      ],
+      "event": "ok"
+    },
+    {
+      "from": [
+        "list"
+      ],
+      "to": [
+        "osd"
+      ],
+      "event": "ok"
+    }
+  ],
+  "events": [
+    {
+      "label": "ok"
+    },
+    {
+      "label": "mute"
+    },
+    {
+      "label": "unmute"
+    }
+  ]
+}

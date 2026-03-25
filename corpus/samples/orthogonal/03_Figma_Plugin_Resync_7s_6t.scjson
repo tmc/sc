@@ -1,0 +1,143 @@
+{
+  "name": "Figma Plugin Resync",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Figma Plugin Resync",
+        "type": 3,
+        "children": [
+          {
+            "label": "Figma Plugin",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Figma Plugin Resync.Figma Plugin"
+            }
+          },
+          {
+            "label": "Check if Job Complete",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Figma Plugin Resync.Check if Job Complete"
+            }
+          },
+          {
+            "label": "Handle ResyncJob",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Figma Plugin Resync.Handle ResyncJob"
+            }
+          },
+          {
+            "label": "Backend Jobs",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Figma Plugin Resync.Backend Jobs"
+            }
+          },
+          {
+            "label": "Processing Resync",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Figma Plugin Resync.Processing Resync"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Figma Plugin Resync"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Figma Plugin"
+      ],
+      "to": [
+        "Check if Job Complete"
+      ],
+      "guard": {
+        "expression": "has_job_id",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Check if Job Complete"
+      ],
+      "to": [
+        "Figma Plugin"
+      ],
+      "event": "Poll Response"
+    },
+    {
+      "from": [
+        "Figma Plugin"
+      ],
+      "to": [
+        "Handle ResyncJob"
+      ],
+      "event": "Call Resync"
+    },
+    {
+      "from": [
+        "Handle ResyncJob"
+      ],
+      "to": [
+        "Handle ResyncJob"
+      ],
+      "event": "Create Resync Job",
+      "actions": [
+        {
+          "label": "xstate.sendTo",
+          "language": "xstate"
+        },
+        {
+          "label": "xstate.assign",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Backend Jobs"
+      ],
+      "to": [
+        "Processing Resync"
+      ],
+      "event": "ProcessResync"
+    },
+    {
+      "from": [
+        "Handle ResyncJob"
+      ],
+      "to": [
+        "Figma Plugin"
+      ],
+      "event": "Send Back Job Id"
+    }
+  ],
+  "events": [
+    {
+      "label": "ProcessResync"
+    },
+    {
+      "label": "Send Back Job Id"
+    },
+    {
+      "label": "Poll Response"
+    },
+    {
+      "label": "Call Resync"
+    },
+    {
+      "label": "Create Resync Job"
+    }
+  ],
+  "variables": {
+    "job_id": "undefined"
+  }
+}

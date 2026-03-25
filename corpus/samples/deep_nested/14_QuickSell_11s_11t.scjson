@@ -1,0 +1,224 @@
+{
+  "name": "QuickSell",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "QuickSell",
+        "type": 2,
+        "children": [
+          {
+            "label": "opened",
+            "type": 2,
+            "children": [
+              {
+                "label": "selected skins",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "total price",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "QuickSell.opened.selected skins.total price"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "QuickSell.opened.selected skins"
+                }
+              },
+              {
+                "label": "Selling Confirmation",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "QuickSell.opened.Selling Confirmation"
+                }
+              },
+              {
+                "label": "selling action",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "QuickSell.opened.selling action"
+                }
+              },
+              {
+                "label": "sold",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "QuickSell.opened.sold"
+                }
+              },
+              {
+                "label": "unselected skins",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "QuickSell.opened.unselected skins"
+                }
+              },
+              {
+                "label": "initial",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "QuickSell.opened.initial"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "QuickSell.opened"
+            }
+          },
+          {
+            "label": "closed",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "QuickSell.closed"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "QuickSell"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "closed"
+      ],
+      "to": [
+        "opened"
+      ],
+      "event": "open"
+    },
+    {
+      "from": [
+        "selected skins"
+      ],
+      "to": [
+        "selected skins"
+      ],
+      "event": "select"
+    },
+    {
+      "from": [
+        "selected skins"
+      ],
+      "to": [
+        "Selling Confirmation"
+      ],
+      "event": "sell",
+      "guard": {
+        "expression": "selected length \u003e 0",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Selling Confirmation"
+      ],
+      "to": [
+        "selling action"
+      ],
+      "event": "confirm"
+    },
+    {
+      "from": [
+        "selling action"
+      ],
+      "to": [
+        "sold"
+      ],
+      "event": "Event name"
+    },
+    {
+      "from": [
+        "selected skins"
+      ],
+      "to": [
+        "selected skins"
+      ],
+      "event": "unselect",
+      "guard": {
+        "expression": "selected length \u003e 1",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "selected skins"
+      ],
+      "to": [
+        "unselected skins"
+      ],
+      "event": "unselect"
+    },
+    {
+      "from": [
+        "opened"
+      ],
+      "to": [
+        "closed"
+      ],
+      "event": "close"
+    },
+    {
+      "from": [
+        "unselected skins"
+      ],
+      "to": [
+        "selected skins"
+      ],
+      "event": "select"
+    },
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "unselected skins"
+      ]
+    },
+    {
+      "from": [
+        "selected skins"
+      ],
+      "to": [
+        "total price"
+      ],
+      "event": "count price"
+    }
+  ],
+  "events": [
+    {
+      "label": "select"
+    },
+    {
+      "label": "sell"
+    },
+    {
+      "label": "confirm"
+    },
+    {
+      "label": "Event name"
+    },
+    {
+      "label": "unselect"
+    },
+    {
+      "label": "close"
+    },
+    {
+      "label": "count price"
+    },
+    {
+      "label": "open"
+    }
+  ]
+}

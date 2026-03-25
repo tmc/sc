@@ -1,0 +1,332 @@
+{
+  "name": "Todos Machine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Todos Machine",
+        "type": 2,
+        "children": [
+          {
+            "label": "Loading Todos",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "invocations": [
+                {
+                  "internalUniqueId": "Todos Machine.Loading Todos:invocation[0]",
+                  "src": "loadTodos"
+                }
+              ],
+              "invoke": [
+                {
+                  "id": "Todos Machine.Loading Todos:invocation[0]",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "loadTodos"
+                }
+              ],
+              "stately_id": "Todos Machine.Loading Todos"
+            }
+          },
+          {
+            "label": "Show Todos",
+            "type": 2,
+            "children": [
+              {
+                "label": "Deleting todo",
+                "type": 1,
+                "metadata": {
+                  "invocations": [
+                    {
+                      "internalUniqueId": "Todos Machine.Show Todos.Deleting todo:invocation[0]",
+                      "src": "deleteTodo"
+                    }
+                  ],
+                  "invoke": [
+                    {
+                      "id": "Todos Machine.Show Todos.Deleting todo:invocation[0]",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "deleteTodo"
+                    }
+                  ],
+                  "stately_id": "Todos Machine.Show Todos.Deleting todo"
+                }
+              },
+              {
+                "label": "idle",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Todos Machine.Show Todos.idle"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Todos Machine.Show Todos"
+            }
+          },
+          {
+            "label": "Loading todos errored",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Todos Machine.Loading todos errored"
+            }
+          },
+          {
+            "label": "Creating new todo",
+            "type": 2,
+            "children": [
+              {
+                "label": "Showing form input",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Todos Machine.Creating new todo.Showing form input"
+                }
+              },
+              {
+                "label": "Saving todo",
+                "type": 1,
+                "metadata": {
+                  "invocations": [
+                    {
+                      "internalUniqueId": "Todos Machine.Creating new todo.Saving todo:invocation[0]",
+                      "src": "saveTodo"
+                    }
+                  ],
+                  "invoke": [
+                    {
+                      "id": "Todos Machine.Creating new todo.Saving todo:invocation[0]",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "saveTodo"
+                    }
+                  ],
+                  "stately_id": "Todos Machine.Creating new todo.Saving todo"
+                }
+              },
+              {
+                "label": "Saving todo errored",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Todos Machine.Creating new todo.Saving todo errored"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Todos Machine.Creating new todo"
+            }
+          },
+          {
+            "label": "Deleting todo errored",
+            "type": 1,
+            "exit_actions": [
+              {
+                "label": "\"resetTodoToDelete\"",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "Todos Machine.Deleting todo errored"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Todos Machine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Loading Todos"
+      ],
+      "to": [
+        "Show Todos"
+      ],
+      "guard": {
+        "expression": "Has todos",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "\"assignTodosToContext\"",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Loading Todos"
+      ],
+      "to": [
+        "Creating new todo"
+      ]
+    },
+    {
+      "from": [
+        "Loading Todos"
+      ],
+      "to": [
+        "Loading todos errored"
+      ],
+      "actions": [
+        {
+          "label": "\"assignErrorMessageToContext\"",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Show Todos"
+      ],
+      "to": [
+        "Creating new todo"
+      ],
+      "event": "Create new todo"
+    },
+    {
+      "from": [
+        "Deleting todo"
+      ],
+      "to": [
+        "Loading Todos"
+      ]
+    },
+    {
+      "from": [
+        "Deleting todo"
+      ],
+      "to": [
+        "Deleting todo errored"
+      ],
+      "actions": [
+        {
+          "label": "\"assignErrorMessageToContext\"",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "Deleting todo"
+      ],
+      "event": "Delete todo",
+      "actions": [
+        {
+          "label": "\"assignTodoToDeleteToContext\"",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Showing form input"
+      ],
+      "to": [
+        "Showing form input"
+      ],
+      "event": "Form input changed",
+      "actions": [
+        {
+          "label": "\"assignFormInputToContext\"",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Showing form input"
+      ],
+      "to": [
+        "Saving todo"
+      ],
+      "event": "Submit"
+    },
+    {
+      "from": [
+        "Saving todo"
+      ],
+      "to": [
+        "Loading Todos"
+      ]
+    },
+    {
+      "from": [
+        "Saving todo"
+      ],
+      "to": [
+        "Saving todo errored"
+      ],
+      "actions": [
+        {
+          "label": "\"assignErrorMessageToContext\"",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Saving todo errored"
+      ],
+      "to": [
+        "Showing form input"
+      ],
+      "event": "Back"
+    },
+    {
+      "from": [
+        "Saving todo errored"
+      ],
+      "to": [
+        "Showing form input"
+      ]
+    },
+    {
+      "from": [
+        "Deleting todo errored"
+      ],
+      "to": [
+        "Show Todos"
+      ],
+      "event": "Back"
+    },
+    {
+      "from": [
+        "Deleting todo errored"
+      ],
+      "to": [
+        "Show Todos"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "Create new todo"
+    },
+    {
+      "label": "Delete todo"
+    },
+    {
+      "label": "Form input changed"
+    },
+    {
+      "label": "Submit"
+    },
+    {
+      "label": "Back"
+    }
+  ]
+}

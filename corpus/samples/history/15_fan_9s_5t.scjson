@@ -1,0 +1,134 @@
+{
+  "name": "fan",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "fan",
+        "type": 2,
+        "children": [
+          {
+            "label": "fanOff",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "fan.fanOff"
+            }
+          },
+          {
+            "label": "fanOn",
+            "type": 2,
+            "children": [
+              {
+                "label": "first",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "fan.fanOn.first"
+                }
+              },
+              {
+                "label": "second",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "fan.fanOn.second"
+                }
+              },
+              {
+                "label": "third",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "fan.fanOn.third"
+                }
+              },
+              {
+                "label": "hist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "fan.fanOn.hist"
+                }
+              },
+              {
+                "label": "highPowerHist",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "fan.fanOn.highPowerHist"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "fan.fanOn"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "fan"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "fanOff"
+      ],
+      "to": [
+        "hist"
+      ],
+      "event": "POWER"
+    },
+    {
+      "from": [
+        "fanOff"
+      ],
+      "to": [
+        "highPowerHist"
+      ],
+      "event": "HIGH_POWER"
+    },
+    {
+      "from": [
+        "fanOn"
+      ],
+      "to": [
+        "fanOff"
+      ],
+      "event": "POWER"
+    },
+    {
+      "from": [
+        "second"
+      ],
+      "to": [
+        "third"
+      ],
+      "event": "SWITCH"
+    },
+    {
+      "from": [
+        "first"
+      ],
+      "to": [
+        "second"
+      ],
+      "event": "SWITCH"
+    }
+  ],
+  "events": [
+    {
+      "label": "POWER"
+    },
+    {
+      "label": "HIGH_POWER"
+    },
+    {
+      "label": "SWITCH"
+    }
+  ]
+}

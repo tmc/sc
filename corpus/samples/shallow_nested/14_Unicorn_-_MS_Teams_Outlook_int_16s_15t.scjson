@@ -1,0 +1,311 @@
+{
+  "name": "Unicorn - MS Teams/Outlook integration",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Unicorn - MS Teams/Outlook integration",
+        "type": 2,
+        "children": [
+          {
+            "label": "Boot up",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Unicorn - MS Teams/Outlook integration.Boot up"
+            }
+          },
+          {
+            "label": "No configuration",
+            "type": 2,
+            "children": [
+              {
+                "label": "Select mode",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Select mode"
+                }
+              },
+              {
+                "label": "Meeting room setup",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Meeting room setup"
+                }
+              },
+              {
+                "label": "Personal desk setup",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Personal desk setup"
+                }
+              },
+              {
+                "label": "Enter resource account login from cell phone",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Enter resource account login from cell phone"
+                }
+              },
+              {
+                "label": "Show message to plugin PC",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Show message to plugin PC"
+                }
+              },
+              {
+                "label": "Enter resource account login from device",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Enter resource account login from device"
+                }
+              },
+              {
+                "label": "Pop-up configuration web site",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration.Pop-up configuration web site"
+                }
+              }
+            ],
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "",
+                  "input": {},
+                  "kind": "named",
+                  "settings": {},
+                  "src": "Initialization"
+                }
+              ],
+              "stately_id": "Unicorn - MS Teams/Outlook integration.No configuration"
+            }
+          },
+          {
+            "label": "Resource account login",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Unicorn - MS Teams/Outlook integration.Resource account login"
+            }
+          },
+          {
+            "label": "Display meeting schedule",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Unicorn - MS Teams/Outlook integration.Display meeting schedule"
+            }
+          },
+          {
+            "label": "Display retry message or re-login",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Unicorn - MS Teams/Outlook integration.Display retry message or re-login"
+            }
+          },
+          {
+            "label": "Personal account login",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Unicorn - MS Teams/Outlook integration.Personal account login"
+            }
+          },
+          {
+            "label": "Request pattern/pin to unlock",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Unicorn - MS Teams/Outlook integration.Request pattern/pin to unlock"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Unicorn - MS Teams/Outlook integration"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Boot up"
+      ],
+      "to": [
+        "No configuration"
+      ],
+      "event": "No config found"
+    },
+    {
+      "from": [
+        "Select mode"
+      ],
+      "to": [
+        "Meeting room setup"
+      ],
+      "event": "Choose meeting room"
+    },
+    {
+      "from": [
+        "Select mode"
+      ],
+      "to": [
+        "Personal desk setup"
+      ],
+      "event": "Choose personal desk"
+    },
+    {
+      "from": [
+        "Meeting room setup"
+      ],
+      "to": [
+        "Enter resource account login from cell phone"
+      ],
+      "event": "Scan QR code on cell phone"
+    },
+    {
+      "from": [
+        "Meeting room setup"
+      ],
+      "to": [
+        "Show message to plugin PC"
+      ],
+      "event": "Choose to setup on PC, PC not found"
+    },
+    {
+      "from": [
+        "Meeting room setup"
+      ],
+      "to": [
+        "Enter resource account login from device"
+      ],
+      "event": "Choose to enter login from device"
+    },
+    {
+      "from": [
+        "Show message to plugin PC"
+      ],
+      "to": [
+        "Pop-up configuration web site"
+      ],
+      "event": "Plugin PC"
+    },
+    {
+      "from": [
+        "Meeting room setup"
+      ],
+      "to": [
+        "Pop-up configuration web site"
+      ],
+      "event": "Choose to setup on PC, PC found"
+    },
+    {
+      "from": [
+        "Boot up"
+      ],
+      "to": [
+        "Resource account login"
+      ],
+      "event": "Config as meeting room device"
+    },
+    {
+      "from": [
+        "Resource account login"
+      ],
+      "to": [
+        "Display meeting schedule"
+      ],
+      "event": "Login success"
+    },
+    {
+      "from": [
+        "Resource account login"
+      ],
+      "to": [
+        "Display retry message or re-login"
+      ],
+      "event": "Login failed"
+    },
+    {
+      "from": [
+        "Display retry message or re-login"
+      ],
+      "to": [
+        "Resource account login"
+      ],
+      "event": "Retry"
+    },
+    {
+      "from": [
+        "Display retry message or re-login"
+      ],
+      "to": [
+        "Meeting room setup"
+      ],
+      "event": "Re-login"
+    },
+    {
+      "from": [
+        "Boot up"
+      ],
+      "to": [
+        "Personal account login"
+      ],
+      "event": "Configure as personal desk device"
+    },
+    {
+      "from": [
+        "Personal account login"
+      ],
+      "to": [
+        "Request pattern/pin to unlock"
+      ],
+      "event": "Login success"
+    }
+  ],
+  "events": [
+    {
+      "label": "Choose to setup on PC, PC found"
+    },
+    {
+      "label": "Login failed"
+    },
+    {
+      "label": "No config found"
+    },
+    {
+      "label": "Config as meeting room device"
+    },
+    {
+      "label": "Login success"
+    },
+    {
+      "label": "Retry"
+    },
+    {
+      "label": "Re-login"
+    },
+    {
+      "label": "Configure as personal desk device"
+    },
+    {
+      "label": "Choose meeting room"
+    },
+    {
+      "label": "Choose personal desk"
+    },
+    {
+      "label": "Scan QR code on cell phone"
+    },
+    {
+      "label": "Choose to setup on PC, PC not found"
+    },
+    {
+      "label": "Choose to enter login from device"
+    },
+    {
+      "label": "Plugin PC"
+    }
+  ]
+}

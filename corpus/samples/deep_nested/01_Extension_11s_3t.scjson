@@ -1,0 +1,134 @@
+{
+  "name": "Extension",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Extension",
+        "type": 2,
+        "children": [
+          {
+            "label": "Startup Tracker Stats",
+            "type": 2,
+            "children": [
+              {
+                "label": "creating TrackerStats instances",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Extension.Startup Tracker Stats.creating TrackerStats instances"
+                }
+              },
+              {
+                "label": "⌛️ restoring from storage",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": ":invocation:eb33l5v16ne",
+                      "kind": "named",
+                      "src": "readFromStorage+deserialize"
+                    }
+                  ],
+                  "stately_id": "Extension.Startup Tracker Stats.⌛️ restoring from storage"
+                }
+              },
+              {
+                "label": "🪝 registering extension hooks/handlers",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "Extension.Startup Tracker Stats.🪝 registering extension hooks/handlers"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Extension.Startup Tracker Stats"
+            }
+          },
+          {
+            "label": "Running phase",
+            "type": 3,
+            "children": [
+              {
+                "label": "tracker blocking",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "waiting for block events",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Extension.Running phase.tracker blocking.waiting for block events"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Extension.Running phase.tracker blocking"
+                }
+              },
+              {
+                "label": "tracker stats",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "waiting for events to record",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Extension.Running phase.tracker stats.waiting for events to record"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Extension.Running phase.tracker stats"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Extension.Running phase"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Extension"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "creating TrackerStats instances"
+      ],
+      "to": [
+        "⌛️ restoring from storage"
+      ],
+      "event": "created"
+    },
+    {
+      "from": [
+        "⌛️ restoring from storage"
+      ],
+      "to": [
+        "🪝 registering extension hooks/handlers"
+      ]
+    },
+    {
+      "from": [
+        "Startup Tracker Stats"
+      ],
+      "to": [
+        "Running phase"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "created"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "New Machine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "New Machine",
+        "type": 3,
+        "children": [
+          {
+            "label": "First State",
+            "type": 1,
+            "metadata": {
+              "stately_id": "New Machine.First State"
+            }
+          },
+          {
+            "label": "Second State",
+            "type": 1,
+            "metadata": {
+              "stately_id": "New Machine.Second State"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "New Machine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "First State"
+      ],
+      "to": [
+        "Second State"
+      ],
+      "event": "Event"
+    }
+  ],
+  "events": [
+    {
+      "label": "Event"
+    }
+  ]
+}

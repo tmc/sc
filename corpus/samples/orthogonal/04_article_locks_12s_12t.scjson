@@ -1,0 +1,255 @@
+{
+  "name": "article locks",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "article locks",
+        "type": 3,
+        "children": [
+          {
+            "label": "initial",
+            "type": 1,
+            "metadata": {
+              "description": "Starting point of the machine, from where we immediately attempt to lock the article.",
+              "invoke": [
+                {
+                  "id": ":invocation:dcr1nme7ije",
+                  "kind": "named",
+                  "src": "attemptToLock"
+                }
+              ],
+              "meta_entries": [],
+              "stately_id": "article locks.initial"
+            }
+          },
+          {
+            "label": "locked",
+            "type": 1,
+            "metadata": {
+              "description": "Article is locked by us.",
+              "stately_id": "article locks.locked"
+            }
+          },
+          {
+            "label": "queued",
+            "type": 1,
+            "metadata": {
+              "description": "We don't currently have the lock, but we are in queue for one.",
+              "stately_id": "article locks.queued"
+            }
+          },
+          {
+            "label": "lock_error",
+            "type": 1,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "article locks.lock_error"
+            }
+          },
+          {
+            "label": "TAKEOVER",
+            "type": 2,
+            "children": [
+              {
+                "label": "takeover_error",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "article locks.TAKEOVER.takeover_error"
+                }
+              },
+              {
+                "label": "pending",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": ":invocation:7g9olj17mhy",
+                      "kind": "named",
+                      "src": "requestLockByTakeover"
+                    }
+                  ],
+                  "stately_id": "article locks.TAKEOVER.pending"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "article locks.TAKEOVER"
+            }
+          },
+          {
+            "label": "pingPong",
+            "type": 2,
+            "children": [
+              {
+                "label": "pong_pending",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": ":invocation:44485n8d9yw",
+                      "kind": "named",
+                      "src": "pong"
+                    }
+                  ],
+                  "stately_id": "article locks.pingPong.pong_pending"
+                }
+              },
+              {
+                "label": "idle",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "description": "Waiting for ping event from server.",
+                  "stately_id": "article locks.pingPong.idle"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "article locks.pingPong"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "description": "State machine to handle all possible states of the article view.",
+          "stately_id": "article locks"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "locked"
+      ],
+      "guard": {
+        "expression": "ACQUIRED",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "queued"
+      ],
+      "guard": {
+        "expression": "IN_QUEUE",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "initial"
+      ],
+      "to": [
+        "lock_error"
+      ]
+    },
+    {
+      "from": [
+        "lock_error"
+      ],
+      "to": [
+        "initial"
+      ],
+      "event": "RETRY"
+    },
+    {
+      "from": [
+        "locked"
+      ],
+      "to": [
+        "queued"
+      ],
+      "event": "LOCK_RELEASED"
+    },
+    {
+      "from": [
+        "pending"
+      ],
+      "to": [
+        "takeover_error"
+      ]
+    },
+    {
+      "from": [
+        "takeover_error"
+      ],
+      "to": [
+        "pending"
+      ],
+      "event": "RETRY"
+    },
+    {
+      "from": [
+        "queued"
+      ],
+      "to": [
+        "locked"
+      ],
+      "event": "LOCK_ACQUIRED"
+    },
+    {
+      "from": [
+        "pong_pending"
+      ],
+      "to": [
+        "idle"
+      ]
+    },
+    {
+      "from": [
+        "pong_pending"
+      ],
+      "to": [
+        "queued"
+      ],
+      "guard": {
+        "expression": "FATAL",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "pong_pending"
+      ],
+      "to": [
+        "pong_pending"
+      ]
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "pong_pending"
+      ],
+      "event": "PING"
+    }
+  ],
+  "events": [
+    {
+      "label": "RETRY"
+    },
+    {
+      "label": "LOCK_RELEASED"
+    },
+    {
+      "label": "LOCK_ACQUIRED"
+    },
+    {
+      "label": "PING"
+    }
+  ],
+  "variables": {
+    "attempts": "1"
+  }
+}

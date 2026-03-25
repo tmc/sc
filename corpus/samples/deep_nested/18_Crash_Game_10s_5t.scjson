@@ -1,0 +1,207 @@
+{
+  "name": "Crash Game",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Crash Game",
+        "type": 2,
+        "children": [
+          {
+            "label": "Waiting For Next Round",
+            "type": 3,
+            "children": [
+              {
+                "label": "Betting",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "No Bets Placed",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Crash Game.Waiting For Next Round.Betting.No Bets Placed"
+                    }
+                  },
+                  {
+                    "label": "Bet Queued For Next Round",
+                    "type": 1,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Crash Game.Waiting For Next Round.Betting.Bet Queued For Next Round"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "Crash Game.Waiting For Next Round.Betting"
+                }
+              },
+              {
+                "label": "New state 2",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "New state 1",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Crash Game.Waiting For Next Round.New state 2.New state 1"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "Crash Game.Waiting For Next Round.New state 2"
+                }
+              }
+            ],
+            "is_initial": true,
+            "entry_actions": [
+              {
+                "label": "showCountdown",
+                "language": "xstate"
+              },
+              {
+                "label": "flyInRocket",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "description": "10 second count down. Players are able to place bets.",
+              "meta_entries": [],
+              "stately_id": "Crash Game.Waiting For Next Round"
+            }
+          },
+          {
+            "label": "Playing Round",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "launchRocket",
+                "language": "xstate"
+              },
+              {
+                "label": "startPolling",
+                "language": "xstate"
+              },
+              {
+                "label": "showMultiplier",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "description": "Multiplier increasing",
+              "meta_entries": [],
+              "stately_id": "Crash Game.Playing Round"
+            }
+          },
+          {
+            "label": "Flew Away",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "showFinalMultiplier",
+                "language": "xstate"
+              },
+              {
+                "label": "flyAwayRocket",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "description": "show final multiplier",
+              "meta_entries": [],
+              "stately_id": "Crash Game.Flew Away"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "meta_entries": [],
+          "stately_id": "Crash Game"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Waiting For Next Round"
+      ],
+      "to": [
+        "Playing Round"
+      ],
+      "event": "startRound"
+    },
+    {
+      "from": [
+        "Playing Round"
+      ],
+      "to": [
+        "Flew Away"
+      ],
+      "event": "crash"
+    },
+    {
+      "from": [
+        "Flew Away"
+      ],
+      "to": [
+        "Waiting For Next Round"
+      ],
+      "event": "resetRound"
+    },
+    {
+      "from": [
+        "No Bets Placed"
+      ],
+      "to": [
+        "Bet Queued For Next Round"
+      ],
+      "event": "placeBet",
+      "actions": [
+        {
+          "label": "setBet",
+          "language": "xstate",
+          "parameters": {
+            "bet": 1
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "Bet Queued For Next Round"
+      ],
+      "to": [
+        "No Bets Placed"
+      ],
+      "event": "removeBet"
+    }
+  ],
+  "events": [
+    {
+      "label": "placeBet"
+    },
+    {
+      "label": "removeBet"
+    },
+    {
+      "label": "startRound"
+    },
+    {
+      "label": "crash"
+    },
+    {
+      "label": "resetRound"
+    }
+  ],
+  "variables": {
+    "bet": 0,
+    "hasBet": false
+  }
+}

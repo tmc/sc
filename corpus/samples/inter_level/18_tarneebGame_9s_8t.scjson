@@ -1,0 +1,220 @@
+{
+  "name": "tarneebGame",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "tarneebGame",
+        "type": 2,
+        "children": [
+          {
+            "label": "Seating state",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "description": "Players choose their seats before starting the game.",
+              "stately_id": "tarneebGame.Seating state"
+            }
+          },
+          {
+            "label": "Round state",
+            "type": 2,
+            "children": [
+              {
+                "label": "Choosing trump suite",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "description": "Players call in turn to choose the trump suite for the round.",
+                  "stately_id": "tarneebGame.Round state.Choosing trump suite"
+                }
+              },
+              {
+                "label": "Round play phase",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Card distribution phase",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "description": "The dealer distributes cards to each player.",
+                      "stately_id": "tarneebGame.Round state.Round play phase.Card distribution phase"
+                    }
+                  },
+                  {
+                    "label": "Card throwing phase",
+                    "type": 1,
+                    "metadata": {
+                      "description": "Players throw their cards in turn until all cards are played.",
+                      "stately_id": "tarneebGame.Round state.Round play phase.Card throwing phase"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "description": "The phase of playing cards which includes distribution and throwing cards.",
+                  "stately_id": "tarneebGame.Round state.Round play phase"
+                }
+              }
+            ],
+            "metadata": {
+              "description": "Represents a complete round of the game, which includes choosing the trump suite and playing the round.",
+              "stately_id": "tarneebGame.Round state"
+            }
+          },
+          {
+            "label": "Game over",
+            "type": 1,
+            "metadata": {
+              "description": "The game ends when a player reaches the winning score.",
+              "stately_id": "tarneebGame.Game over"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "tarneebGame"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Seating state"
+      ],
+      "to": [
+        "Seating state"
+      ],
+      "event": "sit",
+      "actions": [
+        {
+          "label": "xstate.assign",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Seating state"
+      ],
+      "to": [
+        "Round state"
+      ],
+      "event": "startGame"
+    },
+    {
+      "from": [
+        "Choosing trump suite"
+      ],
+      "to": [
+        "Round play phase"
+      ],
+      "event": "chooseTrump",
+      "actions": [
+        {
+          "label": "xstate.assign",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Card distribution phase"
+      ],
+      "to": [
+        "Card throwing phase"
+      ],
+      "event": "distribute",
+      "actions": [
+        {
+          "label": "xstate.assign",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Card throwing phase"
+      ],
+      "to": [
+        "Card throwing phase"
+      ],
+      "event": "throwCard",
+      "actions": [
+        {
+          "label": "xstate.assign",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Card throwing phase"
+      ],
+      "to": [
+        "Round state"
+      ],
+      "event": "roundEnd"
+    },
+    {
+      "from": [
+        "Round state"
+      ],
+      "to": [
+        "Round state"
+      ],
+      "event": "nextRound"
+    },
+    {
+      "from": [
+        "Round state"
+      ],
+      "to": [
+        "Game over"
+      ],
+      "event": "endGame"
+    }
+  ],
+  "events": [
+    {
+      "label": "endGame"
+    },
+    {
+      "label": "sit"
+    },
+    {
+      "label": "startGame"
+    },
+    {
+      "label": "chooseTrump"
+    },
+    {
+      "label": "distribute"
+    },
+    {
+      "label": "throwCard"
+    },
+    {
+      "label": "roundEnd"
+    },
+    {
+      "label": "nextRound"
+    }
+  ],
+  "variables": {
+    "cards": [],
+    "currentPlayer": "null",
+    "currentRound": 1,
+    "playerScores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "players": [],
+    "trumpSuite": "null",
+    "winningScore": 31
+  }
+}

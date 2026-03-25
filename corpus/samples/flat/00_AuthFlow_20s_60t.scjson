@@ -1,0 +1,1158 @@
+{
+  "name": "AuthFlow",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "AuthFlow",
+        "type": 2,
+        "children": [
+          {
+            "label": "FirstState",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "AuthFlow.FirstState"
+            }
+          },
+          {
+            "label": "PlanPicker",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.PlanPicker"
+            }
+          },
+          {
+            "label": "Paywall",
+            "type": 1,
+            "metadata": {
+              "stately_id": "AuthFlow.Paywall"
+            }
+          },
+          {
+            "label": "RegWall",
+            "type": 1,
+            "metadata": {
+              "stately_id": "AuthFlow.RegWall"
+            }
+          },
+          {
+            "label": "CreateAccount",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.CreateAccount"
+            }
+          },
+          {
+            "label": "Subscribe",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.Subscribe"
+            }
+          },
+          {
+            "label": "Login",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.Login"
+            }
+          },
+          {
+            "label": "PromoSuccess",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "checkUserType",
+                "language": "xstate"
+              },
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.PromoSuccess"
+            }
+          },
+          {
+            "label": "Profile",
+            "type": 1,
+            "metadata": {
+              "stately_id": "AuthFlow.Profile"
+            }
+          },
+          {
+            "label": "CreateFirstProfile",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate",
+                "parameters": {
+                  "url": "`${UrlPath.MultiProfiles}?${QueryParam.IsFirstProfile}=true`"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.CreateFirstProfile"
+            }
+          },
+          {
+            "label": "WhoIsWatching",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "toggleProfileGate",
+                "language": "xstate",
+                "parameters": {
+                  "isProfileGateOpen": true
+                }
+              }
+            ],
+            "exit_actions": [
+              {
+                "label": "toggleProfileGate",
+                "language": "xstate",
+                "parameters": {
+                  "isProfileGateOpen": false
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.WhoIsWatching"
+            }
+          },
+          {
+            "label": "AddProfile",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.AddProfile"
+            }
+          },
+          {
+            "label": "EditProfile",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate",
+                "parameters": {
+                  "url": "`${UrlPath.MultiProfiles}?WhoIsWatchingWrapper=true`"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.EditProfile"
+            }
+          },
+          {
+            "label": "CardPayment",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.CardPayment"
+            }
+          },
+          {
+            "label": "OutboundConfirmation",
+            "type": 1,
+            "metadata": {
+              "stately_id": "AuthFlow.OutboundConfirmation"
+            }
+          },
+          {
+            "label": "ForgetPassword",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.ForgetPassword"
+            }
+          },
+          {
+            "label": "ActivateAccount",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.ActivateAccount"
+            }
+          },
+          {
+            "label": "KidProfileChangeModal",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "navigateTo",
+                "language": "xstate",
+                "parameters": {
+                  "url": "`${UrlPath.MultiProfiles}?${QueryParam.CreateOrChangeProfile}=true`"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "AuthFlow.KidProfileChangeModal"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "AuthFlow"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "clickOnPremium"
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "Paywall"
+      ],
+      "event": "clickOnPayWall",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        },
+        {
+          "label": "saveFlowType",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "RegWall"
+      ],
+      "event": "onRegWallFlowInit",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        },
+        {
+          "label": "saveFlowType",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "KidProfileChangeModal"
+      ],
+      "event": "onKidProfileChangeInit",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "Profile"
+      ],
+      "event": "clickOnProfile",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "AddProfile"
+      ],
+      "event": "onClickAddProfile",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        },
+        {
+          "label": "saveFlowType",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "EditProfile"
+      ],
+      "event": "onClickEditProfile",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        },
+        {
+          "label": "saveFlowType",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "clickOnWatchWithoutAds",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        },
+        {
+          "label": "saveFlowType",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "Subscribe"
+      ],
+      "event": "onSubscribe"
+    },
+    {
+      "from": [
+        "FirstState"
+      ],
+      "to": [
+        "CreateAccount"
+      ],
+      "event": "clickOnRegister",
+      "actions": [
+        {
+          "label": "saveInitialUrl",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlanPicker"
+      ],
+      "to": [
+        "CardPayment"
+      ],
+      "event": "clickOnPlan"
+    },
+    {
+      "from": [
+        "PlanPicker"
+      ],
+      "to": [
+        "Subscribe"
+      ],
+      "event": "onSubscribe"
+    },
+    {
+      "from": [
+        "Paywall"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "clickStartNow",
+      "guard": {
+        "expression": "isAVOD",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Paywall"
+      ],
+      "to": [
+        "Subscribe"
+      ],
+      "event": "clickStartNow"
+    },
+    {
+      "from": [
+        "Paywall"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickImPremium"
+    },
+    {
+      "from": [
+        "Paywall"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "clickOnPremium"
+    },
+    {
+      "from": [
+        "RegWall"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin"
+    },
+    {
+      "from": [
+        "RegWall"
+      ],
+      "to": [
+        "CreateAccount"
+      ],
+      "event": "clickOnRegister"
+    },
+    {
+      "from": [
+        "CreateAccount"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin"
+    },
+    {
+      "from": [
+        "CreateAccount"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "registerSuccess",
+      "guard": {
+        "expression": "isPayWall",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "CreateAccount"
+      ],
+      "to": [
+        "PromoSuccess"
+      ],
+      "event": "registerSuccess",
+      "guard": {
+        "expression": "isKidsRegWall",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "CreateAccount"
+      ],
+      "to": [
+        "CreateFirstProfile"
+      ],
+      "event": "registerSuccess"
+    },
+    {
+      "from": [
+        "Subscribe"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin"
+    },
+    {
+      "from": [
+        "Subscribe"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "registerSuccess",
+      "guard": {
+        "expression": "isPayWall",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Subscribe"
+      ],
+      "to": [
+        "PromoSuccess"
+      ],
+      "event": "registerSuccess"
+    },
+    {
+      "from": [
+        "Login"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "loginSuccess",
+      "guard": {
+        "expression": "isPayWallAndAVOD",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Login"
+      ],
+      "to": [
+        "WhoIsWatching"
+      ],
+      "event": "loginSuccess",
+      "guard": {
+        "expression": "isNotAnyWallFlow",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Login"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "loginSuccess",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        },
+        {
+          "label": "saveUserInfo",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Login"
+      ],
+      "to": [
+        "OutboundConfirmation"
+      ],
+      "event": "outboundConfirmation",
+      "actions": [
+        {
+          "label": "navigateTo",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Login"
+      ],
+      "to": [
+        "ForgetPassword"
+      ],
+      "event": "clickOnForgetPassword",
+      "actions": [
+        {
+          "label": "navigateTo",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "PromoSuccess"
+      ],
+      "to": [
+        "CreateFirstProfile"
+      ],
+      "event": "watchNow",
+      "guard": {
+        "expression": "isRegWallKidsOrPayWall",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "PromoSuccess"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "watchNow",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        },
+        {
+          "label": "saveUserInfo",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "PromoSuccess"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "clickOnPremium"
+    },
+    {
+      "from": [
+        "Profile"
+      ],
+      "to": [
+        "CreateAccount"
+      ],
+      "event": "clickOnRegister"
+    },
+    {
+      "from": [
+        "Profile"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin"
+    },
+    {
+      "from": [
+        "CreateFirstProfile"
+      ],
+      "to": [
+        "KidProfileChangeModal"
+      ],
+      "event": "clickOnCreateProfile",
+      "guard": {
+        "expression": "isKidsRegWall",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "CreateFirstProfile"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "clickOnCreateProfile",
+      "guard": {
+        "expression": "isPayWall",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "CreateFirstProfile"
+      ],
+      "to": [
+        "PromoSuccess"
+      ],
+      "event": "clickOnCreateProfile"
+    },
+    {
+      "from": [
+        "CreateFirstProfile"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "clickOnCancel",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WhoIsWatching"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "onProfileSelect",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "WhoIsWatching"
+      ],
+      "to": [
+        "AddProfile"
+      ],
+      "event": "onClickAddProfile"
+    },
+    {
+      "from": [
+        "WhoIsWatching"
+      ],
+      "to": [
+        "EditProfile"
+      ],
+      "event": "onClickEditProfile"
+    },
+    {
+      "from": [
+        "AddProfile"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "createKidsProfileSuccess",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "AddProfile"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "clickOnCancel",
+      "guard": {
+        "expression": "isProfilesUpdateFlow",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "AddProfile"
+      ],
+      "to": [
+        "WhoIsWatching"
+      ],
+      "event": "clickOnCancel"
+    },
+    {
+      "from": [
+        "EditProfile"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "clickOnCancel",
+      "guard": {
+        "expression": "isProfilesUpdateFlow",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "EditProfile"
+      ],
+      "to": [
+        "WhoIsWatching"
+      ],
+      "event": "clickOnCancel"
+    },
+    {
+      "from": [
+        "CardPayment"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "clickOnPay",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        },
+        {
+          "label": "saveUserInfo",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "OutboundConfirmation"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "loginSuccess",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "OutboundConfirmation"
+      ],
+      "to": [
+        "PromoSuccess"
+      ],
+      "event": "registerSuccess"
+    },
+    {
+      "from": [
+        "OutboundConfirmation"
+      ],
+      "to": [
+        "PlanPicker"
+      ],
+      "event": "clickOnPremium"
+    },
+    {
+      "from": [
+        "OutboundConfirmation"
+      ],
+      "to": [
+        "CreateAccount"
+      ],
+      "event": "clickOnRegister"
+    },
+    {
+      "from": [
+        "OutboundConfirmation"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin"
+    },
+    {
+      "from": [
+        "OutboundConfirmation"
+      ],
+      "to": [
+        "ActivateAccount"
+      ],
+      "event": "clickOnActivate"
+    },
+    {
+      "from": [
+        "ForgetPassword"
+      ],
+      "to": [
+        "Login"
+      ],
+      "event": "clickOnLogin"
+    },
+    {
+      "from": [
+        "KidProfileChangeModal"
+      ],
+      "to": [
+        "AddProfile"
+      ],
+      "event": "onClickAddProfile"
+    },
+    {
+      "from": [
+        "KidProfileChangeModal"
+      ],
+      "to": [
+        "WhoIsWatching"
+      ],
+      "event": "clickOnChangeProfile",
+      "actions": [
+        {
+          "label": "navigateTo",
+          "language": "xstate",
+          "parameters": {
+            "url": "`${UrlPath.MultiProfiles}?${QueryParam.CreateOrChangeProfile}=true\u0026${QueryParam.ChangeProfile}=true`"
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "KidProfileChangeModal"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "onClickKeepProfile",
+      "actions": [
+        {
+          "label": "navigateToContent",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "KidProfileChangeModal"
+      ],
+      "to": [
+        "FirstState"
+      ],
+      "event": "onClickKeepRestrictedProfile",
+      "actions": [
+        {
+          "label": "navigateTo",
+          "language": "xstate"
+        },
+        {
+          "label": "reset",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "onClickEditProfile"
+    },
+    {
+      "label": "clickOnCreateProfile"
+    },
+    {
+      "label": "clickOnActivate"
+    },
+    {
+      "label": "onClickKeepProfile"
+    },
+    {
+      "label": "clickOnPayWall"
+    },
+    {
+      "label": "clickOnPlan"
+    },
+    {
+      "label": "clickImPremium"
+    },
+    {
+      "label": "outboundConfirmation"
+    },
+    {
+      "label": "clickOnPay"
+    },
+    {
+      "label": "clickOnChangeProfile"
+    },
+    {
+      "label": "onClickKeepRestrictedProfile"
+    },
+    {
+      "label": "onRegWallFlowInit"
+    },
+    {
+      "label": "clickOnLogin"
+    },
+    {
+      "label": "clickOnWatchWithoutAds"
+    },
+    {
+      "label": "registerSuccess"
+    },
+    {
+      "label": "loginSuccess"
+    },
+    {
+      "label": "clickOnForgetPassword"
+    },
+    {
+      "label": "watchNow"
+    },
+    {
+      "label": "createKidsProfileSuccess"
+    },
+    {
+      "label": "clickOnPremium"
+    },
+    {
+      "label": "clickOnProfile"
+    },
+    {
+      "label": "onClickAddProfile"
+    },
+    {
+      "label": "onSubscribe"
+    },
+    {
+      "label": "clickOnRegister"
+    },
+    {
+      "label": "clickStartNow"
+    },
+    {
+      "label": "clickOnCancel"
+    },
+    {
+      "label": "onProfileSelect"
+    },
+    {
+      "label": "onKidProfileChangeInit"
+    }
+  ],
+  "variables": {
+    "__js_template__": "{} as IContext"
+  }
+}

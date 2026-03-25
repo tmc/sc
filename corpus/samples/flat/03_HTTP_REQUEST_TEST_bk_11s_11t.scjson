@@ -1,0 +1,385 @@
+{
+  "name": "HTTP_REQUEST_TEST_bk",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "HTTP_REQUEST_TEST_bk",
+        "type": 2,
+        "children": [
+          {
+            "label": "INITIALIZATION",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.INITIALIZATION"
+            }
+          },
+          {
+            "label": "SETTING_UP_VARIABLES",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "call (SETTING_UP_VARIABLES) (event pkt queue)",
+                "language": "xstate"
+              },
+              {
+                "label": "trigger (event)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.SETTING_UP_VARIABLES"
+            }
+          },
+          {
+            "label": "THREE_WAY_HANDSHAKE",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "call (THREE_WAY_HANDSHAKE pkt queue) (event pkt queue)",
+                "language": "xstate"
+              },
+              {
+                "label": "trigger (event)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.THREE_WAY_HANDSHAKE"
+            }
+          },
+          {
+            "label": "LISTENING",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "set (50) (timeout)",
+                "language": "xstate"
+              },
+              {
+                "label": "get_from_file (variables msg) (msg)",
+                "language": "xstate"
+              },
+              {
+                "label": "wait_packet_signal (queue timeout)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.LISTENING"
+            }
+          },
+          {
+            "label": "HTTP_PARSE_HEADER",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "wait_HTTP_headers (queue msg) (msg event)",
+                "language": "xstate"
+              },
+              {
+                "label": "pop (queue)",
+                "language": "xstate"
+              },
+              {
+                "label": "trigger (event)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.HTTP_PARSE_HEADER"
+            }
+          },
+          {
+            "label": "ENDING",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "return (msg)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.ENDING"
+            }
+          },
+          {
+            "label": "HTTP_PARSE_PAYLOAD",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "wait_HTTP_payload (queue msg) (msg event)",
+                "language": "xstate"
+              },
+              {
+                "label": "pop (queue)",
+                "language": "xstate"
+              },
+              {
+                "label": "trigger (event)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.HTTP_PARSE_PAYLOAD"
+            }
+          },
+          {
+            "label": "SENDING",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "get_from_file (variables msg) (msg)",
+                "language": "xstate"
+              },
+              {
+                "label": "send (msg)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.SENDING"
+            }
+          },
+          {
+            "label": "TIMEOUT ENDING",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "set (TIMEOUT) (event)",
+                "language": "xstate"
+              },
+              {
+                "label": "return (event)",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "stately_id": "HTTP_REQUEST_TEST_bk.TIMEOUT ENDING"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "HTTP_REQUEST_TEST_bk"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "INITIALIZATION"
+      ],
+      "to": [
+        "SETTING_UP_VARIABLES"
+      ],
+      "event": "STARTED"
+    },
+    {
+      "from": [
+        "SETTING_UP_VARIABLES"
+      ],
+      "to": [
+        "THREE_WAY_HANDSHAKE"
+      ],
+      "event": "DONE",
+      "actions": [
+        {
+          "label": "assign (pkt) (pkt)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "THREE_WAY_HANDSHAKE"
+      ],
+      "to": [
+        "LISTENING"
+      ],
+      "event": "DONE",
+      "guard": {
+        "expression": "equal(role client)",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "assign (pkt) (pkt)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "THREE_WAY_HANDSHAKE"
+      ],
+      "to": [
+        "SENDING"
+      ],
+      "event": "DONE",
+      "guard": {
+        "expression": "equal(role server)",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "LISTENING"
+      ],
+      "to": [
+        "HTTP_PARSE_HEADER"
+      ],
+      "event": "PACKET_AVAILABLE",
+      "actions": [
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (msg) (msg)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "HTTP_PARSE_HEADER"
+      ],
+      "to": [
+        "HTTP_PARSE_HEADER"
+      ],
+      "event": "HEADER_INCOMPLETE",
+      "actions": [
+        {
+          "label": "assign (msg) (msg)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "HTTP_PARSE_HEADER"
+      ],
+      "to": [
+        "HTTP_PARSE_PAYLOAD"
+      ],
+      "event": "HEADER_COMPLETE",
+      "actions": [
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (msg) (msg)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "HTTP_PARSE_PAYLOAD"
+      ],
+      "to": [
+        "HTTP_PARSE_PAYLOAD"
+      ],
+      "event": "PAYLOAD_INCOMPLETE",
+      "actions": [
+        {
+          "label": "assign (msg) (msg)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "HTTP_PARSE_PAYLOAD"
+      ],
+      "to": [
+        "ENDING"
+      ],
+      "event": "PAYOAD_COMPLETE",
+      "actions": [
+        {
+          "label": "assign (queue) (queue)",
+          "language": "xstate"
+        },
+        {
+          "label": "assign (msg) (msg)",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "SENDING"
+      ],
+      "to": [
+        "LISTENING"
+      ],
+      "event": "PACKET_SENT"
+    },
+    {
+      "from": [
+        "LISTENING"
+      ],
+      "to": [
+        "TIMEOUT ENDING"
+      ],
+      "event": "TIMEOUT"
+    }
+  ],
+  "events": [
+    {
+      "label": "DONE"
+    },
+    {
+      "label": "HEADER_COMPLETE"
+    },
+    {
+      "label": "PAYLOAD_INCOMPLETE"
+    },
+    {
+      "label": "STARTED"
+    },
+    {
+      "label": "PACKET_AVAILABLE"
+    },
+    {
+      "label": "HEADER_INCOMPLETE"
+    },
+    {
+      "label": "PAYOAD_COMPLETE"
+    },
+    {
+      "label": "PACKET_SENT"
+    },
+    {
+      "label": "TIMEOUT"
+    }
+  ]
+}

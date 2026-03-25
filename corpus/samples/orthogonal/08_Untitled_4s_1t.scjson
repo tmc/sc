@@ -1,0 +1,73 @@
+{
+  "name": "Untitled",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Untitled",
+        "type": 3,
+        "children": [
+          {
+            "label": "New state 1",
+            "type": 1,
+            "entry_actions": [
+              {
+                "label": "start",
+                "language": "xstate",
+                "parameters": {
+                  "name": "string"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Untitled.New state 1"
+            }
+          },
+          {
+            "label": "New state 3",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Untitled.New state 3"
+            }
+          }
+        ],
+        "is_initial": true,
+        "entry_actions": [
+          {
+            "label": "ok",
+            "language": "xstate"
+          }
+        ],
+        "metadata": {
+          "invoke": [
+            {
+              "id": "",
+              "input": {},
+              "kind": "named",
+              "settings": {},
+              "src": "submit"
+            }
+          ],
+          "stately_id": "Untitled"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "New state 1"
+      ],
+      "to": [
+        "New state 3"
+      ],
+      "event": "submit"
+    }
+  ],
+  "events": [
+    {
+      "label": "submit"
+    }
+  ]
+}

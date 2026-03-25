@@ -1,0 +1,238 @@
+{
+  "name": "01-ConnectedStateMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "01-ConnectedStateMachine",
+        "type": 3,
+        "children": [
+          {
+            "label": "NetworkConnectivityStatus",
+            "type": 2,
+            "children": [
+              {
+                "label": "CheckingConnectivity",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "01-ConnectedStateMachine.NetworkConnectivityStatus.CheckingConnectivity"
+                }
+              },
+              {
+                "label": "Reconnecting",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "ConnectToServer",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "ConnectToServer"
+                    }
+                  ],
+                  "stately_id": "01-ConnectedStateMachine.NetworkConnectivityStatus.Reconnecting"
+                }
+              },
+              {
+                "label": "Connected",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "HeartbeatRequest",
+                      "input": {},
+                      "kind": "named",
+                      "settings": {},
+                      "src": "HeartbeatRequest"
+                    }
+                  ],
+                  "stately_id": "01-ConnectedStateMachine.NetworkConnectivityStatus.Connected"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "01-ConnectedStateMachine.NetworkConnectivityStatus"
+            }
+          },
+          {
+            "label": "CoreStateMachineStatus",
+            "type": 2,
+            "children": [
+              {
+                "label": "Available",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "EVSEStateMachine",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "01-ConnectedStateMachine.CoreStateMachineStatus.Available.EVSEStateMachine"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "entry_actions": [
+                  {
+                    "label": "StatusNotificationRequest",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "01-ConnectedStateMachine.CoreStateMachineStatus.Available"
+                }
+              },
+              {
+                "label": "Unavailable",
+                "type": 1,
+                "entry_actions": [
+                  {
+                    "label": "StatusNotificationRequest",
+                    "language": "xstate"
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "01-ConnectedStateMachine.CoreStateMachineStatus.Unavailable"
+                }
+              },
+              {
+                "label": "InvokeFaultedStateMachine",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "01-ConnectedStateMachine.CoreStateMachineStatus.InvokeFaultedStateMachine"
+                }
+              },
+              {
+                "label": "New note",
+                "type": 1,
+                "metadata": {
+                  "description": "A dynamic number of actors (based on config) of the **EVSEStateMachine** blueprint should be spawned.",
+                  "stately_id": "01-ConnectedStateMachine.CoreStateMachineStatus.New note",
+                  "stately_type": "annotation"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "01-ConnectedStateMachine.CoreStateMachineStatus"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "01-ConnectedStateMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Reconnecting"
+      ],
+      "to": [
+        "CheckingConnectivity"
+      ]
+    },
+    {
+      "from": [
+        "Reconnecting"
+      ],
+      "to": [
+        "Reconnecting"
+      ]
+    },
+    {
+      "from": [
+        "CheckingConnectivity"
+      ],
+      "to": [
+        "Connected"
+      ],
+      "guard": {
+        "expression": "context.socket !== null",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "CheckingConnectivity"
+      ],
+      "to": [
+        "Reconnecting"
+      ]
+    },
+    {
+      "from": [
+        "Connected"
+      ],
+      "to": [
+        "CheckingConnectivity"
+      ],
+      "event": "DISCONNECT",
+      "actions": [
+        {
+          "label": "resetSocket",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "Available"
+      ],
+      "to": [
+        "Unavailable"
+      ],
+      "event": "INOPERATIVE"
+    },
+    {
+      "from": [
+        "Unavailable"
+      ],
+      "to": [
+        "Available"
+      ],
+      "event": "OPERATIVE"
+    },
+    {
+      "from": [
+        "Available"
+      ],
+      "to": [
+        "InvokeFaultedStateMachine"
+      ],
+      "event": "FAULT_EVENT"
+    },
+    {
+      "from": [
+        "Available"
+      ],
+      "to": [
+        "Available"
+      ],
+      "actions": [
+        {
+          "label": "HeartbeatRequest",
+          "language": "xstate"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "OPERATIVE"
+    },
+    {
+      "label": "FAULT_EVENT"
+    },
+    {
+      "label": "DISCONNECT"
+    },
+    {
+      "label": "INOPERATIVE"
+    }
+  ]
+}

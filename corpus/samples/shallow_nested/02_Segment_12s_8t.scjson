@@ -1,0 +1,201 @@
+{
+  "name": "Segment",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Segment",
+        "type": 2,
+        "children": [
+          {
+            "label": "Submitted",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:e0xbs2sbk",
+                  "kind": "named",
+                  "src": "queue for render"
+                }
+              ],
+              "stately_id": "Segment.Submitted"
+            }
+          },
+          {
+            "label": "Editing Segment Components",
+            "type": 2,
+            "children": [
+              {
+                "label": "Defaults",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Segment.Editing Segment Components.Defaults"
+                }
+              },
+              {
+                "label": "Customized",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Segment.Editing Segment Components.Customized"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Segment.Editing Segment Components"
+            }
+          },
+          {
+            "label": "Rendering",
+            "type": 2,
+            "children": [
+              {
+                "label": "Rendering Segment MOV",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Segment.Rendering.Rendering Segment MOV"
+                }
+              },
+              {
+                "label": "Converting MOV to GIF",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Segment.Rendering.Converting MOV to GIF"
+                }
+              },
+              {
+                "label": "GIF Posted",
+                "type": 1,
+                "metadata": {
+                  "description": "as a remixable segment",
+                  "stately_id": "Segment.Rendering.GIF Posted"
+                }
+              },
+              {
+                "label": "Concatenating MOVs to MP4",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Segment.Rendering.Concatenating MOVs to MP4"
+                }
+              },
+              {
+                "label": "MP4 posted",
+                "type": 1,
+                "metadata": {
+                  "description": "as a finished but remixable project",
+                  "stately_id": "Segment.Rendering.MP4 posted"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Segment.Rendering"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Segment"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Submitted"
+      ],
+      "to": [
+        "Rendering"
+      ]
+    },
+    {
+      "from": [
+        "Defaults"
+      ],
+      "to": [
+        "Customized"
+      ],
+      "event": "Edit"
+    },
+    {
+      "from": [
+        "Customized"
+      ],
+      "to": [
+        "Defaults"
+      ],
+      "event": "Reset"
+    },
+    {
+      "from": [
+        "Editing Segment Components"
+      ],
+      "to": [
+        "Submitted"
+      ],
+      "event": "Submit"
+    },
+    {
+      "from": [
+        "Rendering Segment MOV"
+      ],
+      "to": [
+        "Converting MOV to GIF"
+      ],
+      "event": "MOV Created"
+    },
+    {
+      "from": [
+        "Converting MOV to GIF"
+      ],
+      "to": [
+        "GIF Posted"
+      ],
+      "event": "GIF Created"
+    },
+    {
+      "from": [
+        "Concatenating MOVs to MP4"
+      ],
+      "to": [
+        "MP4 posted"
+      ],
+      "event": "MP4 Created"
+    },
+    {
+      "from": [
+        "GIF Posted"
+      ],
+      "to": [
+        "Concatenating MOVs to MP4"
+      ],
+      "guard": {
+        "expression": "all segments are done",
+        "language": "xstate"
+      }
+    }
+  ],
+  "events": [
+    {
+      "label": "GIF Created"
+    },
+    {
+      "label": "MP4 Created"
+    },
+    {
+      "label": "Edit"
+    },
+    {
+      "label": "Reset"
+    },
+    {
+      "label": "Submit"
+    },
+    {
+      "label": "MOV Created"
+    }
+  ]
+}

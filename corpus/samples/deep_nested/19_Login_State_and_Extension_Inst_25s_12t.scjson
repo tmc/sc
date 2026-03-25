@@ -1,0 +1,361 @@
+{
+  "name": "Login State and Extension Installation Status",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Login State and Extension Installation Status",
+        "type": 3,
+        "children": [
+          {
+            "label": "Extension",
+            "type": 3,
+            "children": [
+              {
+                "label": "PopUp",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "Notifications",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "NoDisplay",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "Login State and Extension Installation Status.Extension.PopUp.Notifications.NoDisplay"
+                        }
+                      },
+                      {
+                        "label": "Display",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "Login State and Extension Installation Status.Extension.PopUp.Notifications.Display"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Extension.PopUp.Notifications"
+                    }
+                  },
+                  {
+                    "label": "User Profile",
+                    "type": 1,
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Extension.PopUp.User Profile"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Login State and Extension Installation Status.Extension.PopUp"
+                }
+              },
+              {
+                "label": "Installation and Configuration",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Verify Installation",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "invoke": [
+                        {
+                          "id": "invoke-1uwcb",
+                          "kind": "named",
+                          "src": "managementgetF"
+                        }
+                      ],
+                      "stately_id": "Login State and Extension Installation Status.Extension.Installation and Configuration.Verify Installation"
+                    }
+                  },
+                  {
+                    "label": "Installation Prompt",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Extension.Installation and Configuration.Installation Prompt"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "invoke-uas21",
+                      "kind": "named",
+                      "src": "management.get"
+                    }
+                  ],
+                  "stately_id": "Login State and Extension Installation Status.Extension.Installation and Configuration"
+                }
+              },
+              {
+                "label": "SRW",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Active",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Extension.SRW.Active"
+                    }
+                  },
+                  {
+                    "label": "Inactive",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Extension.SRW.Inactive"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "invoke-u3qqt",
+                      "kind": "named",
+                      "src": "New invoke source"
+                    }
+                  ],
+                  "stately_id": "Login State and Extension Installation Status.Extension.SRW"
+                }
+              },
+              {
+                "label": "New state 1",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Login State and Extension Installation Status.Extension.New state 1"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Login State and Extension Installation Status.Extension"
+            }
+          },
+          {
+            "label": "Server",
+            "type": 2,
+            "children": [
+              {
+                "label": "Query Cookies",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Login State and Extension Installation Status.Server.Query Cookies"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Login State and Extension Installation Status.Server"
+            }
+          },
+          {
+            "label": "Cognito",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Login State and Extension Installation Status.Cognito"
+            }
+          },
+          {
+            "label": "Chrome",
+            "type": 2,
+            "children": [
+              {
+                "label": "WebApp",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Login Status",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "LoginState",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "invoke": [
+                            {
+                              "id": "invoke-nkqep",
+                              "kind": "named",
+                              "src": "loginUserFunction"
+                            }
+                          ],
+                          "stately_id": "Login State and Extension Installation Status.Chrome.WebApp.Login Status.LoginState"
+                        }
+                      },
+                      {
+                        "label": "LoggedIn",
+                        "type": 1,
+                        "is_final": true,
+                        "metadata": {
+                          "stately_id": "Login State and Extension Installation Status.Chrome.WebApp.Login Status.LoggedIn"
+                        }
+                      }
+                    ],
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Chrome.WebApp.Login Status"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Login State and Extension Installation Status.Chrome.WebApp"
+                }
+              },
+              {
+                "label": "Context",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Query Access Key",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "stately_id": "Login State and Extension Installation Status.Chrome.Context.Query Access Key"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Login State and Extension Installation Status.Chrome.Context"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Login State and Extension Installation Status.Chrome"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Login State and Extension Installation Status"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Installation and Configuration"
+      ],
+      "to": [
+        "Login Status"
+      ]
+    },
+    {
+      "from": [
+        "Server"
+      ],
+      "to": [
+        "Display"
+      ],
+      "event": "Notifications",
+      "guard": {
+        "expression": "True",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Server"
+      ],
+      "to": [
+        "NoDisplay"
+      ],
+      "event": "Notifications"
+    },
+    {
+      "from": [
+        "Cognito"
+      ],
+      "to": [
+        "Server"
+      ],
+      "event": "Token Refreshed"
+    },
+    {
+      "from": [
+        "Login Status"
+      ],
+      "to": [
+        "Installation and Configuration"
+      ]
+    },
+    {
+      "from": [
+        "Query Access Key"
+      ],
+      "to": [
+        "Server"
+      ],
+      "event": "ValidToken",
+      "guard": {
+        "expression": "True",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Query Access Key"
+      ],
+      "to": [
+        "Cognito"
+      ],
+      "event": "ValidToken"
+    },
+    {
+      "from": [
+        "Active"
+      ],
+      "to": [
+        "Inactive"
+      ]
+    },
+    {
+      "from": [
+        "SRW"
+      ],
+      "to": [
+        "New state 1"
+      ]
+    },
+    {
+      "from": [
+        "LoginState"
+      ],
+      "to": [
+        "LoggedIn"
+      ]
+    },
+    {
+      "from": [
+        "LoginState"
+      ],
+      "to": [
+        "LoginState"
+      ]
+    },
+    {
+      "from": [
+        "Verify Installation"
+      ],
+      "to": [
+        "Installation Prompt"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "Notifications"
+    },
+    {
+      "label": "Token Refreshed"
+    },
+    {
+      "label": "ValidToken"
+    }
+  ]
+}

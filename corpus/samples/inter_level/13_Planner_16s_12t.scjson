@@ -1,0 +1,347 @@
+{
+  "name": "Planner",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Planner",
+        "type": 2,
+        "children": [
+          {
+            "label": "getRequirements",
+            "type": 2,
+            "children": [
+              {
+                "label": "Initial Summary Request",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Planner.getRequirements.Initial Summary Request"
+                }
+              },
+              {
+                "label": "Summarized Request",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.getRequirements.Summarized Request"
+                }
+              },
+              {
+                "label": "RequestComplete",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.getRequirements.RequestComplete"
+                }
+              }
+            ],
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Planner.getRequirements"
+            }
+          },
+          {
+            "label": "Requirements with Components",
+            "type": 1,
+            "metadata": {
+              "stately_id": "Planner.Requirements with Components"
+            }
+          },
+          {
+            "label": "Interface",
+            "type": 3,
+            "children": [
+              {
+                "label": "Frontend Interface",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.Interface.Frontend Interface"
+                }
+              },
+              {
+                "label": "Backend Interface",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.Interface.Backend Interface"
+                }
+              },
+              {
+                "label": "Package Interface",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.Interface.Package Interface"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Planner.Interface"
+            }
+          },
+          {
+            "label": "Developer",
+            "type": 2,
+            "children": [
+              {
+                "label": "onGetRequirements",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Planner.Developer.onGetRequirements"
+                }
+              },
+              {
+                "label": "HasTests",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.Developer.HasTests"
+                }
+              },
+              {
+                "label": "HasCode",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.Developer.HasCode"
+                }
+              },
+              {
+                "label": "CompletedComponent",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Planner.Developer.CompletedComponent"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Planner.Developer"
+            }
+          }
+        ],
+        "is_initial": true,
+        "entry_actions": [
+          {
+            "label": "ask",
+            "language": "xstate",
+            "parameters": {
+              "query": ""
+            }
+          }
+        ],
+        "metadata": {
+          "stately_id": "Planner"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Requirements with Components"
+      ],
+      "to": [
+        "Interface"
+      ],
+      "event": "Write Interface"
+    },
+    {
+      "from": [
+        "Initial Summary Request"
+      ],
+      "to": [
+        "Summarized Request"
+      ],
+      "event": "Ask Model"
+    },
+    {
+      "from": [
+        "Summarized Request"
+      ],
+      "to": [
+        "RequestComplete"
+      ],
+      "event": "CheckComprehensiveness",
+      "guard": {
+        "expression": "comprehensive",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "Summarized Request"
+      ],
+      "to": [
+        "Initial Summary Request"
+      ],
+      "event": "CheckComprehensiveness"
+    },
+    {
+      "from": [
+        "RequestComplete"
+      ],
+      "to": [
+        "Requirements with Components"
+      ],
+      "event": "GetMatchingComponents"
+    },
+    {
+      "from": [
+        "Package Interface"
+      ],
+      "to": [
+        "Developer"
+      ],
+      "event": "InvokePackager",
+      "actions": [
+        {
+          "label": "packager",
+          "language": "xstate",
+          "parameters": {
+            "backendInterface": "BackendInterface",
+            "frontendInterfaces": "FrontendComponents",
+            "type": "packager"
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "Frontend Interface"
+      ],
+      "to": [
+        "Developer"
+      ],
+      "event": "InvokeFrontend",
+      "actions": [
+        {
+          "label": "frontend",
+          "language": "xstate",
+          "parameters": {
+            "frontendInterface": "FrontendComponents",
+            "type": "frontend"
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "onGetRequirements"
+      ],
+      "to": [
+        "HasTests"
+      ],
+      "event": "writeTests",
+      "actions": [
+        {
+          "label": "writeTests",
+          "language": "xstate",
+          "parameters": {
+            "interface": "Interface"
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "HasTests"
+      ],
+      "to": [
+        "HasCode"
+      ],
+      "event": "Write Code",
+      "actions": [
+        {
+          "label": "writeCode",
+          "language": "xstate",
+          "parameters": {
+            "interface": "Interface"
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "HasCode"
+      ],
+      "to": [
+        "CompletedComponent"
+      ],
+      "event": "runTests",
+      "guard": {
+        "expression": "pass",
+        "language": "xstate"
+      },
+      "actions": [
+        {
+          "label": "runTest",
+          "language": "xstate",
+          "parameters": {
+            "testCode": "code",
+            "testableModule": "code"
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "HasCode"
+      ],
+      "to": [
+        "HasCode"
+      ],
+      "event": "runTests"
+    },
+    {
+      "from": [
+        "Backend Interface"
+      ],
+      "to": [
+        "Developer"
+      ],
+      "event": "InvokeBackend",
+      "actions": [
+        {
+          "label": "backend",
+          "language": "xstate",
+          "parameters": {
+            "backendInterface": "BackendComponents",
+            "type": "backend"
+          }
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "Write Interface"
+    },
+    {
+      "label": "Ask Model"
+    },
+    {
+      "label": "InvokeFrontend"
+    },
+    {
+      "label": "writeTests"
+    },
+    {
+      "label": "Write Code"
+    },
+    {
+      "label": "InvokeBackend"
+    },
+    {
+      "label": "CheckComprehensiveness"
+    },
+    {
+      "label": "GetMatchingComponents"
+    },
+    {
+      "label": "InvokePackager"
+    },
+    {
+      "label": "runTests"
+    }
+  ],
+  "variables": {
+    "ask": ""
+  }
+}

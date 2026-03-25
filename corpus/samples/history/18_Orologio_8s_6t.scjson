@@ -1,0 +1,141 @@
+{
+  "name": "Orologio",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Orologio",
+        "type": 2,
+        "children": [
+          {
+            "label": "Orario",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Orologio.Orario"
+            }
+          },
+          {
+            "label": "Stazione Radio",
+            "type": 2,
+            "children": [
+              {
+                "label": "Ricerca",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "Orologio.Stazione Radio.Ricerca"
+                }
+              },
+              {
+                "label": "Stazione",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "Orologio.Stazione Radio.Stazione"
+                }
+              },
+              {
+                "label": "Salva stazione",
+                "type": 1,
+                "is_history": true,
+                "history_type": 1,
+                "metadata": {
+                  "stately_id": "Orologio.Stazione Radio.Salva stazione"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "Orologio.Stazione Radio"
+            }
+          },
+          {
+            "label": "Spegni",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "Orologio.Spegni"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Orologio"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Orario"
+      ],
+      "to": [
+        "Stazione Radio"
+      ],
+      "event": "clickRadio"
+    },
+    {
+      "from": [
+        "Stazione Radio"
+      ],
+      "to": [
+        "Orario"
+      ],
+      "event": "clickOrario"
+    },
+    {
+      "from": [
+        "Stazione Radio"
+      ],
+      "to": [
+        "Spegni"
+      ],
+      "event": "spegniOrologio()"
+    },
+    {
+      "from": [
+        "Orario"
+      ],
+      "to": [
+        "Spegni"
+      ],
+      "event": "spegniOrologio()"
+    },
+    {
+      "from": [
+        "Stazione"
+      ],
+      "to": [
+        "Ricerca"
+      ],
+      "event": "prossimastazione()"
+    },
+    {
+      "from": [
+        "Ricerca"
+      ],
+      "to": [
+        "Stazione"
+      ],
+      "event": "riproduci()"
+    }
+  ],
+  "events": [
+    {
+      "label": "riproduci()"
+    },
+    {
+      "label": "clickRadio"
+    },
+    {
+      "label": "clickOrario"
+    },
+    {
+      "label": "spegniOrologio()"
+    },
+    {
+      "label": "prossimastazione()"
+    }
+  ]
+}

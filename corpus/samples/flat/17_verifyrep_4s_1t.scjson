@@ -1,0 +1,58 @@
+{
+  "name": "verifyrep",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "verifyrep",
+        "type": 2,
+        "children": [
+          {
+            "label": "idle",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "verifyrep.idle"
+            }
+          },
+          {
+            "label": "loading",
+            "type": 1,
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:ujfahrruss",
+                  "kind": "named",
+                  "src": "verifyRep"
+                }
+              ],
+              "meta_entries": [],
+              "stately_id": "verifyrep.loading"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "verifyrep"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "loading"
+      ],
+      "event": "SUBMIT"
+    }
+  ],
+  "events": [
+    {
+      "label": "SUBMIT"
+    }
+  ]
+}

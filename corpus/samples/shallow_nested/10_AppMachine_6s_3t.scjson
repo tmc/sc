@@ -1,0 +1,110 @@
+{
+  "name": "AppMachine",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "AppMachine",
+        "type": 2,
+        "children": [
+          {
+            "label": "Menu",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "AppMachine.Menu"
+            }
+          },
+          {
+            "label": "Game",
+            "type": 2,
+            "children": [
+              {
+                "label": "Preparing",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "LobbyViewMachine",
+                      "kind": "named",
+                      "src": "LobbyViewMachine"
+                    }
+                  ],
+                  "stately_id": "AppMachine.Game.Preparing"
+                }
+              },
+              {
+                "label": "Playing",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "AppMachine.Game.Playing"
+                }
+              }
+            ],
+            "metadata": {
+              "invoke": [
+                {
+                  "id": "RTCMachine",
+                  "kind": "named",
+                  "src": "RTCMachine"
+                },
+                {
+                  "id": "PlayersMachine",
+                  "kind": "named",
+                  "src": "PlayersMachine"
+                }
+              ],
+              "stately_id": "AppMachine.Game"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "AppMachine"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Menu"
+      ],
+      "to": [
+        "Game"
+      ],
+      "event": "GAME_STARTED"
+    },
+    {
+      "from": [
+        "Preparing"
+      ],
+      "to": [
+        "Playing"
+      ],
+      "event": "ROUND_STARTED"
+    },
+    {
+      "from": [
+        "Playing"
+      ],
+      "to": [
+        "Playing"
+      ],
+      "event": "ROUND_RESTARTED"
+    }
+  ],
+  "events": [
+    {
+      "label": "GAME_STARTED"
+    },
+    {
+      "label": "ROUND_STARTED"
+    },
+    {
+      "label": "ROUND_RESTARTED"
+    }
+  ]
+}

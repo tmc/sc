@@ -1,0 +1,206 @@
+{
+  "name": "Basic",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Basic",
+        "type": 2,
+        "children": [
+          {
+            "label": "Locked",
+            "type": 1,
+            "is_initial": true,
+            "metadata": {
+              "stately_id": "Basic.Locked"
+            }
+          },
+          {
+            "label": "Available",
+            "type": 3,
+            "children": [
+              {
+                "label": "Expiration",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "ExpirationSet",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Basic.Available.Expiration.ExpirationSet"
+                    }
+                  },
+                  {
+                    "label": "Expire",
+                    "type": 1,
+                    "is_final": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Basic.Available.Expiration.Expire"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "meta_entries": [],
+                  "stately_id": "Basic.Available.Expiration"
+                }
+              },
+              {
+                "label": "ReadState",
+                "type": 2,
+                "children": [
+                  {
+                    "label": "Read",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "Incomplete",
+                        "type": 1,
+                        "is_initial": true,
+                        "entry_actions": [
+                          {
+                            "label": "taskStatusFalse",
+                            "language": "xstate"
+                          }
+                        ],
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Basic.Available.ReadState.Read.Incomplete"
+                        }
+                      },
+                      {
+                        "label": "Complete",
+                        "type": 1,
+                        "entry_actions": [
+                          {
+                            "label": "taskStatusTrue",
+                            "language": "xstate"
+                          }
+                        ],
+                        "metadata": {
+                          "meta_entries": [],
+                          "stately_id": "Basic.Available.ReadState.Read.Complete"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Basic.Available.ReadState.Read"
+                    }
+                  },
+                  {
+                    "label": "Unread",
+                    "type": 1,
+                    "is_initial": true,
+                    "metadata": {
+                      "meta_entries": [],
+                      "stately_id": "Basic.Available.ReadState.Unread"
+                    }
+                  }
+                ],
+                "metadata": {
+                  "stately_id": "Basic.Available.ReadState"
+                }
+              }
+            ],
+            "metadata": {
+              "meta_entries": [],
+              "stately_id": "Basic.Available"
+            }
+          },
+          {
+            "label": "Done",
+            "type": 1,
+            "is_final": true,
+            "metadata": {
+              "stately_id": "Basic.Done"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "meta_entries": [],
+          "stately_id": "Basic"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "Locked"
+      ],
+      "to": [
+        "Available"
+      ],
+      "event": "Ready"
+    },
+    {
+      "from": [
+        "Incomplete"
+      ],
+      "to": [
+        "Complete"
+      ],
+      "event": "Toggle Complete"
+    },
+    {
+      "from": [
+        "Complete"
+      ],
+      "to": [
+        "Incomplete"
+      ],
+      "event": "Toggle Incomplete"
+    },
+    {
+      "from": [
+        "Unread"
+      ],
+      "to": [
+        "Read"
+      ],
+      "event": "View Task"
+    },
+    {
+      "from": [
+        "ExpirationSet"
+      ],
+      "to": [
+        "Expire"
+      ],
+      "event": "Expire"
+    },
+    {
+      "from": [
+        "Expiration"
+      ],
+      "to": [
+        "Done"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "label": "Ready"
+    },
+    {
+      "label": "Toggle Complete"
+    },
+    {
+      "label": "Toggle Incomplete"
+    },
+    {
+      "label": "View Task"
+    },
+    {
+      "label": "Expire"
+    }
+  ],
+  "variables": {
+    "taskStatus": false
+  }
+}

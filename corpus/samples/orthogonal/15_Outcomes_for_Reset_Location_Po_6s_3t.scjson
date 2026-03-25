@@ -1,0 +1,151 @@
+{
+  "name": "Outcomes for Reset Location Point Annotations Check",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Outcomes for Reset Location Point Annotations Check",
+        "type": 3,
+        "children": [
+          {
+            "label": "If Reset Points (n-n) Don't Exist Anymore",
+            "type": 1,
+            "exit_actions": [
+              {
+                "label": "Reset Location in Fetchcore",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:pel1eseopjr",
+                  "kind": "named",
+                  "src": "HMI: Default Mlzed Screen"
+                }
+              ],
+              "stately_id": "Outcomes for Reset Location Point Annotations Check.If Reset Points (n-n) Don't Exist Anymore"
+            }
+          },
+          {
+            "label": "If Reset Points (n-1) Still Exist",
+            "type": 1,
+            "exit_actions": [
+              {
+                "label": "Enter Low Torque",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:m2g52mlntu",
+                  "kind": "named",
+                  "src": "HMI: New Mlzed Screen"
+                }
+              ],
+              "stately_id": "Outcomes for Reset Location Point Annotations Check.If Reset Points (n-1) Still Exist"
+            }
+          },
+          {
+            "label": "If Reset Points Exist",
+            "type": 1,
+            "exit_actions": [
+              {
+                "label": "Enter Low Torque",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:wq5ncqzf6t",
+                  "kind": "named",
+                  "src": "HMI: New Mlzed Screen"
+                }
+              ],
+              "stately_id": "Outcomes for Reset Location Point Annotations Check.If Reset Points Exist"
+            }
+          },
+          {
+            "label": "If Reset Points Never Existed",
+            "type": 1,
+            "exit_actions": [
+              {
+                "label": "Reset Location in Fetchcore",
+                "language": "xstate"
+              }
+            ],
+            "metadata": {
+              "invoke": [
+                {
+                  "id": ":invocation:kubyi8a2ns",
+                  "kind": "named",
+                  "src": "HMI: Default Mlzed Screen"
+                }
+              ],
+              "stately_id": "Outcomes for Reset Location Point Annotations Check.If Reset Points Never Existed"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "Outcomes for Reset Location Point Annotations Check"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "If Reset Points Never Existed"
+      ],
+      "to": [
+        "If Reset Points Exist"
+      ],
+      "event": "User Annotates RP",
+      "guard": {
+        "expression": "Map Published and Annotations Cached",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "If Reset Points Exist"
+      ],
+      "to": [
+        "If Reset Points (n-1) Still Exist"
+      ],
+      "event": "User Deletes RP",
+      "guard": {
+        "expression": "Map Published and Annotations Cached",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "If Reset Points Exist"
+      ],
+      "to": [
+        "If Reset Points (n-n) Don't Exist Anymore"
+      ],
+      "event": "User Deletes All RPs",
+      "guard": {
+        "expression": "Map Published and Annotations Cached",
+        "language": "xstate"
+      }
+    }
+  ],
+  "events": [
+    {
+      "label": "User Deletes RP"
+    },
+    {
+      "label": "User Deletes All RPs"
+    },
+    {
+      "label": "User Annotates RP"
+    }
+  ]
+}

@@ -1,0 +1,502 @@
+{
+  "name": "inputMachine(詳細なし)",
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "inputMachine(詳細なし)",
+        "type": 3,
+        "children": [
+          {
+            "label": "touchState",
+            "type": 2,
+            "children": [
+              {
+                "label": "untouched",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).touchState.untouched"
+                }
+              },
+              {
+                "label": "touched",
+                "type": 1,
+                "is_final": true,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).touchState.touched"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "inputMachine(詳細なし).touchState"
+            }
+          },
+          {
+            "label": "dirtyState",
+            "type": 2,
+            "children": [
+              {
+                "label": "pristine",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).dirtyState.pristine"
+                }
+              },
+              {
+                "label": "dirty",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).dirtyState.dirty"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "inputMachine(詳細なし).dirtyState"
+            }
+          },
+          {
+            "label": "validity",
+            "type": 2,
+            "children": [
+              {
+                "label": "invalid",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).validity.invalid"
+                }
+              },
+              {
+                "label": "valid",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).validity.valid"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "inputMachine(詳細なし).validity"
+            }
+          },
+          {
+            "label": "validationState",
+            "type": 2,
+            "children": [
+              {
+                "label": "idle",
+                "type": 1,
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).validationState.idle"
+                }
+              },
+              {
+                "label": "validating",
+                "type": 1,
+                "metadata": {
+                  "invoke": [
+                    {
+                      "id": "validate",
+                      "kind": "named",
+                      "src": "validate"
+                    }
+                  ],
+                  "stately_id": "inputMachine(詳細なし).validationState.validating"
+                }
+              },
+              {
+                "label": "validated",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).validationState.validated"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "inputMachine(詳細なし).validationState"
+            }
+          },
+          {
+            "label": "editableState",
+            "type": 2,
+            "children": [
+              {
+                "label": "enabled",
+                "type": 3,
+                "children": [
+                  {
+                    "label": "focusState",
+                    "type": 2,
+                    "children": [
+                      {
+                        "label": "unfocused",
+                        "type": 1,
+                        "is_initial": true,
+                        "metadata": {
+                          "stately_id": "inputMachine(詳細なし).editableState.enabled.focusState.unfocused"
+                        }
+                      },
+                      {
+                        "label": "focused",
+                        "type": 1,
+                        "metadata": {
+                          "stately_id": "inputMachine(詳細なし).editableState.enabled.focusState.focused"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "stately_id": "inputMachine(詳細なし).editableState.enabled.focusState"
+                    }
+                  }
+                ],
+                "is_initial": true,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).editableState.enabled"
+                }
+              },
+              {
+                "label": "disabled",
+                "type": 1,
+                "metadata": {
+                  "stately_id": "inputMachine(詳細なし).editableState.disabled"
+                }
+              }
+            ],
+            "metadata": {
+              "stately_id": "inputMachine(詳細なし).editableState"
+            }
+          }
+        ],
+        "is_initial": true,
+        "metadata": {
+          "stately_id": "inputMachine(詳細なし)"
+        }
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "from": [
+        "untouched"
+      ],
+      "to": [
+        "touched"
+      ],
+      "event": "FOCUS"
+    },
+    {
+      "from": [
+        "pristine"
+      ],
+      "to": [
+        "dirty"
+      ],
+      "guard": {
+        "expression": "isDirty",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "dirty"
+      ],
+      "to": [
+        "pristine"
+      ],
+      "guard": {
+        "expression": "isPristine",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "invalid"
+      ],
+      "to": [
+        "valid"
+      ],
+      "guard": {
+        "expression": "isValid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "valid"
+      ],
+      "to": [
+        "invalid"
+      ],
+      "guard": {
+        "expression": "isInvalid",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isOnChangeMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "BLUR",
+      "guard": {
+        "expression": "isOnBlurMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "BLUR",
+      "guard": {
+        "expression": "isOnTouchedMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "idle"
+      ],
+      "to": [
+        "validating"
+      ],
+      "guard": {
+        "expression": "isAllMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validating"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isAllMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validating"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isOnChangeMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validating"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isOnTouchedMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validating"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "BLUR",
+      "guard": {
+        "expression": "isAllMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validating"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "BLUR",
+      "guard": {
+        "expression": "isOnBlurMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validating"
+      ],
+      "to": [
+        "validated"
+      ],
+      "actions": [
+        {
+          "label": "setError",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "validated"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isAllMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validated"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isOnChangeMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validated"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "CHANGE",
+      "guard": {
+        "expression": "isOnTouchedMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validated"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "BLUR",
+      "guard": {
+        "expression": "isAllMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "validated"
+      ],
+      "to": [
+        "validating"
+      ],
+      "event": "BLUR",
+      "guard": {
+        "expression": "isOnBlurMode",
+        "language": "xstate"
+      }
+    },
+    {
+      "from": [
+        "unfocused"
+      ],
+      "to": [
+        "focused"
+      ],
+      "event": "FOCUS"
+    },
+    {
+      "from": [
+        "focused"
+      ],
+      "to": [
+        "unfocused"
+      ],
+      "event": "BLUR"
+    },
+    {
+      "from": [
+        "focused"
+      ],
+      "to": [
+        "focused"
+      ],
+      "event": "CHANGE",
+      "actions": [
+        {
+          "label": "setValue",
+          "language": "xstate"
+        }
+      ]
+    },
+    {
+      "from": [
+        "enabled"
+      ],
+      "to": [
+        "disabled"
+      ],
+      "event": "DISABLE"
+    },
+    {
+      "from": [
+        "disabled"
+      ],
+      "to": [
+        "enabled"
+      ],
+      "event": "ENABLE"
+    }
+  ],
+  "events": [
+    {
+      "label": "FOCUS"
+    },
+    {
+      "label": "CHANGE"
+    },
+    {
+      "label": "BLUR"
+    },
+    {
+      "label": "DISABLE"
+    },
+    {
+      "label": "ENABLE"
+    }
+  ]
+}
