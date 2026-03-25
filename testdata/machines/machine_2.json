@@ -1,0 +1,1095 @@
+{
+  "id": "4b3fdc10-da6f-449e-8f5f-63e1594bf11f",
+  "name": "White noise machine with assets",
+  "definition": {
+    "id": "4b3fdc10-da6f-449e-8f5f-63e1594bf11f",
+    "edges": [
+      {
+        "id": "White noise machine with assets.Power off#toggle power[0]",
+        "data": {
+          "color": "green",
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle power"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 410.3358914711232,
+          "y": -194.273451987839,
+          "top": -194.273451987839,
+          "left": 410.3358914711232,
+          "right": 532.3045956355036,
+          "width": 121.9687041643804,
+          "bottom": -154.2734407498799,
+          "height": 40.00001123795906
+        },
+        "source": "White noise machine with assets.Power off",
+        "target": "White noise machine with assets.Power on",
+        "position": {
+          "x": 410.3393284607477,
+          "y": -194.2764479374557
+        },
+        "uniqueId": "546v0pfkw46"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Sound.White noise#toggle sound[0]",
+        "data": {
+          "actions": [],
+          "metaEntries": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle sound"
+          }
+        },
+        "size": {
+          "x": 1005.421854545144,
+          "y": 553.2968564208235,
+          "top": 553.2968564208235,
+          "left": 1005.421854545144,
+          "right": 1127.07027684212,
+          "width": 121.6484222969758,
+          "bottom": 593.296916646526,
+          "height": 40.00006022570255
+        },
+        "source": "White noise machine with assets.Power on.Sound.White noise",
+        "target": "White noise machine with assets.Power on.Sound.Waves",
+        "position": {
+          "x": 1005.425324088945,
+          "y": 553.2986550134021
+        },
+        "uniqueId": "coe19j8j9xm"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Light.Light off#toggle light[0]",
+        "data": {
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle light"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 915.3906118201518,
+          "y": 1005.460979678881,
+          "top": 1005.460979678881,
+          "left": 915.3906118201518,
+          "right": 1025.788998808245,
+          "width": 110.398386988093,
+          "bottom": 1045.461039904584,
+          "height": 40.00006022570267
+        },
+        "source": "White noise machine with assets.Power on.Light.Light off",
+        "target": "White noise machine with assets.Power on.Light.Yellow",
+        "position": {
+          "x": 915.3963137851858,
+          "y": 1005.461120709077
+        },
+        "uniqueId": "yet4wkjmw1"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Light.Yellow#toggle light[0]",
+        "data": {
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle light"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 1284.859211000567,
+          "y": 1005.460979678881,
+          "top": 1005.460979678881,
+          "left": 1284.859211000567,
+          "right": 1395.257793939635,
+          "width": 110.3985829390674,
+          "bottom": 1045.461039904584,
+          "height": 40.00006022570267
+        },
+        "source": "White noise machine with assets.Power on.Light.Yellow",
+        "target": "White noise machine with assets.Power on.Light.Blue",
+        "position": {
+          "x": 1284.865063785185,
+          "y": 1005.461120709077
+        },
+        "uniqueId": "mtz9ksl4wjb"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Light.Blue#toggle light[0]",
+        "data": {
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle light"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 1642.539105643899,
+          "y": 1005.460979678881,
+          "top": 1005.460979678881,
+          "left": 1642.539105643899,
+          "right": 1752.937492631992,
+          "width": 110.3983869880931,
+          "bottom": 1045.461039904584,
+          "height": 40.00006022570267
+        },
+        "source": "White noise machine with assets.Power on.Light.Blue",
+        "target": "White noise machine with assets.Power on.Light.Green",
+        "position": {
+          "x": 1642.544751285185,
+          "y": 1005.461120709077
+        },
+        "uniqueId": "oa4w57oa11e"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Light.Green#toggle light[0]",
+        "data": {
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle light"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 1304.163909081308,
+          "y": 880.2890649385062,
+          "top": 880.2890649385062,
+          "left": 1304.163909081308,
+          "right": 1414.562492020375,
+          "width": 110.3985829390674,
+          "bottom": 920.2891251642088,
+          "height": 40.00006022570267
+        },
+        "source": "White noise machine with assets.Power on.Light.Green",
+        "target": "White noise machine with assets.Power on.Light.Light off",
+        "position": {
+          "x": 1304.171721375668,
+          "y": 880.2902722436603
+        },
+        "uniqueId": "44yj5ilmmwy"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Volume#volume up[0]",
+        "data": {
+          "guard": {
+            "kind": "named",
+            "type": "isNotMaxVolume",
+            "params": {}
+          },
+          "actions": [
+            {
+              "kind": "named",
+              "action": {
+                "type": "volUp",
+                "params": {}
+              }
+            },
+            {
+              "kind": "named",
+              "action": {
+                "type": "volumeUp",
+                "params": {}
+              }
+            }
+          ],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "volume up"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 1575.367111672464,
+          "y": 149.679685007631,
+          "top": 149.679685007631,
+          "left": 1575.367111672464,
+          "right": 1840.117256779761,
+          "width": 264.7501451072965,
+          "bottom": 303.6797111280631,
+          "height": 154.0000261204321
+        },
+        "source": "White noise machine with assets.Power on.Volume",
+        "target": "White noise machine with assets.Power on.Volume",
+        "position": {
+          "x": 1575.370278450262,
+          "y": 149.6856910750795
+        },
+        "uniqueId": "qhq3wbopvv"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Volume#volume down[0]",
+        "data": {
+          "guard": {
+            "kind": "named",
+            "type": "isNotMinVolume",
+            "params": {}
+          },
+          "actions": [
+            {
+              "kind": "named",
+              "action": {
+                "type": "volDown",
+                "params": {}
+              }
+            },
+            {
+              "kind": "named",
+              "action": {
+                "type": "volumeDown",
+                "params": {}
+              }
+            }
+          ],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "volume down"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 1568.179629937131,
+          "y": 496.2968734734587,
+          "top": 496.2968734734587,
+          "left": 1568.179629937131,
+          "right": 1847.296900476124,
+          "width": 279.1172705389929,
+          "bottom": 650.2968995938909,
+          "height": 154.0000261204322
+        },
+        "source": "White noise machine with assets.Power on.Volume",
+        "target": "White noise machine with assets.Power on.Volume",
+        "position": {
+          "x": 1568.186700779714,
+          "y": 496.2986546993162
+        },
+        "uniqueId": "i404phdsmje"
+      },
+      {
+        "id": "White noise machine with assets.Power on#toggle power[0]",
+        "data": {
+          "color": "red",
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle power"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 410.3358914711232,
+          "y": -284.2734405324392,
+          "top": -284.2734405324392,
+          "left": 410.3358914711232,
+          "right": 532.3045956355036,
+          "width": 121.9687041643804,
+          "bottom": -244.2734782822237,
+          "height": 39.99996225021553
+        },
+        "source": "White noise machine with assets.Power on",
+        "target": "White noise machine with assets.Power off",
+        "position": {
+          "x": 410.3393284607477,
+          "y": -284.2764479374557
+        },
+        "uniqueId": "be1zqtlp3b"
+      },
+      {
+        "id": "White noise machine with assets.Power on.Sound.Waves#toggle sound[0]",
+        "data": {
+          "actions": [],
+          "eventTypeData": {
+            "type": "named",
+            "eventType": "toggle sound"
+          },
+          "metaEntries": null
+        },
+        "size": {
+          "x": 1005.421854545144,
+          "y": 275.7577750284057,
+          "top": 275.7577750284057,
+          "left": 1005.421854545144,
+          "right": 1127.07027684212,
+          "width": 121.6484222969758,
+          "bottom": 315.7578352541083,
+          "height": 40.00006022570261
+        },
+        "source": "White noise machine with assets.Power on.Sound.Waves",
+        "target": "White noise machine with assets.Power on.Sound.White noise",
+        "position": {
+          "x": 1005.425324088945,
+          "y": 275.764671831936
+        },
+        "uniqueId": "9fkvb7zqt8l"
+      }
+    ],
+    "context": {
+      "volume": 5
+    },
+    "schemas": {
+      "tags": {},
+      "input": null,
+      "actors": {},
+      "delays": {},
+      "events": {
+        "volume up": {
+          "type": "object",
+          "properties": {}
+        },
+        "volume down": {
+          "type": "object",
+          "properties": {}
+        },
+        "toggle light": {
+          "type": "object",
+          "properties": {}
+        },
+        "toggle power": {
+          "type": "object",
+          "properties": {}
+        },
+        "toggle sound": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      "guards": {},
+      "output": null,
+      "actions": {},
+      "context": {
+        "volume": {
+          "type": "number",
+          "description": "Generated automatically based on the key: \"volume\" in initial context values"
+        }
+      }
+    },
+    "rootNode": {
+      "id": "White noise machine with assets",
+      "data": {
+        "key": "White noise machine with assets",
+        "exit": [],
+        "tags": [],
+        "entry": [],
+        "assets": [],
+        "invoke": [],
+        "initial": "Power off",
+        "metaEntries": [
+          [
+            "gitHubUrl",
+            "https://github.com/laurakalbag/whitenoise-demo/blob/43d996b7b794c411a397b9b8094fdb23af2c3f4d/machine.js"
+          ]
+        ]
+      },
+      "size": {
+        "x": 46.63275780593947,
+        "y": -600.3359445963874,
+        "top": -600.3359445963874,
+        "left": 46.63275780593947,
+        "right": 2123.632744911186,
+        "width": 2076.999987105246,
+        "bottom": -495.3359579610205,
+        "height": 104.999986635367
+      },
+      "nodes": [
+        {
+          "id": "White noise machine with assets.Power off",
+          "data": {
+            "key": "Power off",
+            "exit": [],
+            "tags": [],
+            "entry": [
+              {
+                "kind": "named",
+                "action": {
+                  "type": "hideButtons",
+                  "params": {}
+                }
+              }
+            ],
+            "assets": [
+              {
+                "name": "power-off",
+                "template": "@figma.link",
+                "properties": {
+                  "url": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/dd2715ed-9932-4f95-9630-042b68dd2a1f",
+                  "name": "power-off",
+                  "size": "sm",
+                  "uuid": "23d4b7a7-a412-40a2-ba66-e15fb4b7dbd9",
+                  "fileId": "cf1cQQjyMNBrV2nhpT2ccN",
+                  "nodeId": "1-2",
+                  "lastRefreshed": 1706188232208
+                }
+              }
+            ],
+            "invoke": [],
+            "description": "We need power states because\n\nbrowsers don’t like autoplaying audio.",
+            "metaEntries": []
+          },
+          "size": {
+            "x": 89.63277845960059,
+            "y": -448.0156592149332,
+            "top": -448.0156592149332,
+            "left": 89.63277845960059,
+            "right": 354.8827455144542,
+            "width": 265.2499670548536,
+            "bottom": -48.61721430176405,
+            "height": 399.3984449131691
+          },
+          "nodes": [],
+          "position": {
+            "x": 89.64035036321508,
+            "y": -448.0214374149764
+          },
+          "uniqueId": "kxhmvtvkk7a"
+        },
+        {
+          "id": "White noise machine with assets.Power on",
+          "data": {
+            "key": "Power on",
+            "exit": [
+              {
+                "kind": "named",
+                "action": {
+                  "type": "hideButtons",
+                  "params": {}
+                }
+              },
+              {
+                "kind": "named",
+                "action": {
+                  "type": "pause",
+                  "params": {}
+                }
+              }
+            ],
+            "tags": [],
+            "type": "parallel",
+            "entry": [
+              {
+                "kind": "named",
+                "action": {
+                  "type": "showButtons",
+                  "params": {}
+                }
+              },
+              {
+                "kind": "named",
+                "action": {
+                  "type": "setVolume",
+                  "params": {}
+                }
+              },
+              {
+                "kind": "named",
+                "action": {
+                  "type": "play",
+                  "params": {}
+                }
+              }
+            ],
+            "assets": [
+              {
+                "name": "power-on",
+                "template": "@figma.link",
+                "properties": {
+                  "url": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/465db25a-1851-4795-a70c-5aa003d11dd1",
+                  "name": "power-on",
+                  "size": "md",
+                  "uuid": "34078c1e-addd-4cc2-898f-14e424a18cf5",
+                  "fileId": "cf1cQQjyMNBrV2nhpT2ccN",
+                  "nodeId": "1-3",
+                  "lastRefreshed": 1706188232213
+                }
+              }
+            ],
+            "invoke": [
+              {
+                "id": "audioPlayer",
+                "src": "audioPlayer",
+                "kind": "named",
+                "input": {},
+                "settings": {}
+              }
+            ],
+            "metaEntries": []
+          },
+          "size": {
+            "x": 589.5546120260059,
+            "y": -447.3359542730183,
+            "top": -447.3359542730183,
+            "left": 589.5546120260059,
+            "right": 2065.554541728034,
+            "width": 1475.999929702028,
+            "bottom": 99.18752784142812,
+            "height": 546.5234821144464
+          },
+          "nodes": [
+            {
+              "id": "White noise machine with assets.Power on.Sound",
+              "data": {
+                "key": "Sound",
+                "exit": [],
+                "tags": [],
+                "entry": [],
+                "assets": [],
+                "invoke": [],
+                "initial": "White noise",
+                "metaEntries": []
+              },
+              "size": {
+                "x": 638.5936947426896,
+                "y": 146.179706681141,
+                "top": 146.179706681141,
+                "left": 638.5936947426896,
+                "right": 1463.593736698089,
+                "width": 825.0000419553994,
+                "bottom": 187.6796736392075,
+                "height": 41.49996695806652
+              },
+              "nodes": [
+                {
+                  "id": "White noise machine with assets.Power on.Sound.White noise",
+                  "data": {
+                    "key": "White noise",
+                    "exit": [],
+                    "tags": [],
+                    "entry": [
+                      {
+                        "kind": "named",
+                        "action": {
+                          "type": "changeToNoise",
+                          "params": {}
+                        }
+                      }
+                    ],
+                    "assets": [
+                      {
+                        "name": "noise",
+                        "template": "@figma.link",
+                        "properties": {
+                          "url": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/c847e711-dfbd-4cd6-a8b4-86b7d5288077",
+                          "name": "noise",
+                          "size": "sm",
+                          "uuid": "7636ee16-1203-4d13-9964-2cb7455c328f",
+                          "fileId": "cf1cQQjyMNBrV2nhpT2ccN",
+                          "nodeId": "1-11",
+                          "lastRefreshed": 1706188232218
+                        }
+                      }
+                    ],
+                    "invoke": [],
+                    "metaEntries": []
+                  },
+                  "size": {
+                    "x": 682.5937022056702,
+                    "y": 239.6796735522312,
+                    "top": 239.6796735522312,
+                    "left": 682.5937022056702,
+                    "right": 932.5937357021068,
+                    "width": 250.0000334964366,
+                    "bottom": 616.1796795169934,
+                    "height": 376.5000059647622
+                  },
+                  "nodes": [],
+                  "position": {
+                    "x": 682.6003859213095,
+                    "y": 239.6868660979586
+                  },
+                  "uniqueId": "oq74ejh4vt"
+                },
+                {
+                  "id": "White noise machine with assets.Power on.Sound.Waves",
+                  "data": {
+                    "key": "Waves",
+                    "exit": [],
+                    "tags": [],
+                    "entry": [
+                      {
+                        "kind": "named",
+                        "action": {
+                          "type": "changeToWaves",
+                          "params": {}
+                        }
+                      }
+                    ],
+                    "assets": [
+                      {
+                        "name": "waves",
+                        "template": "@figma.link",
+                        "properties": {
+                          "url": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/55b010e8-c904-44c8-9eeb-168d79379ed6",
+                          "name": "waves",
+                          "size": "sm",
+                          "uuid": "d67d06ca-6c47-4550-86bd-d8db6d2a9ef7",
+                          "fileId": "cf1cQQjyMNBrV2nhpT2ccN",
+                          "nodeId": "1-8",
+                          "lastRefreshed": 1706188232222
+                        }
+                      }
+                    ],
+                    "invoke": [],
+                    "metaEntries": []
+                  },
+                  "size": {
+                    "x": 1162.02342377515,
+                    "y": 239.6796735522312,
+                    "top": 239.6796735522312,
+                    "left": 1162.02342377515,
+                    "right": 1412.023555247073,
+                    "width": 250.0001314719236,
+                    "bottom": 616.1796795169934,
+                    "height": 376.5000059647622
+                  },
+                  "nodes": [],
+                  "position": {
+                    "x": 1162.027949581843,
+                    "y": 239.6868194337923
+                  },
+                  "uniqueId": "fejvogsyc9t"
+                }
+              ],
+              "position": {
+                "x": 634.6003859213095,
+                "y": 142.1868524757258
+              },
+              "uniqueId": "o3nlnhjxeib"
+            },
+            {
+              "id": "White noise machine with assets.Power on.Light",
+              "data": {
+                "key": "Light",
+                "exit": [
+                  {
+                    "kind": "named",
+                    "action": {
+                      "type": "removeColour",
+                      "params": {}
+                    }
+                  }
+                ],
+                "tags": [],
+                "entry": [],
+                "assets": [],
+                "invoke": [],
+                "initial": "Light off",
+                "metaEntries": null
+              },
+              "size": {
+                "x": 636.5546289046886,
+                "y": 699.7890209630307,
+                "top": 699.7890209630307,
+                "left": 636.5546289046886,
+                "right": 2008.554754731644,
+                "width": 1372.000125826955,
+                "bottom": 828.2889670499953,
+                "height": 128.4999460869647
+              },
+              "nodes": [
+                {
+                  "id": "White noise machine with assets.Power on.Light.Light off",
+                  "data": {
+                    "key": "Light off",
+                    "exit": [],
+                    "tags": [],
+                    "entry": [
+                      {
+                        "kind": "named",
+                        "action": {
+                          "type": "removeColour",
+                          "params": {}
+                        }
+                      }
+                    ],
+                    "assets": [],
+                    "invoke": [],
+                    "metaEntries": null
+                  },
+                  "size": {
+                    "x": 680.5546363676692,
+                    "y": 945.1251273459575,
+                    "top": 945.1251273459575,
+                    "left": 680.5546363676692,
+                    "right": 871.5624533615846,
+                    "width": 191.0078169939154,
+                    "bottom": 1073.625073432922,
+                    "height": 128.4999460869647
+                  },
+                  "nodes": [],
+                  "position": {
+                    "x": 680.5603762851858,
+                    "y": 945.1277873757441
+                  },
+                  "uniqueId": "2ky6d0nmy73"
+                },
+                {
+                  "id": "White noise machine with assets.Power on.Light.Yellow",
+                  "data": {
+                    "key": "Yellow",
+                    "exit": [],
+                    "tags": [],
+                    "color": "yellow",
+                    "entry": [
+                      {
+                        "kind": "named",
+                        "action": {
+                          "type": "setYellow",
+                          "params": {}
+                        }
+                      }
+                    ],
+                    "assets": [],
+                    "invoke": [],
+                    "metaEntries": null
+                  },
+                  "size": {
+                    "x": 1077.421884571019,
+                    "y": 945.1251273459575,
+                    "top": 945.1251273459575,
+                    "left": 1077.421884571019,
+                    "right": 1241.788990910383,
+                    "width": 164.3671063393635,
+                    "bottom": 1073.625073432922,
+                    "height": 128.4999460869647
+                  },
+                  "nodes": [],
+                  "position": {
+                    "x": 1077.42506339091,
+                    "y": 945.1277873757443
+                  },
+                  "uniqueId": "kdnierp8vf"
+                },
+                {
+                  "id": "White noise machine with assets.Power on.Light.Blue",
+                  "data": {
+                    "key": "Blue",
+                    "exit": [],
+                    "tags": [],
+                    "color": "blue",
+                    "entry": [
+                      {
+                        "kind": "named",
+                        "action": {
+                          "type": "setBlue",
+                          "params": {}
+                        }
+                      }
+                    ],
+                    "assets": [],
+                    "invoke": [],
+                    "metaEntries": null
+                  },
+                  "size": {
+                    "x": 1449.281281588207,
+                    "y": 945.1251273459575,
+                    "top": 945.1251273459575,
+                    "left": 1449.281281588207,
+                    "right": 1613.648485903058,
+                    "width": 164.3672043148506,
+                    "bottom": 1073.625073432922,
+                    "height": 128.4999460869647
+                  },
+                  "nodes": [],
+                  "position": {
+                    "x": 1449.282847668914,
+                    "y": 945.1277873757441
+                  },
+                  "uniqueId": "5sxt2hz5984"
+                },
+                {
+                  "id": "White noise machine with assets.Power on.Light.Green",
+                  "data": {
+                    "key": "Green",
+                    "exit": [],
+                    "tags": [],
+                    "color": "green",
+                    "entry": [
+                      {
+                        "kind": "named",
+                        "action": {
+                          "type": "setGreen",
+                          "params": {}
+                        }
+                      }
+                    ],
+                    "assets": [],
+                    "invoke": [],
+                    "metaEntries": null
+                  },
+                  "size": {
+                    "x": 1792.304827161855,
+                    "y": 945.1251273459575,
+                    "top": 945.1251273459575,
+                    "left": 1792.304827161855,
+                    "right": 1956.672031476706,
+                    "width": 164.3672043148508,
+                    "bottom": 1073.625073432922,
+                    "height": 128.4999460869647
+                  },
+                  "nodes": [],
+                  "position": {
+                    "x": 1792.308537510921,
+                    "y": 945.1277873757442
+                  },
+                  "uniqueId": "hgcpefryjml"
+                }
+              ],
+              "position": {
+                "x": 632.5603762851858,
+                "y": 695.7903261566956
+              },
+              "uniqueId": "xzvf8kx9k6"
+            },
+            {
+              "id": "White noise machine with assets.Power on.Volume",
+              "data": {
+                "key": "Volume",
+                "exit": [],
+                "tags": [],
+                "entry": [],
+                "assets": [],
+                "invoke": [],
+                "metaEntries": null
+              },
+              "size": {
+                "x": 1658.632951060649,
+                "y": 384.6015849623203,
+                "top": 384.6015849623203,
+                "left": 1658.632951060649,
+                "right": 1744.851379728768,
+                "width": 86.21842866811926,
+                "bottom": 426.1015519203868,
+                "height": 41.49996695806652
+              },
+              "nodes": [],
+              "position": {
+                "x": 1654.635934790833,
+                "y": 380.6036443480525
+              },
+              "uniqueId": "rsnvfqd93n9"
+            }
+          ],
+          "position": {
+            "x": 584.5603762851858,
+            "y": -452.3366296387206
+          },
+          "uniqueId": "7q72d5spyl9"
+        }
+      ],
+      "position": {
+        "x": 41.64035036321508,
+        "y": -605.3366162740876
+      },
+      "uniqueId": "crt1781ak1k"
+    },
+    "implementations": {
+      "actors": {
+        "audioPlayer": {
+          "id": "audioPlayer",
+          "kind": "named",
+          "name": "audioPlayer",
+          "type": "actor",
+          "input": {
+            "type": "object",
+            "properties": {}
+          },
+          "output": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        }
+      },
+      "guards": {
+        "isNotMaxVolume": {
+          "id": "isNotMaxVolume",
+          "name": "isNotMaxVolume",
+          "type": "guard",
+          "params": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "isNotMinVolume": {
+          "id": "isNotMinVolume",
+          "name": "isNotMinVolume",
+          "type": "guard",
+          "params": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        }
+      },
+      "actions": {
+        "play": {
+          "id": "play",
+          "code": "export default sendTo(\"audioPlayer\", {\"type\":\"play\"},)",
+          "name": "Unnamed sendTo",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "pause": {
+          "id": "pause",
+          "code": "export default sendTo(\"audioPlayer\", {\"type\":\"pause\"},)",
+          "name": "Unnamed sendTo",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "volUp": {
+          "id": "volUp",
+          "name": "volUp",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "setBlue": {
+          "id": "setBlue",
+          "name": "setBlue",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "volDown": {
+          "id": "volDown",
+          "name": "volDown",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "setGreen": {
+          "id": "setGreen",
+          "name": "setGreen",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "volumeUp": {
+          "id": "volumeUp",
+          "code": "export default assign({\"volume\":(event) => {\\r\n                      return event.context.volume + 1;\\r\n                    }})",
+          "name": "Unnamed assign",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "setVolume": {
+          "id": "setVolume",
+          "name": "setVolume",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "setYellow": {
+          "id": "setYellow",
+          "name": "setYellow",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "volumeDown": {
+          "id": "volumeDown",
+          "code": "export default assign({\"volume\":(event) => {\\r\n                      return event.context.volume - 1;\\r\n                    }})",
+          "name": "Unnamed assign",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "hideButtons": {
+          "id": "hideButtons",
+          "name": "hideButtons",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "showButtons": {
+          "id": "showButtons",
+          "name": "showButtons",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "removeColour": {
+          "id": "removeColour",
+          "name": "removeColour",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "changeToNoise": {
+          "id": "changeToNoise",
+          "name": "changeToNoise",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        },
+        "changeToWaves": {
+          "id": "changeToWaves",
+          "name": "changeToWaves",
+          "type": "action",
+          "schema": {
+            "type": "object",
+            "properties": {}
+          },
+          "imports": []
+        }
+      }
+    }
+  },
+  "projectVersionId": "c447d996-cef1-421d-a422-8be695668764",
+  "forkParentId": "80d29520-d47f-4b26-a872-03ca4204f443",
+  "lastEditedById": "cb08f417-f1b4-4b7a-81dc-32e4bd629d15",
+  "originalCode": null,
+  "createdAt": "2024-01-25T11:38:26.983Z",
+  "updatedAt": "2024-01-25T13:10:33.456Z",
+  "fileId": null,
+  "fileIndex": null,
+  "file": null
+}

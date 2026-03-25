@@ -1,0 +1,8 @@
+root_state {
+  label: "root_proto"
+  type: STATE_TYPE_OR
+  children {
+    label: "state1"
+    type: STATE_TYPE_BASIC
+  }
+}
