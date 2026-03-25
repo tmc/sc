@@ -1,0 +1,78 @@
+# Analysis command tests
+
+# Test transitions command
+sc transitions chart.json
+stdout 'green -> yellow \[TIMER\]'
+stdout 'yellow -> red \[TIMER\]'
+stdout 'red -> green \[TIMER\]'
+
+# Test transitions with --from filter
+sc transitions --from green chart.json
+stdout 'green -> yellow'
+! stdout 'red -> green'
+
+# Test transitions with --to filter
+sc transitions --to red chart.json
+stdout 'yellow -> red'
+! stdout 'red -> green'
+
+# Test orphans command
+sc orphans chart.json
+stdout 'root'
+
+# Test sinks command
+sc sinks chart.json
+stdout 'root'
+
+# Test disconnected command
+sc disconnected chart.json
+stdout 'root'
+
+# Test reachable command
+sc reachable chart.json
+stdout 'green'
+stdout 'yellow'
+stdout 'red'
+! stdout 'root'
+
+# Test unreachable command
+sc unreachable chart.json
+stdout 'root'
+
+# Test path command
+sc path green red chart.json
+stdout 'green'
+stdout 'yellow'
+stdout 'red'
+
+# Test analyze command
+sc analyze chart.json
+stdout 'Analysis: traffic_light'
+stdout 'States:'
+stdout 'Transitions:'
+stdout 'Orphans'
+stdout 'Sinks'
+
+# Test JSON output for orphans
+sc orphans --json chart.json
+stdout '"orphans"'
+stdout '"root"'
+
+-- chart.json --
+{
+  "name": "traffic_light",
+  "rootState": {
+    "label": "root",
+    "type": 2,
+    "children": [
+      {"label": "green", "type": 1, "isInitial": true},
+      {"label": "yellow", "type": 1},
+      {"label": "red", "type": 1}
+    ]
+  },
+  "transitions": [
+    {"from": ["green"], "to": ["yellow"], "event": "TIMER"},
+    {"from": ["yellow"], "to": ["red"], "event": "TIMER"},
+    {"from": ["red"], "to": ["green"], "event": "TIMER"}
+  ]
+}

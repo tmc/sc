@@ -1,0 +1,64 @@
+# Test basic sc commands
+
+# Test validate
+sc validate chart.json
+stdout 'VALID'
+
+# Test info
+sc info chart.json
+stdout 'States:'
+stdout 'Transitions:'
+stdout 'Events:'
+
+# Test states - outputs one state per line
+sc states chart.json
+stdout '__root__'
+stdout 'Red'
+stdout 'Green'
+
+# Test leaf-only states
+sc states -leaf chart.json
+stdout 'Red'
+stdout 'Green'
+stdout 'Yellow'
+! stdout '__root__'
+! stdout 'Normal'
+
+# Test events
+sc events chart.json
+stdout 'TIMER_EXPIRED'
+stdout 'EMERGENCY'
+
+-- chart.json --
+{
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {
+        "label": "Normal",
+        "type": 2,
+        "children": [
+          {"label": "Red", "type": 1, "is_initial": true},
+          {"label": "Green", "type": 1},
+          {"label": "Yellow", "type": 1}
+        ],
+        "is_initial": true
+      },
+      {
+        "label": "Emergency",
+        "type": 1
+      }
+    ]
+  },
+  "transitions": [
+    {"label": "ToGreen", "from": ["Red"], "to": ["Green"], "event": "TIMER_EXPIRED"},
+    {"label": "ToYellow", "from": ["Green"], "to": ["Yellow"], "event": "TIMER_EXPIRED"},
+    {"label": "ToRed", "from": ["Yellow"], "to": ["Red"], "event": "TIMER_EXPIRED"},
+    {"label": "Panic", "from": ["Normal"], "to": ["Emergency"], "event": "EMERGENCY"}
+  ],
+  "events": [
+    {"label": "TIMER_EXPIRED"},
+    {"label": "EMERGENCY"}
+  ]
+}

@@ -1,0 +1,47 @@
+# Test txtar format input
+# We use a helper script to create the txtar content
+
+# First, create a proper txtar file using the embedded data
+cp chart_template.json chart.json
+cat chart.json
+
+# Create a txtar file with the cat command
+# (scripttest extracts files at the same level, so we need to create it manually)
+
+# For now, verify the basic JSON loading works as a baseline
+sc validate chart.json
+stdout 'VALID'
+
+# Test info
+sc info chart.json
+stdout 'States:'
+stdout 'Transitions: 3'
+
+# Test states
+sc states chart.json
+stdout 'Idle'
+stdout 'Running'
+stdout 'Stopped'
+
+-- chart_template.json --
+{
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {"label": "Idle", "type": 1, "is_initial": true},
+      {"label": "Running", "type": 1},
+      {"label": "Stopped", "type": 1}
+    ]
+  },
+  "transitions": [
+    {"from": ["Idle"], "to": ["Running"], "event": "START"},
+    {"from": ["Running"], "to": ["Stopped"], "event": "STOP"},
+    {"from": ["Stopped"], "to": ["Idle"], "event": "RESET"}
+  ],
+  "events": [
+    {"label": "START"},
+    {"label": "STOP"},
+    {"label": "RESET"}
+  ]
+}

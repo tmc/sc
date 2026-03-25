@@ -1,0 +1,34 @@
+# Test mermaid diagram generation
+
+# Generate mermaid from file
+sc mermaid chart.json
+stdout 'stateDiagram-v2'
+stdout 'direction TB'
+stdout 'Red --> Green : TIMER_EXPIRED'
+
+# Test direction flag
+sc mermaid -dir LR chart.json
+stdout 'direction LR'
+
+# Pipeline: read from stdin
+stdin-sc chart.json mermaid
+stdout 'stateDiagram-v2'
+stdout 'Red --> Green'
+
+-- chart.json --
+{
+  "root_state": {
+    "label": "__root__",
+    "type": 2,
+    "children": [
+      {"label": "Red", "type": 1, "is_initial": true},
+      {"label": "Green", "type": 1},
+      {"label": "Yellow", "type": 1}
+    ]
+  },
+  "transitions": [
+    {"from": ["Red"], "to": ["Green"], "event": "TIMER_EXPIRED"},
+    {"from": ["Green"], "to": ["Yellow"], "event": "TIMER_EXPIRED"},
+    {"from": ["Yellow"], "to": ["Red"], "event": "TIMER_EXPIRED"}
+  ]
+}
