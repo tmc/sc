@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --border: #e2e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617;
+    /* midnight-950 */
+    --foreground: #f8fafc;
+    --border: #1e293b;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  @apply antialiased overflow-hidden tracking-tight;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  @apply backdrop-blur-xl bg-midnight-950/60 border border-glass-border shadow-glass transition-all duration-300;
+}
+
+.glass-pill {
+  @apply backdrop-blur-md bg-midnight-800/80 border border-glass-border shadow-glass-sm rounded-full;
+}
+
+.glass-button {
+  @apply backdrop-blur-sm bg-white/5 border border-glass-border hover:bg-white/10 hover:border-white/20 hover:shadow-neon/20 hover:text-white transition-all duration-200 shadow-sm active:scale-95 text-slate-400;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
