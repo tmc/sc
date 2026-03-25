@@ -26,6 +26,53 @@ struct PropertiesView: View {
                 }
                 
                 Section {
+                    TextField("Description", text: Binding(
+                         get: { viewModel.nodes[index].description ?? "" },
+                         set: { viewModel.nodes[index].description = $0.isEmpty ? nil : $0 }
+                    ), axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2...4)
+                    .padding(8)
+                    .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                } header: {
+                    Text("Documentation")
+                }
+                
+                Section {
+                     VStack(alignment: .leading) {
+                         Text("On Entry")
+                             .font(.caption2)
+                             .foregroundStyle(.secondary)
+                         TextField("Action Script", text: Binding(
+                             get: { viewModel.nodes[index].entryActions ?? "" },
+                             set: { viewModel.nodes[index].entryActions = $0.isEmpty ? nil : $0 }
+                         ), axis: .vertical)
+                         .textFieldStyle(.plain)
+                         .font(Theme.Typography.body.monospaced())
+                         .padding(8)
+                         .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                     }
+                     
+                     VStack(alignment: .leading) {
+                         Text("On Exit")
+                             .font(.caption2)
+                             .foregroundStyle(.secondary)
+                         TextField("Action Script", text: Binding(
+                             get: { viewModel.nodes[index].exitActions ?? "" },
+                             set: { viewModel.nodes[index].exitActions = $0.isEmpty ? nil : $0 }
+                         ), axis: .vertical)
+                         .textFieldStyle(.plain)
+                         .font(Theme.Typography.body.monospaced())
+                         .padding(8)
+                         .background(Theme.Colors.canvasBackground, in: RoundedRectangle(cornerRadius: 6))
+                     }
+                } header: {
+                    Text("Actions")
+                }
+                
+                Section {
                     Picker("Type", selection: $viewModel.nodes[index].type) {
                         Text("Atomic").tag(FlowNode.NodeType.atomic)
                         Text("Compound").tag(FlowNode.NodeType.compound)
@@ -83,7 +130,7 @@ struct PropertiesView: View {
                     TextField("Guard (Condition)", text: Binding(
                         get: { viewModel.edges[index].guardExpression ?? "" },
                         set: { viewModel.edges[index].guardExpression = $0.isEmpty ? nil : $0 }
-                    ))
+                    ), axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(Theme.Typography.body.monospaced())
                     .padding(8)
@@ -92,7 +139,7 @@ struct PropertiesView: View {
                     TextField("Action", text: Binding(
                         get: { viewModel.edges[index].action ?? "" },
                         set: { viewModel.edges[index].action = $0.isEmpty ? nil : $0 }
-                    ))
+                    ), axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(Theme.Typography.body.monospaced())
                     .padding(8)
@@ -199,7 +246,57 @@ struct PropertiesView: View {
                         .frame(minHeight: 150)
                     }
                 } header: {
-                    Text("Simulation History")
+                    HStack {
+                        Text("Session History")
+                        Spacer()
+                        if !viewModel.simulationHistory.isEmpty {
+                            Button("Save") {
+                                viewModel.saveCurrentRun()
+                            }
+                            .font(.caption)
+                            .buttonStyle(.borderedProminent)
+                        }
+                    }
+                }
+                
+                // SAVED RUNS
+                Section {
+                    if viewModel.pastRuns.isEmpty {
+                        Text("No saved runs.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 8)
+                    } else {
+                        ForEach(viewModel.pastRuns) { run in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(run.name ?? "Untitled")
+                                        .font(.caption.bold())
+                                    Text(run.timestamp.formatted(date: .abbreviated, time: .shortened))
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Button("Restore") {
+                                    withAnimation {
+                                        viewModel.restoreRun(run)
+                                    }
+                                }
+                                .font(.caption)
+                                .buttonStyle(.bordered)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Saved Runs")
+                        Spacer()
+                        Button(action: { viewModel.loadPastRuns() }) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.caption)
+                        }
+                    }
                 }
                 
                 Section {
@@ -240,6 +337,11 @@ struct PropertiesView: View {
         .inspectorColumnWidth(min: 220, ideal: 280, max: 350)
         .background(Theme.Colors.sidebarBackground) // Consistent background
         .scrollContentBackground(.hidden)
+        .onAppear {
+            if viewModel.mode == .simulation {
+                viewModel.loadPastRuns()
+            }
+        }
     }
 }
 
@@ -308,3 +410,4 @@ struct SteeringControl: View {
         }
     }
 }
+

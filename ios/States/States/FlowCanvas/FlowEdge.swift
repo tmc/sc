@@ -1,6 +1,6 @@
 import Foundation
 
-public struct FlowEdge: Identifiable, Equatable {
+public struct FlowEdge: Identifiable, Equatable, Sendable {
     public let id: UUID
     public let source: UUID
     public let target: UUID
@@ -17,7 +17,7 @@ public struct FlowEdge: Identifiable, Equatable {
         return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
     
-    public enum RoutingType: Equatable {
+    public enum RoutingType: Equatable, Sendable {
         case straight
         case orthogonal
         case curved

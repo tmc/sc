@@ -26,6 +26,9 @@ struct MachineListView: View {
                 NavigationLink(value: machine) {
                     MachineRowView(machine: machine)
                 }
+                .simultaneousGesture(TapGesture().onEnded {
+                    hapticFeedback(.light)
+                })
 #if os(macOS)
                 .listRowBackground(Color.clear) // Transparent rows for vibrant sidebar
 #else

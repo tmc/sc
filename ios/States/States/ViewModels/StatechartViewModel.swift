@@ -229,6 +229,40 @@ class StatechartViewModel {
         // engine.context is updated.
     }
     
+    // MARK: - Simulation Persistence
+    
+    var pastRuns: [SimulationRun] = []
+    
+    func loadPastRuns() {
+        pastRuns = LibraryManager.shared.loadRuns(for: machine.id)
+    }
+    
+    func saveCurrentRun() {
+        guard !simulationHistory.isEmpty else { return }
+        
+        // Convert Set<UUID> to [UUID] for Codable
+        let steps = simulationHistory.map { Array($0) }
+        let run = SimulationRun(machineID: machine.id, steps: steps, name: "Run \(Date().formatted())")
+        
+        LibraryManager.shared.saveRun(run)
+        loadPastRuns() // Refresh
+        
+        #if os(iOS)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
+    }
+    
+    func restoreRun(_ run: SimulationRun) {
+        // Convert [UUID] back to Set<UUID>
+        let history = run.steps.map { Set($0) }
+        guard !history.isEmpty else { return }
+        
+        self.simulationHistory = history
+        self.currentStepIndex = history.count - 1
+        self.activeStateIDs = history.last!
+        self.mode = .simulation
+    }
+
     // MARK: - Analysis Actions
     
     func analyze() {

@@ -43,6 +43,7 @@ struct StatesApp: App {
             SidebarCommands()
             StatechartCommands()
             
+            #if os(macOS)
             CommandGroup(replacing: .appInfo) {
                 Button("About States") {
                     NSApplication.shared.orderFrontStandardAboutPanel(
@@ -59,6 +60,7 @@ struct StatesApp: App {
                     )
                 }
             }
+            #endif
             
             CommandGroup(replacing: .newItem) {
                 Button("New Statechart") {

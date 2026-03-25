@@ -32,10 +32,12 @@ struct VisualizerView: View {
         .userActivity("com.tmc.States.viewMachine") { activity in
             updateUserActivity(activity)
         }
+        #if os(macOS)
         .onDeleteCommand {
             viewModel.selection.forEach { viewModel.deleteNode(id: $0) }
             viewModel.selection.removeAll()
         }
+        #endif
         .focusedSceneValue(\.statechartViewModel, viewModel)
         .toolbar { makeToolbar() }
         .sheet(isPresented: $showExtensions) { extensionSheetContent }

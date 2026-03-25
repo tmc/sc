@@ -109,66 +109,32 @@ public struct FlowView: View {
                 
                 // Canvas
                 TimelineView(.animation) { timeline in
-                    // ... (Canvas Content)
-                    let phase = timeline.date.timeIntervalSinceReferenceDate
-                    
-                    Canvas { context, size in
-                        drawGrid(context: context, size: size) // Draw Grid in Screen Space
+                    ZStack {
+                        // 1. Edges Layer
+                        FlowEdgesLayer(
+                            edges: $edges,
+                            nodes: nodes,
+                            selection: $selection,
+                            scale: $scale,
+                            offset: $offset,
+                            currentDragOffset: drawing_currentDragOffset,
+                            connectingEdge: drawing_connectingEdge
+                        )
                         
-                        let totalOffset = offset + currentDragOffset
-                        context.translateBy(x: size.width / 2 + totalOffset.width,
-                                          y: size.height / 2 + totalOffset.height)
-                        context.scaleBy(x: scale, y: scale)
-                        
-                        // Draw Edges
-                        for edge in edges {
-                            if let sourceNode = nodes.first(where: { $0.id == edge.source }),
-                               let targetNode = nodes.first(where: { $0.id == edge.target }) {
-                                drawEdge(context: context, source: sourceNode, target: targetNode, edge: edge)
-                            }
-                        }
-                        
-                        // Draw Connection Dragging
-                        if let connecting = connectingEdge,
-                           let sourceNode = nodes.first(where: { $0.id == connecting.source }) {
-                            drawConnectionDrag(context: context, source: sourceNode, endPoint: connecting.currentPoint)
-                        }
-                        
-                        // Draw Nodes (Sorted by hierarchy)
-                        let sortedNodes = nodes.sorted { (a, b) -> Bool in
-                            if a.id == b.parentID { return true }
-                            if b.id == a.parentID { return false }
-                            if a.parentID == nil && b.parentID != nil { return true }
-                            if a.parentID != nil && b.parentID == nil { return false }
-                            return false
-                        }
-                        
-                        // Frustum Culling
-                        let center = CGPoint(x: size.width / 2 + totalOffset.width, y: size.height / 2 + totalOffset.height)
-                        let visibleRect = CGRect(
-                            x: -center.x / scale,
-                            y: -center.y / scale,
-                            width: size.width / scale,
-                            height: size.height / scale
-                        ).insetBy(dx: -200, dy: -200) // Buffer for smooth entry
-                        
-                        let visibleNodes = sortedNodes.filter { node in
-                            let nodeRect = CGRect(origin: node.position, size: node.size)
-                            return visibleRect.intersects(nodeRect)
-                        }
-                        
-                        for node in visibleNodes {
-                            drawNode(context: context, node: node, phase: phase)
-                        }
-                        
-                        // Draw Marquee Selection
-                        if let selectionRect = selectionRect {
-                            let path = Path(selectionRect)
-                            context.fill(path, with: .color(Color.blue.opacity(0.1)))
-                            context.stroke(path, with: .color(Color.blue), lineWidth: 1.0 / scale)
-                        }
+                        // 2. Nodes Layer
+                        FlowNodesLayer(
+                            nodes: $nodes,
+                            selection: $selection,
+                            activeStateIDs: $activeStateIDs,
+                            hoveredNodeID: drawing_hoveredNodeID,
+                            hoveredParentID: drawing_hoveredParentID,
+                            scale: $scale,
+                            offset: $offset,
+                            currentDragOffset: drawing_currentDragOffset,
+                            selectionRect: selectionRect,
+                            phase: timeline.date.timeIntervalSinceReferenceDate
+                        )
                     }
-                    .drawingGroup() // Optimize rendering with Metal backing
                 }
                 .gesture(
                     DragGesture(minimumDistance: 1, coordinateSpace: .local)
@@ -384,22 +350,31 @@ public struct FlowView: View {
                 // Background Drag Logic
                 if isSpacePressed {
                     dragMode = .pan
-                } else if !selection.isEmpty && !NSEvent.modifierFlags.contains(.shift) {
-                   // Click on background clears selection unless Shift held
-                   // Actually tap handles clear, drag might not?
-                   // Standard: Background click = clear. Background Drag = marquee.
-                   dragMode = .marquee
                 } else {
-                   dragMode = .marquee
+                    var shiftHeld = false
+                    #if os(macOS)
+                    shiftHeld = NSEvent.modifierFlags.contains(.shift)
+                    #endif
+                    
+                    if !selection.isEmpty && !shiftHeld {
+                       // Click on background clears selection unless Shift held
+                       // Actually tap handles clear, drag might not?
+                       // Standard: Background click = clear. Background Drag = marquee.
+                       dragMode = .marquee
+                    } else {
+                       dragMode = .marquee
+                    }
                 }
                 
                 if dragMode == .marquee {
                      // Start Marquee
-                     let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                     // let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                     /*
                      let chartPoint = CGPoint(
                          x: (startLocation.x - center.x - offset.width) / scale,
                          y: (startLocation.y - center.y - offset.height) / scale
                      )
+                     */
                      // Using dragStartNodePositions to store Start Point? No, separate var.
                      // Re-use currentDragOffset for translation? Yes.
                      
@@ -414,7 +389,7 @@ public struct FlowView: View {
         if let connecting = connectingEdge {
             // ... (Connector Logic)
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
-            var currentChartPoint = CGPoint(
+            let currentChartPoint = CGPoint(
                  x: (location.x - center.x - offset.width) / scale,
                  y: (location.y - center.y - offset.height) / scale
             )// ...
@@ -656,7 +631,7 @@ public struct FlowView: View {
             
             let sRect = CGRect(origin: source.position, size: source.size)
             let tRect = CGRect(origin: target.position, size: target.size)
-            let (start, end) = calculateConnectionPoints(from: sRect, to: tRect)
+            let (start, end) = FlowRenderer.calculateConnectionPoints(from: sRect, to: tRect)
             
             // 1. Reflexive (Self-loop) logic matching drawEdge
             if source.id == target.id {
@@ -674,9 +649,20 @@ public struct FlowView: View {
                     let uuu = uu * u
                     let ttt = tt * t
                     
+                    // Breakdown for compiler speed
+                    let termX1 = uuu * start.x
+                    let termX2 = 3 * uu * t * control1.x
+                    let termX3 = 3 * u * tt * control2.x
+                    let termX4 = ttt * end.x
+                    
+                    let termY1 = uuu * start.y
+                    let termY2 = 3 * uu * t * control1.y
+                    let termY3 = 3 * u * tt * control2.y
+                    let termY4 = ttt * end.y
+                    
                     let p = CGPoint(
-                        x: uuu * start.x + 3 * uu * t * control1.x + 3 * u * tt * control2.x + ttt * end.x,
-                        y: uuu * start.y + 3 * uu * t * control1.y + 3 * u * tt * control2.y + ttt * end.y
+                        x: termX1 + termX2 + termX3 + termX4,
+                        y: termY1 + termY2 + termY3 + termY4
                     )
                     
                     if distance(from: chartPoint, toLineSegment: (prevPoint, p)) < threshold {

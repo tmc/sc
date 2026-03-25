@@ -113,15 +113,14 @@ class StatechartEngine: ObservableObject {
         guard let node = nodes.first(where: { $0.id == id }) else { return }
         
         // Execute Enter Actions
-        // Assuming 'enter' property on FlowNode? Or stored in a map?
-        // Current FlowNode definition doesn't show semantic properties directly in this file's context.
-        // We need to assume/check if FlowNode has it, or if we need to look it up.
-        // For now, we'll assume we can't execute untyped actions without schema support.
-        // Leaving placeholder:
-        // if let enterScript = node.enterAction {
-        //    _ = guardEvaluator.executeAction(script: enterScript, context: context)
-        // }
-        // Logger.statechart.info("Entered state: \(node.text)")
+        if let enterScript = node.entryActions, !enterScript.isEmpty {
+             // TODO: Capture context changes from entry actions?
+             // For now, assuming executeAction returns updated context or side effects
+             if let newContext = guardEvaluator.executeAction(script: enterScript, context: context) {
+                 self.context = newContext
+                 // Logger.statechart.info("Executed Entry Action for \(node.label): \(enterScript)")
+             }
+        }
         
         // Handling Children
         // 1. If Parallel: Enter ALL children (Fork)
@@ -141,7 +140,6 @@ class StatechartEngine: ObservableObject {
             // A better way: check incoming edges from an Initial pseudo-node?
             // For now: if NO child is active, pick first.
             
-            let activeChildren = children.filter { activeStateIDs.contains($0.id) }
             let anyChildActive = children.contains { activeStateIDs.contains($0.id) }
             
             if !anyChildActive {
@@ -159,11 +157,15 @@ class StatechartEngine: ObservableObject {
         activeStateIDs.remove(id)
         
         // Find Node (for logging/actions)
-        // guard let node = nodes.first(where: { $0.id == id }) else { return }
+        guard let node = nodes.first(where: { $0.id == id }) else { return }
         // Logger.statechart.info("Exited state: \(node.text)")
         
-        // TODO: Exit actions
-        // if let exitScript = node.exitAction { ... }
+        // Execute Exit Actions
+        if let exitScript = node.exitActions, !exitScript.isEmpty {
+            if let newContext = guardEvaluator.executeAction(script: exitScript, context: context) {
+                self.context = newContext
+            }
+        }
         
         // Cascade Exit: Exit all children
         let children = nodes.filter { $0.parentID == id }

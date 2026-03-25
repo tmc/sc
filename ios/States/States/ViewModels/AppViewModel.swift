@@ -6,7 +6,20 @@ import OSLog
 @Observable
 class AppViewModel {
     var machines: [StatechartWrapper] = []
-    var selectedMachine: StatechartWrapper?
+    
+    // MARK: - Tab Management
+    var openMachines: [StatechartWrapper] = []
+    
+    var selectedMachine: StatechartWrapper? {
+        didSet {
+            if let machine = selectedMachine {
+                // Auto-open tab for selected machine
+                if !openMachines.contains(where: { $0.id == machine.id }) {
+                    openMachines.append(machine)
+                }
+            }
+        }
+    }
     
     init() {
         // Load from Persistence
@@ -89,6 +102,10 @@ class AppViewModel {
     func deleteMachine(at offsets: IndexSet) {
         offsets.forEach { index in
             let machine = machines[index]
+            // Close tab if open
+            if openMachines.contains(where: { $0.id == machine.id }) {
+                closeTab(machine)
+            }
             LibraryManager.shared.delete(machine)
         }
         machines.remove(atOffsets: offsets)
@@ -105,6 +122,23 @@ class AppViewModel {
         let newMachine = StatechartWrapper(name: "\(machine.name) Copy", jsonContent: machine.jsonContent)
         machines.insert(newMachine, at: 0)
         LibraryManager.shared.save(newMachine)
+    }
+    
+    func closeTab(_ machine: StatechartWrapper) {
+        guard let index = openMachines.firstIndex(where: { $0.id == machine.id }) else { return }
+        
+        openMachines.remove(at: index)
+        
+        // If we closed the active tab, select a neighbor
+        if selectedMachine?.id == machine.id {
+            if openMachines.isEmpty {
+                selectedMachine = nil
+            } else {
+                // Select the one to the right, or the last one if at end
+                let newIndex = min(index, openMachines.count - 1)
+                selectedMachine = openMachines[newIndex]
+            }
+        }
     }
     
     // MARK: - AI Generation (Mock)

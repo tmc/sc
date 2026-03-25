@@ -35,11 +35,7 @@ enum Theme {
         
         // Backgrounds
         static let canvasBackground: Color = {
-            #if os(macOS)
-            return Color(nsColor: .windowBackgroundColor)
-            #else
-            return Color(uiColor: .systemGroupedBackground) 
-            #endif
+            return Color(red: 15/255, green: 23/255, blue: 42/255) // #0f172a (Midnight)
         }()
         
         static let sidebarBackground: Color = {
@@ -68,11 +64,7 @@ enum Theme {
         static let glassMaterial: Material = .regular
         
         static var gridDot: Color {
-            #if os(iOS)
-            Color(uiColor: .label).opacity(0.1)
-            #else
-            Color(nsColor: .labelColor).opacity(0.1)
-            #endif
+            return Color(red: 51/255, green: 65/255, blue: 85/255).opacity(0.3) // Slate 700
         }
     }
     
