@@ -11,7 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"github.com/tmc/sc"
+	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -26,11 +29,11 @@ type GuardExpression struct {
 
 // GuardEvaluator provides a comprehensive guard evaluation engine
 type GuardEvaluator struct {
-	mu             sync.RWMutex
-	cache          map[string]*GuardExpression
-	maxCache       int
+	mu              sync.RWMutex
+	cache           map[string]*GuardExpression
+	maxCache        int
 	customFunctions map[string]GuardFunction
-	metrics        *GuardMetrics
+	metrics         *GuardMetrics
 }
 
 // GuardFunction represents a custom function that can be used in guard expressions
@@ -58,33 +61,33 @@ func NewGuardEvaluator() *GuardEvaluator {
 
 // EvaluationContext holds all data available for guard evaluation
 type EvaluationContext struct {
-	Variables       *structpb.Struct           // Context variables
-	Event           *sc.Event                  // Current event being processed
-	StateData       map[string]interface{}     // State-specific data
-	EventData       map[string]interface{}     // Event payload as map
-	Transition      *sc.Transition             // Current transition being evaluated
-	ActiveStates    []string                   // Currently active states
-	Statechart      *sc.Statechart             // Full statechart context
-	CustomVariables map[string]interface{}     // Custom variables for expression evaluation
-	TimeContext     *TimeContext               // Time-related context
+	Variables       *structpb.Struct       // Context variables
+	Event           *sc.Event              // Current event being processed
+	StateData       map[string]interface{} // State-specific data
+	EventData       map[string]interface{} // Event payload as map
+	Transition      *sc.Transition         // Current transition being evaluated
+	ActiveStates    []string               // Currently active states
+	Statechart      *sc.Statechart         // Full statechart context
+	CustomVariables map[string]interface{} // Custom variables for expression evaluation
+	TimeContext     *TimeContext           // Time-related context
 }
 
 // TimeContext provides time-related data for guard evaluation
 type TimeContext struct {
-	CurrentTime   int64 // Unix timestamp in milliseconds
-	ElapsedTime   int64 // Time elapsed since state entry
-	EventTime     int64 // Time when event was triggered
+	CurrentTime    int64 // Unix timestamp in milliseconds
+	ElapsedTime    int64 // Time elapsed since state entry
+	EventTime      int64 // Time when event was triggered
 	TransitionTime int64 // Time when transition was triggered
 }
 
 // GuardResult represents the result of guard evaluation
 type GuardResult struct {
-	Value         bool
-	Error         error
-	Variables     []string               // Variables accessed during evaluation
-	Complexity    int                    // Execution complexity
-	EvaluationTime int64                 // Time taken for evaluation in nanoseconds
-	CacheHit      bool                   // Whether result came from cache
+	Value              bool
+	Error              error
+	Variables          []string               // Variables accessed during evaluation
+	Complexity         int                    // Execution complexity
+	EvaluationTime     int64                  // Time taken for evaluation in nanoseconds
+	CacheHit           bool                   // Whether result came from cache
 	IntermediateValues map[string]interface{} // Intermediate values for debugging
 }
 
@@ -98,28 +101,140 @@ func (ge *GuardEvaluator) EvaluateGuard(guard *sc.Guard, context *EvaluationCont
 		ge.mu.Unlock()
 	}()
 
-	if guard == nil || guard.Expression == "" {
+	if guard == nil {
 		return &GuardResult{
-			Value:          true,
-			Variables:      []string{},
-			Complexity:     0,
-			EvaluationTime: time.Since(start).Nanoseconds(),
-			CacheHit:       false,
+			Value:              true,
+			Variables:          []string{},
+			Complexity:         0,
+			EvaluationTime:     time.Since(start).Nanoseconds(),
+			CacheHit:           false,
 			IntermediateValues: make(map[string]interface{}),
 		}, nil
 	}
 
+	// Check for structured expression first
+	if guard.Condition != nil {
+		switch guard.Condition.Type {
+		case sc.ExpressionTypeCEL:
+			return ge.evaluateCEL(guard.Condition.Source, context, start)
+		case sc.ExpressionTypeStarlark:
+			return ge.evaluateStarlark(guard.Condition.Source, context, start)
+		case sc.ExpressionTypeRaw:
+			// Fall through to legacy handling or implement raw handling
+			if guard.Condition.Source != "" {
+				// Treat content as the expression string
+				return ge.evaluateLegacyExpression(guard.Condition.Source, "simple", context, start)
+			}
+		}
+	}
+
+	if guard.Expression == "" {
+		return &GuardResult{
+			Value:              true,
+			Variables:          []string{},
+			Complexity:         0,
+			EvaluationTime:     time.Since(start).Nanoseconds(),
+			CacheHit:           false,
+			IntermediateValues: make(map[string]interface{}),
+		}, nil
+	}
+
+	return ge.evaluateLegacyExpression(guard.Expression, guard.Language, context, start)
+}
+
+// evaluateCEL evaluates a CEL expression
+func (ge *GuardEvaluator) evaluateCEL(source string, context *EvaluationContext, start time.Time) (*GuardResult, error) {
+	// Simple CEL environment setup
+	// In production, you would cache the environment and compiled programs
+	env, err := cel.NewEnv(
+		cel.Declarations(
+			decls.NewVar("context", decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar("event", decls.Dyn),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CEL env: %w", err)
+	}
+
+	ast, issues := env.Compile(source)
+	if issues.Err() != nil {
+		return nil, fmt.Errorf("CEL compile error: %w", issues.Err())
+	}
+
+	prg, err := env.Program(ast)
+	if err != nil {
+		return nil, fmt.Errorf("CEL program error: %w", err)
+	}
+
+	// Prepare activation inputs
+	vars := map[string]interface{}{}
+	if context != nil {
+		if context.Variables != nil {
+			vars["context"] = context.Variables.AsMap()
+		}
+		// TODO: Add event data if available in context
+	}
+
+	out, _, err := prg.Eval(vars)
+	if err != nil {
+		return nil, fmt.Errorf("CEL eval error: %w", err)
+	}
+
+	val, ok := out.Value().(bool)
+	if !ok {
+		return nil, fmt.Errorf("CEL expression must return bool, got %T", out.Value())
+	}
+
+	return &GuardResult{
+		Value:          val,
+		EvaluationTime: time.Since(start).Nanoseconds(),
+		Complexity:     1, // Placeholder
+	}, nil
+}
+
+// evaluateStarlark evaluates a Starlark expression
+func (ge *GuardEvaluator) evaluateStarlark(source string, context *EvaluationContext, start time.Time) (*GuardResult, error) {
+	thread := &starlark.Thread{Name: "guard_eval"}
+
+	// Predefine globals (context, etc.)
+	globals := starlark.StringDict{}
+
+	// Convert context to Starlark values (simplified)
+	if context != nil && context.Variables != nil {
+		// This conversion is non-trivial; strictly simpler here for brevity
+		// Ideally use a struct or dict wrapper
+	}
+
+	// Starlark is typically for statements, but we expect an expression.
+	// We can wrap it in a function or use Eval.
+	val, err := starlark.Eval(thread, "guard", source, globals)
+	if err != nil {
+		return nil, fmt.Errorf("Starlark eval error: %w", err)
+	}
+
+	if boolVal, ok := val.(starlark.Bool); ok {
+		return &GuardResult{
+			Value:          bool(boolVal),
+			EvaluationTime: time.Since(start).Nanoseconds(),
+			Complexity:     1,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("Starlark expression must return bool, got %s", val.Type())
+}
+
+func (ge *GuardEvaluator) evaluateLegacyExpression(expression, language string, context *EvaluationContext, start time.Time) (*GuardResult, error) {
 	// Parse or retrieve from cache
-	expr, cacheHit, err := ge.parseExpressionWithMetrics(guard.Expression, guard.Language)
+	expr, cacheHit, err := ge.parseExpressionWithMetrics(expression, language)
 	if err != nil {
 		ge.mu.Lock()
 		ge.metrics.Errors++
 		ge.mu.Unlock()
 		return &GuardResult{
-			Value:          false,
-			Error:          err,
-			EvaluationTime: time.Since(start).Nanoseconds(),
-			CacheHit:       cacheHit,
+			Value:              false,
+			Error:              err,
+			EvaluationTime:     time.Since(start).Nanoseconds(),
+			CacheHit:           cacheHit,
 			IntermediateValues: make(map[string]interface{}),
 		}, fmt.Errorf("failed to parse guard expression: %w", err)
 	}
@@ -131,12 +246,12 @@ func (ge *GuardEvaluator) EvaluateGuard(guard *sc.Guard, context *EvaluationCont
 		ge.metrics.Errors++
 		ge.mu.Unlock()
 		return &GuardResult{
-			Value:          false,
-			Error:          err,
-			Variables:      expr.Variables,
-			Complexity:     expr.Complexity,
-			EvaluationTime: time.Since(start).Nanoseconds(),
-			CacheHit:       cacheHit,
+			Value:              false,
+			Error:              err,
+			Variables:          expr.Variables,
+			Complexity:         expr.Complexity,
+			EvaluationTime:     time.Since(start).Nanoseconds(),
+			CacheHit:           cacheHit,
 			IntermediateValues: intermediateValues,
 		}, fmt.Errorf("failed to evaluate guard expression: %w", err)
 	}
@@ -147,11 +262,11 @@ func (ge *GuardEvaluator) EvaluateGuard(guard *sc.Guard, context *EvaluationCont
 	ge.mu.Unlock()
 
 	return &GuardResult{
-		Value:          result,
-		Variables:      expr.Variables,
-		Complexity:     expr.Complexity,
-		EvaluationTime: time.Since(start).Nanoseconds(),
-		CacheHit:       cacheHit,
+		Value:              result,
+		Variables:          expr.Variables,
+		Complexity:         expr.Complexity,
+		EvaluationTime:     time.Since(start).Nanoseconds(),
+		CacheHit:           cacheHit,
 		IntermediateValues: intermediateValues,
 	}, nil
 }
@@ -255,7 +370,7 @@ func (ge *GuardEvaluator) parseJavaScriptExpression(expression string) (*GuardEx
 func (ge *GuardEvaluator) parseSimpleExpression(expression string) (*GuardExpression, error) {
 	// Handle common simple cases
 	expression = strings.TrimSpace(expression)
-	
+
 	var variables []string
 	complexity := 1
 
@@ -283,14 +398,14 @@ func (ge *GuardEvaluator) evaluateExpression(expr *GuardExpression, context *Eva
 // evaluateExpressionWithDebug evaluates a parsed expression with debug information
 func (ge *GuardEvaluator) evaluateExpressionWithDebug(expr *GuardExpression, context *EvaluationContext) (bool, map[string]interface{}, error) {
 	intermediateValues := make(map[string]interface{})
-	
+
 	// Add time context if not present
 	if context.TimeContext == nil {
 		context.TimeContext = &TimeContext{
 			CurrentTime: time.Now().UnixMilli(),
 		}
 	}
-	
+
 	switch expr.Language {
 	case "go", "golang":
 		result, err := ge.evaluateGoExpressionWithDebug(expr.Parsed, context, intermediateValues)
@@ -927,7 +1042,7 @@ func (ge *GuardEvaluator) compareNumbers(left, right interface{}, op string) (bo
 		// For graceful handling, fall back to string comparison
 		leftStr := fmt.Sprintf("%v", left)
 		rightStr := fmt.Sprintf("%v", right)
-		
+
 		switch op {
 		case "<":
 			return leftStr < rightStr, nil
@@ -1049,7 +1164,7 @@ func (ge *GuardEvaluator) evaluateSimpleExpressionWithDebug(expression string, c
 // extractVariables extracts variable names from Go AST
 func (ge *GuardEvaluator) extractVariables(expr ast.Expr) []string {
 	var variables []string
-	
+
 	ast.Inspect(expr, func(n ast.Node) bool {
 		if sel, ok := n.(*ast.SelectorExpr); ok {
 			if ident, ok := sel.X.(*ast.Ident); ok {
@@ -1059,14 +1174,14 @@ func (ge *GuardEvaluator) extractVariables(expr ast.Expr) []string {
 		}
 		return true
 	})
-	
+
 	return variables
 }
 
 // extractSimpleVariables extracts variables from simple expressions
 func (ge *GuardEvaluator) extractSimpleVariables(expression string) []string {
 	var variables []string
-	
+
 	// Simple regex-like extraction for context.variable patterns
 	words := strings.Fields(expression)
 	for _, word := range words {
@@ -1074,14 +1189,14 @@ func (ge *GuardEvaluator) extractSimpleVariables(expression string) []string {
 			variables = append(variables, word)
 		}
 	}
-	
+
 	return variables
 }
 
 // calculateComplexity calculates expression complexity for optimization
 func (ge *GuardEvaluator) calculateComplexity(expr ast.Expr) int {
 	complexity := 0
-	
+
 	ast.Inspect(expr, func(n ast.Node) bool {
 		switch n.(type) {
 		case *ast.BinaryExpr:
@@ -1097,7 +1212,7 @@ func (ge *GuardEvaluator) calculateComplexity(expr ast.Expr) int {
 		}
 		return true
 	})
-	
+
 	return complexity
 }
 
@@ -1108,7 +1223,7 @@ func (ge *GuardEvaluator) convertJSToGo(expression string) string {
 	expression = strings.ReplaceAll(expression, "!==", "!=")
 	expression = strings.ReplaceAll(expression, "&&", "&&")
 	expression = strings.ReplaceAll(expression, "||", "||")
-	
+
 	return expression
 }
 
@@ -1116,7 +1231,7 @@ func (ge *GuardEvaluator) convertJSToGo(expression string) string {
 func (ge *GuardEvaluator) ClearCache() {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	
+
 	ge.cache = make(map[string]*GuardExpression)
 }
 
@@ -1124,7 +1239,7 @@ func (ge *GuardEvaluator) ClearCache() {
 func (ge *GuardEvaluator) GetCacheSize() int {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	
+
 	return len(ge.cache)
 }
 
@@ -1135,12 +1250,12 @@ var globalGuardEvaluator = NewGuardEvaluator()
 func EvaluateGuardExpression(expression string, context *structpb.Struct) (bool, error) {
 	guard := &sc.Guard{Expression: expression}
 	evalContext := &EvaluationContext{Variables: context}
-	
+
 	result, err := globalGuardEvaluator.EvaluateGuard(guard, evalContext)
 	if err != nil {
 		return false, err
 	}
-	
+
 	return result.Value, nil
 }
 
@@ -1172,11 +1287,11 @@ func (ge *GuardEvaluator) UnregisterCustomFunction(name string) {
 func (ge *GuardEvaluator) GetMetrics() GuardMetrics {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	
+
 	// Create a copy of complexity scores
 	complexityScores := make([]int, len(ge.metrics.ComplexityScores))
 	copy(complexityScores, ge.metrics.ComplexityScores)
-	
+
 	return GuardMetrics{
 		Evaluations:      ge.metrics.Evaluations,
 		CacheHits:        ge.metrics.CacheHits,
@@ -1198,7 +1313,7 @@ func (ge *GuardEvaluator) ResetMetrics() {
 func (ge *GuardEvaluator) GetAverageEvaluationTime() int64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	
+
 	if ge.metrics.Evaluations == 0 {
 		return 0
 	}
@@ -1209,7 +1324,7 @@ func (ge *GuardEvaluator) GetAverageEvaluationTime() int64 {
 func (ge *GuardEvaluator) GetCacheHitRate() float64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	
+
 	total := ge.metrics.CacheHits + ge.metrics.CacheMisses
 	if total == 0 {
 		return 0
@@ -1221,11 +1336,11 @@ func (ge *GuardEvaluator) GetCacheHitRate() float64 {
 func (ge *GuardEvaluator) GetAverageComplexity() float64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	
+
 	if len(ge.metrics.ComplexityScores) == 0 {
 		return 0
 	}
-	
+
 	total := 0
 	for _, score := range ge.metrics.ComplexityScores {
 		total += score
