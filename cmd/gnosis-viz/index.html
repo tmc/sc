@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gnosis — Neural Anatomy Visualizer</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+  --bg: #08080e; --surface: #0e0e18; --panel: #121220;
+  --border: #1a1a2e; --border-hl: #2a2a4a;
+  --text: #c0c0d0; --text-dim: #606080; --text-bright: #e8e8f0;
+  --accent: #7aa2f7; --accent2: #bb9af7; --accent3: #9ece6a;
+  --warn: #e0af68; --danger: #f7768e;
+  --head-mono: #7aa2f7; --head-poly: #bb9af7; --head-inactive: #2a2a3a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace; background: var(--bg); color: var(--text); overflow: hidden; }
+
+/* ─── Layout ─── */
+.app { display: grid; grid-template-rows: 44px auto 1fr; height: 100vh; }
+.navbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+.navbar .brand { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 2px; }
+.navbar .sep { width: 1px; height: 20px; background: var(--border); }
+.tabs { display: flex; gap: 1px; }
+.tab { padding: 8px 16px; font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.main { overflow: hidden; position: relative; }
+.view { display: none; position: absolute; inset: 0; overflow-y: auto; }
+.view.active { display: flex; flex-direction: column; }
+
+/* ─── Shared ─── */
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; }
+.panel-header { padding: 8px 12px; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.panel-body { padding: 12px; }
+.controls { display: flex; gap: 10px; align-items: center; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.controls label { font-size: 10px; color: var(--text-dim); }
+.controls select, .controls input[type=range] { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 3px 6px; color: var(--text); font-family: inherit; font-size: 10px; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 8px; font-weight: 600; letter-spacing: 0.5px; }
+.badge-mono { background: rgba(122,162,247,0.15); color: var(--head-mono); }
+.badge-poly { background: rgba(187,154,247,0.15); color: var(--head-poly); }
+.badge-circuit { background: rgba(158,206,106,0.15); color: var(--accent3); }
+.badge-warn { background: rgba(224,175,104,0.15); color: var(--warn); }
+.tooltip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--border-hl); border-radius: 5px; padding: 8px 10px; font-size: 9px; color: var(--text); z-index: 1000; white-space: pre; box-shadow: 0 8px 24px rgba(0,0,0,0.6); max-width: 320px; line-height: 1.5; }
+
+/* ─── Global Transport ─── */
+.global-transport { background: var(--surface); border-bottom: 1px solid var(--border); }
+.transport-controls { display: flex; gap: 10px; align-items: center; padding: 6px 16px; border-bottom: 1px solid var(--border); }
+.transport-controls button { padding: 4px 12px; border: none; border-radius: 3px; font-family: inherit; font-size: 10px; cursor: pointer; }
+.token-stream { padding: 8px 16px; line-height: 2; max-height: 60px; overflow-y: auto; }
+.token { display: inline; padding: 2px 0; cursor: pointer; transition: all 0.1s; border-bottom: 2px solid transparent; }
+.token:hover { border-bottom-color: var(--accent); }
+.token.selected { border-bottom-color: var(--accent2); background: rgba(187,154,247,0.1); }
+.transport-sono { display: flex; align-items: center; gap: 8px; padding: 4px 16px; border-top: 1px solid var(--border); }
+
+/* ─── Inspector ─── */
+.inspector { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: 100%; }
+.inspector-left { display: grid; grid-template-rows: 140px 1fr; border-right: 1px solid var(--border); }
+
+/* ─── Atlas ─── */
+.atlas { display: grid; grid-template-columns: 1fr 320px; height: 100%; }
+.atlas-main { overflow: auto; padding: 16px; }
+.atlas-sidebar { border-left: 1px solid var(--border); overflow-y: auto; }
+
+/* ─── Circuit ─── */
+.circuit-view { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+.circuit-graph { padding: 16px; overflow: auto; }
+.circuit-detail { border-left: 1px solid var(--border); overflow-y: auto; }
+
+/* ─── Compare ─── */
+.compare { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+.compare-body { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; overflow: auto; }
+.compare-col { padding: 16px; overflow: auto; }
+.compare-col + .compare-col { border-left: 1px solid var(--border); }
+
+/* ─── Residual ─── */
+.residual-view { display: grid; grid-template-rows: 1fr; height: 100%; }
+.residual-body { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-height: 0; overflow: auto; gap: 0; }
+.residual-panel { overflow: auto; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.residual-panel:nth-child(2n) { border-right: none; }
+.residual-panel:nth-child(n+3) { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="navbar">
+    <div class="brand">GNOSIS</div>
+    <div class="sep"></div>
+    <div class="tabs">
+      <div class="tab active" data-v="inspector">Inspector</div>
+      <div class="tab" data-v="atlas">Head Atlas</div>
+      <div class="tab" data-v="circuit">Circuit Map</div>
+      <div class="tab" data-v="compare">Compare</div>
+      <div class="tab" data-v="residual">Residual Stream</div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="font-size:9px;color:var(--text-dim)">Qwen2.5-Coder-0.5B &bull; 24L &times; 14H &bull; simulated</div>
+  </div>
+  <!-- ═══ GLOBAL TRANSPORT ═══ -->
+  <div class="global-transport">
+    <div class="transport-controls">
+      <button id="gen-btn" style="background:var(--accent);color:#000;">Generate</button>
+      <button id="play-btn" style="background:var(--accent3);color:#000;">▶ Play</button>
+      <button id="play-sound-toggle" style="background:var(--accent2);color:#000;border:1px solid var(--border);">♫ On</button>
+      <label style="font-size:9px;color:var(--text-dim);">Speed</label>
+      <input type="range" id="play-speed" min="150" max="1200" value="500" style="width:80px;">
+      <div class="sep" style="width:1px;height:16px;background:var(--border);"></div>
+      <button id="sono-btn" style="background:var(--accent2);color:#000;font-size:9px;padding:3px 8px;">♫ Head</button>
+      <button id="sono-chord-btn" style="background:var(--accent);color:#000;font-size:9px;padding:3px 8px;">♫ Chord</button>
+      <input type="range" id="sono-vol" min="0" max="100" value="30" style="width:50px;">
+      <span style="font-size:8px;color:var(--text-dim);">vol</span>
+      <div id="sono-viz" style="width:80px;height:24px;"></div>
+      <span id="sono-label" style="font-size:8px;color:var(--accent3);"></span>
+      <div style="flex:1"></div>
+      <input type="text" id="prompt-input" value="Explain why statecharts use hierarchy for state organization." style="width:320px;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:4px 10px;color:var(--text);font-family:inherit;font-size:10px;">
+    </div>
+    <div class="token-stream" id="token-stream"></div>
+  </div>
+
+  <div class="main">
+
+    <!-- ═══ INSPECTOR ═══ -->
+    <div class="view active" id="inspector">
+      <div class="inspector">
+        <div class="inspector-left">
+          <div class="panel" style="border-radius:0;border-left:0;border-right:0;">
+            <div class="panel-header">Supervisor Confidence</div>
+            <div class="panel-body" id="confidence-chart"></div>
+          </div>
+          <div class="panel" style="border-radius:0;border-left:0;border-right:0;flex:1;overflow:auto;">
+            <div class="panel-header">
+              Head Activity <span id="heatmap-label" style="color:var(--accent)"></span>
+            </div>
+            <div class="panel-body" id="heatmap-chart"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-rows:auto 1fr auto;overflow:auto;">
+          <div class="panel" style="border-radius:0;border-right:0;">
+            <div class="panel-header">Spectral Profiles <span id="spectral-mode-label" style="color:var(--accent);font-size:8px;letter-spacing:0;text-transform:none;"></span></div>
+            <div class="panel-body" id="radar-chart" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);">
+            <div class="panel" style="border-radius:0;border-right:1px solid var(--border);border-bottom:0;overflow:auto;">
+              <div class="panel-header">Attention Pattern</div>
+              <div class="panel-body" id="attn-spotlight"></div>
+            </div>
+            <div class="panel" style="border-radius:0;border-right:0;border-bottom:0;overflow:auto;">
+              <div class="panel-header">Eigenvalue Spectrum</div>
+              <div class="panel-body" style="display:flex;flex-direction:column;gap:2px;">
+                <div id="eigen-waveform" style="height:80px;"></div>
+                <div id="spectral-strip" style="height:36px;overflow-x:auto;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ HEAD ATLAS ═══ -->
+    <div class="view" id="atlas">
+      <div class="atlas">
+        <div class="atlas-main">
+          <div class="controls" style="background:transparent;padding:0 0 12px 0;border:none;">
+            <label>Feature</label>
+            <select id="atlas-feat">
+              <option value="0">Spectral Entropy</option>
+              <option value="9" selected>Diagonal Ratio</option>
+              <option value="3">High-Freq Energy</option>
+              <option value="1">Low-Freq Energy</option>
+              <option value="12">Laplacian Trace</option>
+              <option value="5">Row Variance</option>
+              <option value="7">Row Entropy</option>
+            </select>
+            <label style="margin-left:12px;">Overlay</label>
+            <select id="atlas-overlay">
+              <option value="none">None</option>
+              <option value="circuit" selected>Circuit Heads</option>
+              <option value="specialization">Specialization</option>
+            </select>
+          </div>
+          <div id="atlas-svg"></div>
+        </div>
+        <div class="atlas-sidebar" id="atlas-sidebar"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CIRCUIT MAP ═══ -->
+    <div class="view" id="circuit">
+      <div class="circuit-view">
+        <div class="circuit-graph">
+          <div class="panel" style="height:100%;">
+            <div class="panel-header">Structure Recovery Circuit <span class="badge badge-circuit">4 heads / 336 total</span></div>
+            <div class="panel-body" id="circuit-svg" style="height:calc(100% - 32px);overflow:auto;"></div>
+          </div>
+        </div>
+        <div class="circuit-detail" id="circuit-detail"></div>
+      </div>
+    </div>
+
+    <!-- ═══ COMPARE ═══ -->
+    <div class="view" id="compare">
+      <div class="compare">
+        <div class="controls">
+          <label>Feature</label>
+          <select id="cmp-feat">
+            <option value="0">Spectral Entropy</option>
+            <option value="9" selected>Diagonal Ratio</option>
+            <option value="3">High-Freq Energy</option>
+          </select>
+          <label style="margin-left:12px;">Mode</label>
+          <select id="cmp-mode">
+            <option value="rys">Original vs RYS</option>
+            <option value="scale">0.5B vs 1.5B</option>
+          </select>
+        </div>
+        <div class="compare-body">
+          <div class="compare-col" id="cmp-left"></div>
+          <div class="compare-col" id="cmp-right"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ RESIDUAL STREAM ═══ -->
+    <div class="view" id="residual">
+      <div class="residual-view">
+        <div class="residual-body">
+          <div class="residual-panel">
+            <div class="panel" style="border-radius:0;border:0;height:100%;">
+              <div class="panel-header">Residual Norm by Layer</div>
+              <div class="panel-body" id="res-norms" style="height:calc(100% - 32px);"></div>
+            </div>
+          </div>
+          <div class="residual-panel">
+            <div class="panel" style="border-radius:0;border:0;height:100%;">
+              <div class="panel-header">Hidden State Trajectory <span style="color:var(--accent)">(PCA)</span></div>
+              <div class="panel-body" id="res-trajectory" style="height:calc(100% - 32px);"></div>
+            </div>
+          </div>
+          <div class="residual-panel">
+            <div class="panel" style="border-radius:0;border:0;height:100%;">
+              <div class="panel-header">Per-Head Write Magnitude</div>
+              <div class="panel-body" id="res-writes" style="height:calc(100% - 32px);"></div>
+            </div>
+          </div>
+          <div class="residual-panel">
+            <div class="panel" style="border-radius:0;border:0;height:100%;">
+              <div class="panel-header">Logit Lens — Top Predictions by Layer</div>
+              <div class="panel-body" id="res-logitlens" style="height:calc(100% - 32px);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="tooltip" id="tt" style="display:none;"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// DATA SIMULATION
+// ════════════════════════════════════════════════════════════
+
+const N_LAYERS = 24, N_HEADS = 14;
+const FEAT = ['Spectral Entropy','Low-Freq','Mid-Freq','High-Freq','VHigh-Freq','Row Var','Col Var','Row Entropy','Col Entropy','Diag Ratio','Band w1','Band w2','Laplacian'];
+
+const CIRCUIT_HEADS = [
+  { l:8, h:3, role:'state_type', type:'mono', color:'#7aa2f7', probes:['state_type'] },
+  { l:13, h:3, role:'position', type:'poly', color:'#bb9af7', probes:['depth','initial_state','transition'] },
+  { l:14, h:1, role:'tree_structure', type:'poly', color:'#9ece6a', probes:['hierarchy','lca','inter_level'] },
+  { l:4, h:12, role:'adjacency', type:'mono', color:'#e0af68', probes:['adjacency'] },
+];
+
+function rng(s){let x=s;return()=>{x=(x*16807)%2147483647;return x/2147483647;}}
+
+function genProfiles(nL,nH,seed){
+  const r=rng(seed),profiles=[];
+  for(let l=0;l<nL;l++){const row=[];for(let h=0;h<nH;h++){
+    const phase=l/nL, circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+    const isC=!!circ, feats=[];
+    for(let f=0;f<13;f++){
+      let v=r()*0.25;
+      if(f===0)v=isC?0.15+r()*0.15:0.45+r()*0.45; // entropy: circuit=low
+      else if(f===9)v=isC?0.08+r()*0.12:(phase<0.15?0.6+r()*0.3:0.3+r()*0.5); // diag
+      else if(f===1)v=phase<0.2?0.35+r()*0.3:0.08+r()*0.2;
+      else if(f===3)v=isC?0.35+r()*0.3:0.03+r()*0.12;
+      else if(f===12)v=isC?0.5+r()*0.4:0.05+r()*0.2;
+      feats.push(Math.max(0,Math.min(1,v)));
+    }
+    row.push({l,h,feats,circ});
+  }profiles.push(row);}return profiles;
+}
+
+function genAttnMap(sz,pattern,r){
+  const m=[];for(let i=0;i<sz;i++){const row=[];for(let j=0;j<sz;j++){
+    let v=r()*0.01;
+    if(pattern==='diag')v+=Math.exp(-((i-j)**2)/1.5)*0.7;
+    else if(pattern==='stripe'){v+=(j<sz*0.25?0.6:0.03)+r()*0.08;}
+    else if(pattern==='struct'){[0,Math.floor(sz/4),Math.floor(sz/2),Math.floor(3*sz/4)].forEach(t=>{v+=Math.exp(-((j-t)**2)/2.5)*0.3;});}
+    else if(pattern==='tree'){const d=Math.abs(i-j);v+=Math.exp(-d/3)*0.3+(i>j?0.02:0.15)/sz;}
+    else v=1/sz+r()*0.04;
+    row.push(v);
+  }const s=row.reduce((a,b)=>a+b);m.push(row.map(x=>x/s));}return m;
+}
+
+const TOKENS=[
+  'State','charts',' use',' hierarchy',' to',' organize',' complex',' behavior','.',
+  ' A',' parent',' state',' contains',' child',' states',' that',' represent',
+  ' sub','-','behaviors','.',' This',' allows',' transitions',' between',' high',
+  '-','level',' modes',' without',' specifying',' every',' internal',' detail','.',
+  ' The',' key',' insight',' is',' that',' hierarchy',' enables',' depth','-',
+  'first',' refinement',':',' start',' broad',',',' go',' deep','.'
+];
+
+function genConfidence(){
+  const r=rng(77),c=[];
+  for(let i=0;i<TOKENS.length;i++){
+    let v=0.88+r()*0.08;
+    if(i>=21&&i<=28)v=0.45+r()*0.2; // dip during "allows transitions..."
+    if(i>=35&&i<=42)v=0.92+r()*0.06;
+    c.push(v);
+  }return c;
+}
+
+function genActivity(){
+  const r=rng(55),act=[];
+  for(let t=0;t<TOKENS.length;t++){const step=[];
+    for(let l=0;l<8;l++){const row=[];for(let h=0;h<6;h++){
+      let v=r()*0.15;
+      if(l===3&&h===2&&t>=10&&t<=16)v=0.85+r()*0.1; // "parent state contains child" → L08/H03-like
+      if(l===5&&h===1&&TOKENS[t].match(/hierarch|depth|child/i))v=0.75+r()*0.15;
+      if(l===6&&h===3&&t>=21&&t<=28)v=0.9; // lights up during uncertainty
+      if(l===1&&h===0)v=0.35+r()*0.15; // always-on position head
+      if(l===2&&h===4&&TOKENS[t].match(/transition|between/i))v=0.7+r()*0.2;
+      row.push(v);
+    }step.push(row);}act.push(step);}return act;
+}
+
+const profiles05=genProfiles(24,14,42);
+const profiles15=genProfiles(28,12,99);
+const confidence=genConfidence();
+const activity=genActivity();
+const tt=d3.select('#tt');
+let selToken=0,selHead={l:8,h:3};
+
+// ════════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════════
+// (tab switching moved to INIT section)
+
+// ════════════════════════════════════════════════════════════
+// INSPECTOR
+// ════════════════════════════════════════════════════════════
+
+function renderTokens(){
+  const el=d3.select('#token-stream').html('');
+  const cs=d3.scaleSequential(t=>d3.interpolateRgb('#f7768e','#9ece6a')(t)).domain([0.3,1]);
+  TOKENS.forEach((tok,i)=>{
+    el.append('span').attr('class','token'+(i===selToken?' selected':''))
+      .style('color',cs(confidence[i]))
+      .text(tok)
+      .on('click',()=>{selToken=i;renderTokens();renderConfidence();renderHeatmap();renderSpotlight();});
+  });
+}
+
+function renderConfidence(){
+  const el=d3.select('#confidence-chart').html('');
+  const W=el.node().clientWidth||600,H=90;
+  const mg={t:8,r:12,b:20,l:30},w=W-mg.l-mg.r,h=H-mg.t-mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+  const x=d3.scaleLinear().domain([0,TOKENS.length-1]).range([0,w]);
+  const y=d3.scaleLinear().domain([0.2,1]).range([h,0]);
+
+  // Danger zone
+  svg.append('rect').attr('x',0).attr('y',y(0.65)).attr('width',w).attr('height',h-y(0.65))
+    .attr('fill','rgba(247,118,142,0.06)');
+  svg.append('line').attr('x1',0).attr('x2',w).attr('y1',y(0.65)).attr('y2',y(0.65))
+    .attr('stroke','var(--danger)').attr('stroke-width',0.5).attr('stroke-dasharray','3,3');
+
+  // Area
+  const area=d3.area().x((_,i)=>x(i)).y0(h).y1(d=>y(d)).curve(d3.curveMonotoneX);
+  const defs=svg.append('defs');
+  const gr=defs.append('linearGradient').attr('id','cg').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',1);
+  gr.append('stop').attr('offset','0%').attr('stop-color','var(--accent)').attr('stop-opacity',0.25);
+  gr.append('stop').attr('offset','100%').attr('stop-color','var(--accent)').attr('stop-opacity',0.02);
+  svg.append('path').datum(confidence).attr('fill','url(#cg)').attr('d',area);
+  svg.append('path').datum(confidence).attr('fill','none').attr('stroke','var(--accent)').attr('stroke-width',1.5)
+    .attr('d',d3.line().x((_,i)=>x(i)).y(d=>y(d)).curve(d3.curveMonotoneX));
+
+  // Marker
+  svg.append('line').attr('x1',x(selToken)).attr('x2',x(selToken)).attr('y1',0).attr('y2',h)
+    .attr('stroke','var(--accent2)').attr('stroke-width',1);
+  svg.append('circle').attr('cx',x(selToken)).attr('cy',y(confidence[selToken])).attr('r',3)
+    .attr('fill','var(--accent2)');
+
+  // Axes
+  svg.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(8).tickFormat(()=>''))
+    .selectAll('.domain,.tick line').attr('stroke','var(--border)');
+  svg.append('g').call(d3.axisLeft(y).ticks(3).tickFormat(d3.format('.0%')))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','8px');
+  svg.selectAll('.domain,.tick line').attr('stroke','var(--border)');
+}
+
+function renderHeatmap(){
+  const el=d3.select('#heatmap-chart').html('');
+  d3.select('#heatmap-label').text(`@ "${TOKENS[selToken].trim()}"`);
+  const act=activity[selToken];
+  const nL=act.length,nH=act[0].length;
+  const cw=34,ch=22;
+  const mg={t:16,r:8,b:20,l:28};
+  const svg=el.append('svg').attr('width',nH*cw+mg.l+mg.r).attr('height',nL*ch+mg.t+mg.b)
+    .append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+  const color=d3.scaleSequential(d3.interpolateInferno).domain([0,1]);
+
+  for(let l=0;l<nL;l++)for(let h=0;h<nH;h++){
+    const v=act[l][h];
+    const isSel=selHead.l===l&&selHead.h===h;
+    svg.append('rect').attr('x',h*cw).attr('y',l*ch).attr('width',cw-2).attr('height',ch-2)
+      .attr('fill',color(v)).attr('rx',3)
+      .attr('stroke',isSel?'var(--accent2)':'none').attr('stroke-width',isSel?2:0)
+      .style('cursor','pointer')
+      .on('mouseover',function(e){
+        tt.style('display','block').style('left',(e.pageX+10)+'px').style('top',(e.pageY-10)+'px')
+          .text(`Layer ${l} Head ${h}\nActivity: ${v.toFixed(3)}`);
+      })
+      .on('mouseout',()=>tt.style('display','none'))
+      .on('click',()=>{selHead={l,h};renderHeatmap();renderSpotlight();});
+  }
+  for(let l=0;l<nL;l++)svg.append('text').attr('x',-4).attr('y',l*ch+ch/2+3).attr('text-anchor','end')
+    .attr('fill','var(--text-dim)').style('font-size','8px').text(l);
+  for(let h=0;h<nH;h++)svg.append('text').attr('x',h*cw+cw/2).attr('y',nL*ch+12).attr('text-anchor','middle')
+    .attr('fill','var(--text-dim)').style('font-size','8px').text(`H${h}`);
+}
+
+function renderSpotlight(){
+  // Attention map
+  const el=d3.select('#attn-spotlight').html('');
+  const {l,h}=selHead;
+  const r2=rng(selToken*100+l*14+h);
+  const act=activity[selToken]?.[l]?.[h]||0;
+  let pat='diffuse';
+  if(act>0.7)pat='struct'; else if(l<2)pat='diag'; else if(act>0.35)pat='tree';
+
+  const sz=20,cellSz=12;
+  const map=genAttnMap(sz,pat,r2);
+  const W=sz*cellSz,H=sz*cellSz;
+  const svg=el.append('svg').attr('width',W+4).attr('height',H+4).append('g').attr('transform','translate(2,2)');
+  const mx2=d3.max(map.flat());
+  const color=d3.scaleSequential(d3.interpolateViridis).domain([0,mx2]);
+  for(let i=0;i<sz;i++)for(let j=0;j<sz;j++){
+    svg.append('rect').attr('x',j*cellSz).attr('y',i*cellSz)
+      .attr('width',cellSz-1).attr('height',cellSz-1).attr('fill',color(map[i][j])).attr('rx',1);
+  }
+  el.append('div').style('font-size','9px').style('color','var(--text-dim)').style('margin-top','4px')
+    .text(`L${l}/H${h} — pattern: ${pat} — activity: ${act.toFixed(2)}`);
+
+  // Radar + eigenvalue waveform + spectral strip
+  renderRadar(l,h);
+  renderEigenWaveform(l,h);
+  renderSpectralStrip(l,h);
+}
+
+let radarInitialized=false;
+
+function genHeadFeats(l,h,tok){
+  const r2=rng(l*14+h+tok*50+500);
+  const isC=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+  const feats=[];
+  for(let f=0;f<13;f++){
+    let v=r2()*0.3;
+    if(isC){if(f===0)v=0.15+r2()*0.1;else if(f===3)v=0.5+r2()*0.3;else if(f===12)v=0.6+r2()*0.3;else if(f===9)v=0.1+r2()*0.1;}
+    else{if(f===0)v=0.5+r2()*0.4;else if(f===9)v=0.4+r2()*0.5;}
+    feats.push(v);
+  }
+  return feats;
+}
+
+function renderRadar(li,hi){
+  const el=d3.select('#radar-chart');
+  const n=13;
+  const isSel=idx=>CIRCUIT_HEADS[idx].l===li&&CIRCUIT_HEADS[idx].h===hi;
+
+  // Animate if already drawn — push-out then decay
+  if(radarInitialized && el.select('.mini-radar-0').size()>0){
+    const isPlaying=!!playInterval;
+    const pushDur=isPlaying?120:200;
+    const decayDur=isPlaying?300:600;
+    const overshoot=1.35; // push values out 35% past their target
+
+    CIRCUIT_HEADS.forEach((ch,idx)=>{
+      const feats=genHeadFeats(ch.l,ch.h,selToken);
+      const cellEl=el.select(`.mini-radar-${idx}`);
+      const cellSz=cellEl.node()?.getBoundingClientRect();
+      if(!cellSz)return;
+      const sz=Math.min(cellSz.width,cellSz.height)-4;
+      const rad=sz/2-22;
+      const toXY=(v,i,scale)=>{const a=2*Math.PI*i/n-Math.PI/2;const s=Math.min(v*scale,1.1);return[Math.cos(a)*rad*s,Math.sin(a)*rad*s];};
+      const dpPush=feats.map((v,i)=>toXY(v,i,overshoot));
+      const dpFinal=feats.map((v,i)=>toXY(v,i,1));
+
+      // Phase 1: push out fast
+      cellEl.select('.rpoly')
+        .transition('push').duration(pushDur).ease(d3.easeQuadOut)
+        .attr('points',dpPush.map(p=>p.join(',')).join(' '))
+        .attr('fill-opacity',0.25).attr('stroke-width',2.2)
+        // Phase 2: decay back with elastic feel
+        .transition('decay').duration(decayDur).ease(d3.easeElasticOut.amplitude(1).period(0.4))
+        .attr('points',dpFinal.map(p=>p.join(',')).join(' '))
+        .attr('fill-opacity',0.15).attr('stroke-width',1.5);
+
+      cellEl.selectAll('.rdot').each(function(d,i){
+        d3.select(this)
+          .transition('push').duration(pushDur).ease(d3.easeQuadOut)
+          .attr('cx',dpPush[i][0]).attr('cy',dpPush[i][1]).attr('r',3.5)
+          .transition('decay').duration(decayDur).ease(d3.easeElasticOut.amplitude(1).period(0.4))
+          .attr('cx',dpFinal[i][0]).attr('cy',dpFinal[i][1]).attr('r',2);
+      });
+
+      // Pulse the border glow on the selected cell
+      if(isSel(idx)){
+        cellEl.style('box-shadow',`0 0 12px ${ch.color}60`)
+          .transition().duration(decayDur).style('box-shadow','none');
+      }
+    });
+    d3.select('#spectral-mode-label').text(`@ "${TOKENS[selToken].trim()}"`);
+    return;
+  }
+
+  // First render: 2×2 grid of mini radars
+  el.html('');
+  radarInitialized=true;
+
+  CIRCUIT_HEADS.forEach((ch,idx)=>{
+    const feats=genHeadFeats(ch.l,ch.h,selToken);
+    const cell=el.append('div').attr('class',`mini-radar-${idx}`)
+      .style('position','relative').style('overflow','hidden')
+      .style('border',`1px solid ${isSel(idx)?ch.color:'var(--border)'}`)
+      .style('border-radius','4px').style('background','var(--bg)')
+      .style('cursor','pointer')
+      .on('click',()=>{selHead={l:ch.l,h:ch.h};radarInitialized=false;renderSpotlight();});
+
+    // Measure available space after append
+    const cw=cell.node().clientWidth||160, cch=cell.node().clientHeight||140;
+    const sz=Math.min(cw,cch,180);
+    const rad=sz/2-22, cx=sz/2, cy=sz/2;
+
+    const svg=cell.append('svg').attr('width','100%').attr('height','100%')
+      .attr('viewBox',`0 0 ${sz+4} ${sz+20}`).attr('preserveAspectRatio','xMidYMid meet');
+    const g=svg.append('g').attr('transform',`translate(${cx+2},${cy+2})`);
+
+    // Rings
+    [0.5,1].forEach(rv=>{
+      const pts=[];for(let i=0;i<n;i++){const a=2*Math.PI*i/n-Math.PI/2;pts.push([Math.cos(a)*rad*rv,Math.sin(a)*rad*rv]);}
+      g.append('polygon').attr('points',pts.map(p=>p.join(',')).join(' '))
+        .attr('fill','none').attr('stroke','var(--border)').attr('stroke-width',0.4);
+    });
+
+    // Spokes (no labels — too small)
+    for(let i=0;i<n;i++){
+      const a=2*Math.PI*i/n-Math.PI/2;
+      g.append('line').attr('x1',0).attr('y1',0).attr('x2',Math.cos(a)*rad).attr('y2',Math.sin(a)*rad)
+        .attr('stroke','var(--border)').attr('stroke-width',0.2);
+    }
+
+    // Polygon — bloom from center on first render
+    const dp=feats.map((v,i)=>{const a=2*Math.PI*i/n-Math.PI/2;return[Math.cos(a)*rad*v,Math.sin(a)*rad*v];});
+    const dpZero=feats.map((v,i)=>{return[0,0];});
+    const dpOver=feats.map((v,i)=>{const a=2*Math.PI*i/n-Math.PI/2;const s=Math.min(v*1.3,1.1);return[Math.cos(a)*rad*s,Math.sin(a)*rad*s];});
+    g.append('polygon').attr('class','rpoly')
+      .attr('points',dpZero.map(p=>p.join(',')).join(' '))
+      .attr('fill',ch.color).attr('fill-opacity',0.05)
+      .attr('stroke',ch.color).attr('stroke-width',1.5)
+      .transition().delay(idx*80).duration(250).ease(d3.easeQuadOut)
+      .attr('points',dpOver.map(p=>p.join(',')).join(' '))
+      .attr('fill-opacity',0.25)
+      .transition().duration(500).ease(d3.easeElasticOut.amplitude(1).period(0.45))
+      .attr('points',dp.map(p=>p.join(',')).join(' '))
+      .attr('fill-opacity',0.15);
+    dp.forEach((p,pi)=>g.append('circle').attr('class','rdot')
+      .attr('cx',0).attr('cy',0).attr('r',0).attr('fill',ch.color)
+      .transition().delay(idx*80+pi*15).duration(250).ease(d3.easeQuadOut)
+      .attr('cx',dpOver[pi][0]).attr('cy',dpOver[pi][1]).attr('r',3.5)
+      .transition().duration(500).ease(d3.easeElasticOut.amplitude(1).period(0.45))
+      .attr('cx',p[0]).attr('cy',p[1]).attr('r',2));
+
+    // Head label
+    svg.append('text').attr('x',sz/2+2).attr('y',sz+12).attr('text-anchor','middle')
+      .attr('fill',ch.color).style('font-size','9px').style('font-weight','600')
+      .text(`L${ch.l}/H${ch.h} — ${ch.role}`);
+
+    // Type badge
+    svg.append('text').attr('x',8).attr('y',12)
+      .attr('fill',ch.type==='mono'?'var(--head-mono)':'var(--head-poly)')
+      .style('font-size','7px').style('font-weight','600')
+      .text(ch.type);
+  });
+
+  d3.select('#spectral-mode-label').text(`@ "${TOKENS[selToken].trim()}"`);
+}
+
+// ════════════════════════════════════════════════════════════
+// EIGENVALUE WAVEFORM + SPECTRAL STRIP + SONIFICATION
+// ════════════════════════════════════════════════════════════
+
+function genEigenvalues(l,h,tok){
+  const r2=rng(l*14+h+tok*31+7777);
+  const circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+  const n=20; // number of eigenvalues
+  const vals=[];
+  for(let i=0;i<n;i++){
+    let v;
+    if(circ){
+      // Circuit heads: sharp eigenvalue decay (low rank)
+      v=Math.exp(-i*0.45)*0.9+r2()*0.03;
+    }else{
+      // Non-circuit: flatter spectrum (higher rank)
+      v=Math.exp(-i*0.15)*0.5+r2()*0.08;
+    }
+    vals.push(Math.max(0,v));
+  }
+  return vals;
+}
+
+function renderEigenWaveform(l,h){
+  const el=d3.select('#eigen-waveform').html('');
+  const W=el.node().clientWidth||300, H=55;
+  const mg={t:4,r:8,b:12,l:24};
+  const w=W-mg.l-mg.r, h2=H-mg.t-mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  const eigs=genEigenvalues(l,h,selToken);
+  const x=d3.scaleLinear().domain([0,eigs.length-1]).range([0,w]);
+  const y=d3.scaleLinear().domain([0,1]).range([h2,0]);
+  const circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+  const clr=circ?circ.color:'var(--accent)';
+
+  // Area fill
+  const area=d3.area().x((_,i)=>x(i)).y0(h2).y1(d=>y(d)).curve(d3.curveMonotoneX);
+  svg.append('path').datum(eigs).attr('fill',clr).attr('fill-opacity',0.12).attr('d',area);
+  // Line
+  svg.append('path').datum(eigs).attr('fill','none').attr('stroke',clr).attr('stroke-width',1.5)
+    .attr('d',d3.line().x((_,i)=>x(i)).y(d=>y(d)).curve(d3.curveMonotoneX));
+  // Dots
+  eigs.forEach((v,i)=>{
+    svg.append('circle').attr('cx',x(i)).attr('cy',y(v)).attr('r',2).attr('fill',clr);
+  });
+
+  // Effective rank annotation
+  const effRank=eigs.filter(v=>v>0.05).length;
+  svg.append('text').attr('x',w-2).attr('y',8).attr('text-anchor','end')
+    .attr('fill','var(--text-dim)').style('font-size','8px').text(`rank≈${effRank}`);
+
+  // Axis
+  svg.append('g').attr('transform',`translate(0,${h2})`).call(d3.axisBottom(x).ticks(5).tickFormat(d=>`λ${d}`))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','6px');
+  svg.selectAll('.domain,.tick line').attr('stroke','var(--border)');
+
+  d3.select('#spectral-mode-label').text(`L${l}/H${h} @ "${TOKENS[selToken].trim()}"`);
+}
+
+function renderSpectralStrip(l,h){
+  const el=d3.select('#spectral-strip').html('');
+  const miniW=20, miniH=30, gap=2;
+  const total=Math.min(TOKENS.length,20); // show first 20 tokens
+  const W=total*(miniW+gap)+4;
+  const svg=el.append('svg').attr('width',W).attr('height',miniH+14);
+
+  for(let t=0;t<total;t++){
+    const eigs=genEigenvalues(l,h,t);
+    const x=d3.scaleLinear().domain([0,eigs.length-1]).range([0,miniW]);
+    const y=d3.scaleLinear().domain([0,1]).range([miniH,0]);
+    const g=svg.append('g').attr('transform',`translate(${t*(miniW+gap)+2},2)`);
+
+    const isSel=t===selToken;
+    if(isSel){
+      g.append('rect').attr('x',-1).attr('y',-1).attr('width',miniW+2).attr('height',miniH+2)
+        .attr('fill','none').attr('stroke','var(--accent2)').attr('stroke-width',1).attr('rx',2);
+    }
+
+    const circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+    const clr=circ?circ.color:'var(--accent)';
+    const area=d3.area().x((_,i)=>x(i)).y0(miniH).y1(d=>y(d)).curve(d3.curveMonotoneX);
+    g.append('path').datum(eigs).attr('fill',clr).attr('fill-opacity',isSel?0.3:0.1).attr('d',area);
+    g.append('path').datum(eigs).attr('fill','none').attr('stroke',clr).attr('stroke-width',0.7)
+      .attr('d',d3.line().x((_,i)=>x(i)).y(d=>y(d)).curve(d3.curveMonotoneX));
+
+    // Token label
+    g.append('text').attr('x',miniW/2).attr('y',miniH+10).attr('text-anchor','middle')
+      .attr('fill',isSel?'var(--accent2)':'var(--text-dim)').style('font-size','5px')
+      .text(TOKENS[t].trim().substring(0,3));
+  }
+}
+
+// ── Sonification ──
+let audioCtx=null, playSoundEnabled=true;
+function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+
+// Pentatonic scale intervals for pleasant continuous sound
+// C major pentatonic across octaves
+const PENTA_RATIOS=[1, 9/8, 5/4, 3/2, 5/3, 2, 9/4, 5/2, 3, 10/3];
+
+// Each circuit head has a distinct musical voice:
+// state_type  → bell/vibraphone (sine, sharp attack, long decay, mid register)
+// position    → warm pad (triangle, slow attack, low-mid, chorused)
+// tree_struct → airy flute (sine+2nd harmonic, breathy, upper register)
+// adjacency   → plucky pizzicato (triangle, fast attack/decay, staccato)
+const HEAD_VOICES=[
+  {base:392.00,wave:'sine',    attack:0.003,decay:0.85,sustain:0.3, character:'bell'},
+  {base:220.00,wave:'triangle',attack:0.08, decay:0.5, sustain:0.6, character:'pad'},
+  {base:587.33,wave:'sine',    attack:0.02, decay:0.7, sustain:0.4, character:'flute'},
+  {base:329.63,wave:'triangle',attack:0.001,decay:0.15,sustain:0.05,character:'pluck'},
+];
+
+function sonifyHead(l,h,tok,duration=1.5){
+  const ctx=getAudioCtx();
+  const eigs=genEigenvalues(l,h,tok);
+  const circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+  const cidx=CIRCUIT_HEADS.indexOf(circ);
+  const voice=cidx>=0?HEAD_VOICES[cidx]:HEAD_VOICES[0];
+  const vol=(+d3.select('#sono-vol').node().value)/100*0.15;
+  const now=ctx.currentTime;
+  const master=ctx.createGain();
+  master.gain.setValueAtTime(vol,now);
+  master.gain.exponentialRampToValueAtTime(0.001,now+duration);
+  master.connect(ctx.destination);
+
+  eigs.forEach((v,i)=>{
+    if(v<0.03)return;
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    const snapFreq=voice.base*PENTA_RATIOS[Math.min(i,PENTA_RATIOS.length-1)];
+    osc.type=voice.wave;
+    osc.frequency.setValueAtTime(snapFreq,now);
+    // Shaped envelope per voice character
+    gain.gain.setValueAtTime(0,now);
+    gain.gain.linearRampToValueAtTime(v*0.6,now+voice.attack);
+    gain.gain.exponentialRampToValueAtTime(Math.max(v*voice.sustain,0.001),now+voice.attack+duration*voice.decay);
+    gain.gain.exponentialRampToValueAtTime(0.001,now+duration-0.05);
+    osc.connect(gain);gain.connect(master);
+    osc.start(now+i*0.02);osc.stop(now+duration);
+
+    // Flute: airy 2nd harmonic for breathiness
+    if(voice.character==='flute'&&i<4){
+      const h2=ctx.createOscillator();const hg=ctx.createGain();
+      h2.type='sine';h2.frequency.setValueAtTime(snapFreq*2.01,now);
+      hg.gain.setValueAtTime(0,now);hg.gain.linearRampToValueAtTime(v*0.08,now+0.04);
+      hg.gain.exponentialRampToValueAtTime(0.001,now+duration*0.6);
+      h2.connect(hg);hg.connect(master);h2.start(now);h2.stop(now+duration);
+    }
+    // Pad: chorus via slightly detuned copy
+    if(voice.character==='pad'&&i<3){
+      const pd=ctx.createOscillator();const pg2=ctx.createGain();
+      pd.type='triangle';pd.frequency.setValueAtTime(snapFreq*1.003,now);
+      pg2.gain.setValueAtTime(0,now);pg2.gain.linearRampToValueAtTime(v*0.25,now+0.1);
+      pg2.gain.exponentialRampToValueAtTime(0.001,now+duration*0.8);
+      pd.connect(pg2);pg2.connect(master);pd.start(now);pd.stop(now+duration);
+    }
+  });
+  renderSonoViz(eigs,duration,circ);
+  d3.select('#sono-label').text(`${voice.character} ${voice.base.toFixed(0)}Hz — ${eigs.filter(v=>v>0.03).length} partials`);
+}
+
+function sonifyChord(duration=2.5){
+  const ctx=getAudioCtx();
+  const vol=(+d3.select('#sono-vol').node().value)/100*0.08;
+  const now=ctx.currentTime;
+  CIRCUIT_HEADS.forEach((ch,ci)=>{
+    const eigs=genEigenvalues(ch.l,ch.h,selToken);
+    const voice=HEAD_VOICES[ci];
+    const master=ctx.createGain();
+    master.gain.setValueAtTime(vol,now+ci*0.15);
+    master.gain.exponentialRampToValueAtTime(0.001,now+duration);
+    master.connect(ctx.destination);
+    eigs.slice(0,6).forEach((v,i)=>{
+      if(v<0.05)return;
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type=voice.wave;
+      const freq=voice.base*PENTA_RATIOS[Math.min(i,PENTA_RATIOS.length-1)];
+      osc.frequency.setValueAtTime(freq,now+ci*0.15);
+      gain.gain.setValueAtTime(0,now+ci*0.15);
+      gain.gain.linearRampToValueAtTime(v*0.4,now+ci*0.15+voice.attack);
+      gain.gain.exponentialRampToValueAtTime(0.001,now+duration-0.2);
+      osc.connect(gain);gain.connect(master);
+      osc.start(now+ci*0.15+i*0.01);osc.stop(now+duration);
+    });
+  });
+  d3.select('#sono-label').text(`chord: ${CIRCUIT_HEADS.map((c,i)=>HEAD_VOICES[i].character).join(' + ')}`);
+}
+
+// ── Token-stream sonification (plays during ▶ Play) ──
+// Generative ambient piece: pentatonic melody + pad chords + circuit bells + punctuation resolves
+
+// C major pentatonic across octaves — always consonant
+const MELODY_FREQS=[
+  261.63,293.66,329.63,392.00,440.00, // C4 D4 E4 G4 A4
+  523.25,587.33,659.25,783.99,880.00, // C5 D5 E5 G5 A5
+  1046.5,1174.7,1318.5,1568.0,1760.0, // C6 D6 E6 G6 A6
+];
+const PAD_CHORDS=[
+  [130.81,196.00,261.63], // C3 G3 C4
+  [146.83,220.00,293.66], // D3 A3 D4
+  [164.81,246.94,329.63], // E3 B3 E4
+  [196.00,293.66,392.00], // G3 D4 G4
+];
+
+function sonifyToken(tokIdx,stepMs){
+  const ctx=getAudioCtx();
+  const vol=(+d3.select('#sono-vol').node().value)/100*0.12;
+  const now=ctx.currentTime;
+  const dur=Math.min(stepMs/1000*2.0, 2.0);
+  const conf=confidence[tokIdx];
+  const act=activity[tokIdx];
+  const tok=TOKENS[tokIdx];
+
+  // Gather head activations — these drive everything
+  const headActs=CIRCUIT_HEADS.map((cn,ci)=>({
+    ci, voice:HEAD_VOICES[ci], a:act?.[cn.l]?.[cn.h]||0, cn
+  }));
+  const dominant=headActs.reduce((best,h)=>h.a>best.a?h:best,headActs[0]);
+  const activeHeads=headActs.filter(h=>h.a>=0.3);
+  const totalAct=headActs.reduce((s,h)=>s+h.a,0)||1;
+
+  // Master with delay
+  const master=ctx.createGain();
+  master.gain.setValueAtTime(vol,now);
+  master.connect(ctx.destination);
+  const dly=ctx.createDelay(0.5);
+  dly.delayTime.setValueAtTime(dominant.voice.character==='pad'?0.22:0.12,now);
+  const dfb=ctx.createGain();
+  dfb.gain.setValueAtTime(dominant.voice.character==='bell'?0.25:0.15,now);
+  const dvol=ctx.createGain();
+  dvol.gain.setValueAtTime(0.10,now);
+  master.connect(dly);dly.connect(dfb);dfb.connect(dly);
+  dly.connect(dvol);dvol.connect(ctx.destination);
+
+  // ── Melody: dominant head picks the base frequency + waveform ──
+  const hash=(tok.charCodeAt(0)||0)*31+(tok.charCodeAt(1)||0)*7+tokIdx;
+  const degree=hash%5;
+  // Dominant head's voice sets the register and base
+  const melBase=dominant.voice.base;
+  const melRatio=PENTA_RATIOS[degree];
+  const mFreq=melBase*melRatio;
+
+  const mel=ctx.createOscillator();
+  const mG=ctx.createGain();
+  mel.type=dominant.voice.wave; // waveform follows dominant head
+  mel.frequency.setValueAtTime(mFreq,now);
+  // Legato slide
+  if(tokIdx>0){
+    const ph=(TOKENS[tokIdx-1].charCodeAt(0)||0)*31+(TOKENS[tokIdx-1].charCodeAt(1)||0)*7+(tokIdx-1);
+    const prevDeg=ph%5;
+    mel.frequency.setValueAtTime(melBase*PENTA_RATIOS[prevDeg],now);
+    mel.frequency.exponentialRampToValueAtTime(mFreq,now+0.06);
+  }
+  // Envelope shaped by dominant head's attack/decay
+  const dv=dominant.voice;
+  mG.gain.setValueAtTime(0,now);
+  mG.gain.linearRampToValueAtTime(conf*0.45,now+dv.attack);
+  mG.gain.exponentialRampToValueAtTime(Math.max(conf*dv.sustain*0.4,0.001),now+dv.attack+dur*dv.decay);
+  mG.gain.exponentialRampToValueAtTime(0.001,now+dur*0.9);
+  mel.connect(mG);mG.connect(master);
+  mel.start(now);mel.stop(now+dur);
+
+  // ── Sub: only when pad or bell dominates (warm voices) ──
+  if(dv.character==='pad'||dv.character==='bell'){
+    const sub=ctx.createOscillator();const sG=ctx.createGain();
+    sub.type='triangle';sub.frequency.setValueAtTime(mFreq/2,now);
+    sG.gain.setValueAtTime(0,now);
+    sG.gain.linearRampToValueAtTime(conf*0.10*dominant.a,now+0.02);
+    sG.gain.exponentialRampToValueAtTime(0.001,now+dur*0.5);
+    sub.connect(sG);sG.connect(master);sub.start(now);sub.stop(now+dur);
+  }
+
+  // ── Pad chord: weighted blend — more pad head = lusher chord, more pluck = sparser ──
+  const padWeight=headActs[1].a; // position/pad head activity
+  const chord=PAD_CHORDS[Math.floor(tokIdx/10)%PAD_CHORDS.length];
+  if(padWeight>0.15){
+    chord.forEach((freq,fi)=>{
+      const p=ctx.createOscillator();const pg=ctx.createGain();
+      p.type='triangle';p.frequency.setValueAtTime(freq,now);
+      // Chorus detune when pad is strongly active
+      if(padWeight>0.5&&fi===0){
+        const p2=ctx.createOscillator();const pg2=ctx.createGain();
+        p2.type='triangle';p2.frequency.setValueAtTime(freq*1.003,now);
+        pg2.gain.setValueAtTime(0.03*padWeight*conf,now);
+        pg2.gain.exponentialRampToValueAtTime(0.001,now+dur);
+        p2.connect(pg2);pg2.connect(master);p2.start(now);p2.stop(now+dur);
+      }
+      pg.gain.setValueAtTime(0.05*padWeight*conf,now);
+      pg.gain.exponentialRampToValueAtTime(0.001,now+dur);
+      p.connect(pg);pg.connect(master);p.start(now);p.stop(now+dur);
+    });
+  }
+
+  // ── Each active head adds its voice, scaled by activity ──
+  activeHeads.forEach(({ci,voice,a,cn})=>{
+    const hFreq=voice.base*PENTA_RATIOS[degree]; // same pentatonic degree, head's register
+    const hVol=a*(a/totalAct); // louder when more dominant
+
+    if(voice.character==='bell'){
+      const b=ctx.createOscillator();const bg=ctx.createGain();
+      b.type='sine';b.frequency.setValueAtTime(hFreq,now+ci*0.04);
+      bg.gain.setValueAtTime(0,now+ci*0.04);
+      bg.gain.linearRampToValueAtTime(hVol*0.14,now+ci*0.04+0.003);
+      bg.gain.exponentialRampToValueAtTime(0.001,now+ci*0.04+dur*0.65);
+      b.connect(bg);bg.connect(master);b.start(now+ci*0.04);b.stop(now+dur);
+      // Bell: high harmonic ping on strong activation
+      if(a>0.6){
+        const bh=ctx.createOscillator();const bhg=ctx.createGain();
+        bh.type='sine';bh.frequency.setValueAtTime(hFreq*3,now+ci*0.04);
+        bhg.gain.setValueAtTime(0,now+ci*0.04);
+        bhg.gain.linearRampToValueAtTime(a*0.02,now+ci*0.04+0.002);
+        bhg.gain.exponentialRampToValueAtTime(0.001,now+ci*0.04+dur*0.3);
+        bh.connect(bhg);bhg.connect(master);bh.start(now+ci*0.04);bh.stop(now+dur);
+      }
+    } else if(voice.character==='pad'){
+      const p1=ctx.createOscillator();const p2=ctx.createOscillator();const pg=ctx.createGain();
+      p1.type='triangle';p1.frequency.setValueAtTime(hFreq,now+ci*0.04);
+      p2.type='triangle';p2.frequency.setValueAtTime(hFreq*1.004,now+ci*0.04);
+      pg.gain.setValueAtTime(0,now+ci*0.04);
+      pg.gain.linearRampToValueAtTime(hVol*0.07,now+ci*0.04+0.08);
+      pg.gain.exponentialRampToValueAtTime(0.001,now+ci*0.04+dur*0.85);
+      p1.connect(pg);p2.connect(pg);pg.connect(master);
+      p1.start(now+ci*0.04);p2.start(now+ci*0.04);p1.stop(now+dur);p2.stop(now+dur);
+    } else if(voice.character==='flute'){
+      const f1=ctx.createOscillator();const fg=ctx.createGain();
+      f1.type='sine';f1.frequency.setValueAtTime(hFreq,now+ci*0.04);
+      fg.gain.setValueAtTime(0,now+ci*0.04);
+      fg.gain.linearRampToValueAtTime(hVol*0.10,now+ci*0.04+0.02);
+      fg.gain.exponentialRampToValueAtTime(0.001,now+ci*0.04+dur*0.55);
+      f1.connect(fg);fg.connect(master);f1.start(now+ci*0.04);f1.stop(now+dur);
+      // Breathy overtone
+      const f2=ctx.createOscillator();const fg2=ctx.createGain();
+      f2.type='sine';f2.frequency.setValueAtTime(hFreq*2.01,now+ci*0.04);
+      fg2.gain.setValueAtTime(0,now+ci*0.04);
+      fg2.gain.linearRampToValueAtTime(a*0.025,now+ci*0.04+0.04);
+      fg2.gain.exponentialRampToValueAtTime(0.001,now+ci*0.04+dur*0.35);
+      f2.connect(fg2);fg2.connect(master);f2.start(now+ci*0.04);f2.stop(now+dur);
+    } else if(voice.character==='pluck'){
+      const pk=ctx.createOscillator();const pkg=ctx.createGain();
+      pk.type='triangle';pk.frequency.setValueAtTime(hFreq,now+ci*0.04);
+      pk.frequency.exponentialRampToValueAtTime(hFreq*0.97,now+ci*0.04+dur*0.12);
+      pkg.gain.setValueAtTime(0,now+ci*0.04);
+      pkg.gain.linearRampToValueAtTime(hVol*0.18,now+ci*0.04+0.001);
+      pkg.gain.exponentialRampToValueAtTime(0.001,now+ci*0.04+dur*0.18);
+      pk.connect(pkg);pkg.connect(master);pk.start(now+ci*0.04);pk.stop(now+dur);
+    }
+  });
+
+  // ── Punctuation → arpeggio uses dominant head's base ──
+  if(tok.includes('.')||tok.includes(',')){
+    const arpBase=dominant.voice.base;
+    [arpBase, arpBase*3/4, arpBase/2].forEach((freq,i)=>{
+      const r=ctx.createOscillator();const rg=ctx.createGain();
+      r.type=dominant.voice.wave;r.frequency.setValueAtTime(freq,now+i*0.08);
+      rg.gain.setValueAtTime(0,now+i*0.08);
+      rg.gain.linearRampToValueAtTime(0.05,now+i*0.08+0.01);
+      rg.gain.exponentialRampToValueAtTime(0.001,now+i*0.08+dur*0.45);
+      r.connect(rg);rg.connect(master);r.start(now+i*0.08);r.stop(now+dur);
+    });
+  }
+
+  // ── Low confidence: tension colored by dominant voice ──
+  if(conf<0.6){
+    const tensionBase=dominant.voice.base*0.75; // minor second below dominant's root
+    const t1=ctx.createOscillator(),t2=ctx.createOscillator();
+    const tg=ctx.createGain();const lp=ctx.createBiquadFilter();
+    t1.type=dominant.voice.wave;t2.type=dominant.voice.wave;
+    t1.frequency.setValueAtTime(tensionBase,now);
+    t2.frequency.setValueAtTime(tensionBase*16/15,now); // minor second
+    tg.gain.setValueAtTime(vol*0.04*(1-conf),now);
+    tg.gain.exponentialRampToValueAtTime(0.001,now+dur*0.4);
+    lp.type='lowpass';lp.frequency.setValueAtTime(500,now);
+    t1.connect(lp);t2.connect(lp);lp.connect(tg);tg.connect(ctx.destination);
+    t1.start(now);t2.start(now);t1.stop(now+dur);t2.stop(now+dur);
+  }
+
+  renderSonoViz(genEigenvalues(selHead.l,selHead.h,tokIdx),dur,
+    CIRCUIT_HEADS.find(c=>c.l===selHead.l&&c.h===selHead.h));
+  const activeNames=activeHeads.map(h=>h.voice.character);
+  d3.select('#sono-label').text(`"${tok.trim()}" ${dominant.voice.character}@${mFreq.toFixed(0)}Hz conf=${(conf*100).toFixed(0)}%${activeNames.length?' — '+activeNames.join('+'):''}`);
+}
+
+function renderSonoViz(eigs,duration,circ){
+  const el=d3.select('#sono-viz').html('');
+  const W=el.node().clientWidth||120, H=28;
+  const svg=el.append('svg').attr('width',W).attr('height',H);
+  const clr=circ?circ.color:'var(--accent)';
+  const n=eigs.length;
+  const barW=Math.max(2,(W-4)/n-1);
+  eigs.forEach((v,i)=>{
+    const bar=svg.append('rect').attr('x',2+i*(barW+1)).attr('y',H-v*H)
+      .attr('width',barW).attr('height',v*H)
+      .attr('fill',clr).attr('fill-opacity',0.7).attr('rx',1);
+    bar.transition().duration(200).delay(i*20)
+      .attr('fill-opacity',0.9)
+      .transition().duration(duration*800)
+      .attr('fill-opacity',0.1).attr('height',v*H*0.2).attr('y',H-v*H*0.2);
+  });
+}
+
+d3.select('#sono-btn').on('click',()=>sonifyHead(selHead.l,selHead.h,selToken));
+d3.select('#sono-chord-btn').on('click',()=>sonifyChord());
+d3.select('#play-sound-toggle').on('click',function(){
+  playSoundEnabled=!playSoundEnabled;
+  d3.select(this).text(playSoundEnabled?'♫ On':'♫ Off')
+    .style('background',playSoundEnabled?'var(--accent2)':'var(--surface)')
+    .style('color',playSoundEnabled?'#000':'var(--text-dim)');
+  if(playSoundEnabled)getAudioCtx(); // warm up
+});
+
+// ════════════════════════════════════════════════════════════
+// HEAD ATLAS
+// ════════════════════════════════════════════════════════════
+
+function renderAtlas(){
+  const el=d3.select('#atlas-svg').html('');
+  const sb=d3.select('#atlas-sidebar').html('');
+  const fi=+d3.select('#atlas-feat').node().value;
+  const overlay=d3.select('#atlas-overlay').node().value;
+  const p=profiles05;
+
+  const mg={t:30,r:80,b:20,l:52};
+  const cw=32,ch=20;
+  const W=N_HEADS*cw+mg.l+mg.r, H=N_LAYERS*ch+mg.t+mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  const vals=p.flat().map(h=>h.feats[fi]);
+  const color=d3.scaleSequential(d3.interpolateViridis).domain([d3.min(vals),d3.max(vals)]);
+
+  // Phase labels
+  const phases=[{l:0,t:'ENCODE',c:'#7aa2f7'},{l:8,t:'REASON',c:'#bb9af7'},{l:19,t:'DECODE',c:'#9ece6a'}];
+  phases.forEach(ph=>{
+    svg.append('text').attr('x',N_HEADS*cw+8).attr('y',ph.l*ch+ch/2+3)
+      .attr('fill',ph.c).style('font-size','8px').style('font-weight','700').text(ph.t);
+    if(ph.l>0)svg.append('line').attr('x1',-4).attr('x2',N_HEADS*cw+4)
+      .attr('y1',ph.l*ch-2).attr('y2',ph.l*ch-2)
+      .attr('stroke',ph.c).attr('stroke-width',0.5).attr('stroke-dasharray','4,3');
+  });
+
+  for(let l=0;l<N_LAYERS;l++){
+    for(let h=0;h<N_HEADS;h++){
+      const v=p[l][h].feats[fi], circ=p[l][h].circ;
+      const rect=svg.append('rect').attr('x',h*cw).attr('y',l*ch)
+        .attr('width',cw-2).attr('height',ch-2).attr('fill',color(v)).attr('rx',3)
+        .style('cursor','pointer');
+
+      if(overlay==='circuit'&&circ){
+        rect.attr('stroke',circ.color).attr('stroke-width',2);
+      }else if(overlay==='specialization'&&circ){
+        rect.attr('stroke',circ.type==='mono'?'var(--head-mono)':'var(--head-poly)').attr('stroke-width',2);
+      }
+
+      rect.on('mouseover',function(e){
+        let text=`Layer ${l}, Head ${h}\n`;
+        if(circ)text+=`CIRCUIT: ${circ.role} (${circ.type})\nProbes: ${circ.probes.join(', ')}\n`;
+        text+='───────────────────\n';
+        p[l][h].feats.forEach((f,i)=>{text+=`${FEAT[i].padEnd(16)} ${f.toFixed(3)}${i===fi?' ◄':''}\n`;});
+        tt.style('display','block').style('left',(e.pageX+12)+'px').style('top',(e.pageY-10)+'px').text(text);
+      })
+      .on('mouseout',()=>tt.style('display','none'))
+      .on('click',()=>{
+        showAtlasSidebar(l,h,p[l][h]);
+      });
+    }
+    if(l%2===0)svg.append('text').attr('x',-6).attr('y',l*ch+ch/2+4).attr('text-anchor','end')
+      .attr('fill','var(--text-dim)').style('font-size','8px').text(l);
+  }
+  for(let h=0;h<N_HEADS;h++)svg.append('text').attr('x',h*cw+cw/2).attr('y',-6).attr('text-anchor','middle')
+    .attr('fill','var(--text-dim)').style('font-size','8px').text(`H${h}`);
+
+  // Title + token indicator
+  svg.append('text').attr('x',N_HEADS*cw/2).attr('y',-18).attr('text-anchor','middle')
+    .attr('fill','var(--text)').style('font-size','11px').text(FEAT[fi]);
+  svg.append('text').attr('x',N_HEADS*cw+8).attr('y',-18)
+    .attr('fill','var(--accent2)').style('font-size','9px')
+    .text(`@ "${TOKENS[selToken].trim()}"`);
+
+  // Per-token activity overlay: show which heads are "hot" for current token
+  // Map from 8×6 simulated activity grid to full 24×14 grid
+  const act=activity[selToken];
+  if(act){
+    const actG=svg.append('g').attr('class','atlas-activity');
+    // Scale: activity layers 0-7 map to real layers [0,3,6,8,11,13,16,20]
+    const layerMap=[0,3,6,8,11,13,16,20];
+    for(let al=0;al<act.length;al++){
+      const realL=layerMap[al]||al*3;
+      for(let ah=0;ah<act[al].length;ah++){
+        const realH=Math.round(ah*N_HEADS/act[al].length);
+        const v=act[al][ah];
+        if(v>0.4){
+          // Pulsing dot for active heads
+          const dot=actG.append('circle')
+            .attr('cx',realH*cw+cw/2-1).attr('cy',realL*ch+ch/2-1)
+            .attr('r',Math.min(cw,ch)/2*v)
+            .attr('fill','var(--accent2)').attr('fill-opacity',0)
+            .attr('stroke','var(--accent2)').attr('stroke-width',1.5).attr('stroke-opacity',0);
+          if(playInterval){
+            dot.transition().duration(200)
+              .attr('fill-opacity',v*0.4).attr('stroke-opacity',v*0.8)
+              .transition().duration(400)
+              .attr('fill-opacity',v*0.15).attr('stroke-opacity',v*0.3);
+          }else{
+            dot.attr('fill-opacity',v*0.3).attr('stroke-opacity',v*0.6);
+          }
+        }
+      }
+    }
+  }
+
+  // Legend
+  sb.html(`<div class="panel" style="border-radius:0;border-top:0;border-right:0;">
+    <div class="panel-header">Legend</div>
+    <div class="panel-body" style="font-size:10px;line-height:2;">
+      ${CIRCUIT_HEADS.map(c=>`<div><span style="display:inline-block;width:10px;height:10px;background:${c.color};border-radius:2px;margin-right:6px;vertical-align:middle;"></span><strong>L${c.l}/H${c.h}</strong> — ${c.role} <span class="badge badge-${c.type==='mono'?'mono':'poly'}">${c.type}</span></div>`).join('')}
+      <div style="margin-top:8px;color:var(--text-dim);">Click a cell for details</div>
+      <div style="margin-top:4px;color:var(--accent2);font-size:9px;">● = active for current token</div>
+    </div>
+  </div><div id="atlas-detail"></div>`);
+}
+
+function showAtlasSidebar(l,h,data){
+  const el=d3.select('#atlas-detail').html('');
+  const panel=el.append('div').attr('class','panel').style('border-radius','0').style('border-right','0');
+  panel.append('div').attr('class','panel-header').text(`L${l} / H${h}`);
+  const body=panel.append('div').attr('class','panel-body');
+
+  if(data.circ){
+    body.append('div').style('margin-bottom','8px')
+      .html(`<span class="badge badge-${data.circ.type==='mono'?'mono':'poly'}">${data.circ.type}</span> <span style="color:${data.circ.color}">${data.circ.role}</span>`);
+  }
+
+  // Bar chart of features
+  const W=280,barH=14,gap=2;
+  const svg=body.append('svg').attr('width',W).attr('height',13*(barH+gap)+10);
+  const x=d3.scaleLinear().domain([0,1]).range([0,160]);
+  data.feats.forEach((v,i)=>{
+    const y=i*(barH+gap);
+    svg.append('text').attr('x',100).attr('y',y+barH-3).attr('text-anchor','end')
+      .attr('fill','var(--text-dim)').style('font-size','8px').text(FEAT[i]);
+    svg.append('rect').attr('x',104).attr('y',y).attr('width',x(v)).attr('height',barH)
+      .attr('fill',data.circ?data.circ.color:'var(--accent)').attr('fill-opacity',0.6).attr('rx',2);
+    svg.append('text').attr('x',108+x(v)).attr('y',y+barH-3)
+      .attr('fill','var(--text)').style('font-size','8px').text(v.toFixed(3));
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// CIRCUIT MAP
+// ════════════════════════════════════════════════════════════
+
+function renderCircuit(){
+  const el=d3.select('#circuit-svg').html('');
+  const det=d3.select('#circuit-detail').html('');
+
+  const W=el.node().clientWidth||500, H=el.node().clientHeight||500;
+  const svg=el.append('svg').attr('width',W).attr('height',H);
+  const g=svg.append('g').attr('transform','translate(40,40)');
+
+  // Nodes: input → circuit heads → probes
+  const probes=['state_type','depth','initial_state','transition','hierarchy','lca','inter_level','adjacency'];
+  const probeColors={state_type:'#7aa2f7',depth:'#bb9af7',initial_state:'#bb9af7',transition:'#bb9af7',
+    hierarchy:'#9ece6a',lca:'#9ece6a',inter_level:'#9ece6a',adjacency:'#e0af68'};
+
+  // Layout: 3 columns
+  const colX=[60,W/2-20,W-160];
+  const inputY=H/2-20;
+
+  // Input node
+  g.append('rect').attr('x',colX[0]-30).attr('y',inputY-15).attr('width',80).attr('height',30)
+    .attr('fill','var(--surface)').attr('stroke','var(--border)').attr('rx',4);
+  g.append('text').attr('x',colX[0]+10).attr('y',inputY+4).attr('text-anchor','middle')
+    .attr('fill','var(--text)').style('font-size','10px').text('Input');
+
+  // Compute per-circuit-head activity for current token
+  const act=activity[selToken];
+  // Map circuit heads to simulated activity indices
+  const circuitActivity=[
+    act?.[3]?.[2]||0,  // L08/H03 → sim layer 3, head 2
+    act?.[5]?.[1]||0,  // L13/H03 → sim layer 5, head 1
+    act?.[6]?.[3]||0,  // L14/H01 → sim layer 6, head 3
+    act?.[1]?.[0]||0,  // L04/H12 → sim layer 1, head 0
+  ];
+
+  // Circuit head nodes
+  const headY=CIRCUIT_HEADS.map((_,i)=>40+i*(H-120)/3);
+  CIRCUIT_HEADS.forEach((ch,i)=>{
+    const y=headY[i];
+    const headAct=circuitActivity[i];
+    const isActive=headAct>0.3;
+    const edgeOpacity=isActive?0.8:0.2;
+    const edgeWidth=isActive?3:1;
+
+    // Node — glow when active
+    if(isActive&&playInterval){
+      g.append('rect').attr('x',colX[1]-44).attr('y',y-22).attr('width',108).attr('height',44)
+        .attr('fill',ch.color).attr('fill-opacity',0).attr('rx',8)
+        .transition().duration(200).attr('fill-opacity',headAct*0.15)
+        .transition().duration(400).attr('fill-opacity',headAct*0.05);
+    }
+    g.append('rect').attr('x',colX[1]-40).attr('y',y-18).attr('width',100).attr('height',36)
+      .attr('fill','var(--surface)').attr('stroke',ch.color)
+      .attr('stroke-width',isActive?3:2).attr('rx',6)
+      .style('cursor','pointer')
+      .on('click',()=>showCircuitDetail(ch));
+    g.append('text').attr('x',colX[1]+10).attr('y',y-2).attr('text-anchor','middle')
+      .attr('fill',ch.color).style('font-size','10px').style('font-weight','600')
+      .text(`L${ch.l}/H${ch.h}`);
+    g.append('text').attr('x',colX[1]+10).attr('y',y+10).attr('text-anchor','middle')
+      .attr('fill','var(--text-dim)').style('font-size','8px').text(ch.role);
+    // Activity badge
+    if(isActive){
+      g.append('text').attr('x',colX[1]+55).attr('y',y-10)
+        .attr('fill',ch.color).style('font-size','8px').style('font-weight','700')
+        .text((headAct*100).toFixed(0)+'%');
+    }
+
+    // Input → head edge
+    const inPath=g.append('path')
+      .attr('d',`M${colX[0]+50},${inputY} C${colX[0]+100},${inputY} ${colX[1]-80},${y} ${colX[1]-40},${y}`)
+      .attr('fill','none').attr('stroke',ch.color).attr('stroke-width',edgeWidth).attr('stroke-opacity',edgeOpacity);
+    if(isActive&&playInterval){
+      // Animated dash flow
+      inPath.attr('stroke-dasharray','8,4')
+        .style('animation',`none`);
+    }
+
+    // Head → probe edges
+    ch.probes.forEach(probe=>{
+      const pi=probes.indexOf(probe);
+      const py=20+pi*(H-80)/7;
+      g.append('path')
+        .attr('d',`M${colX[1]+60},${y} C${colX[1]+120},${y} ${colX[2]-60},${py} ${colX[2]-20},${py}`)
+        .attr('fill','none').attr('stroke',ch.color)
+        .attr('stroke-width',isActive?2.5:1.5).attr('stroke-opacity',edgeOpacity);
+    });
+  });
+
+  // Probe nodes
+  probes.forEach((probe,i)=>{
+    const y=20+i*(H-80)/7;
+    const pc=probeColors[probe];
+    g.append('rect').attr('x',colX[2]-20).attr('y',y-12).attr('width',120).attr('height',24)
+      .attr('fill','var(--surface)').attr('stroke',pc).attr('stroke-width',1).attr('rx',4);
+    g.append('text').attr('x',colX[2]+40).attr('y',y+3).attr('text-anchor','middle')
+      .attr('fill',pc).style('font-size','9px').text(probe);
+  });
+
+  // Column labels
+  ['Residual Stream','Circuit Heads','Structure Probes'].forEach((t,i)=>{
+    g.append('text').attr('x',colX[i]+(i===1?10:i===2?40:10)).attr('y',-15).attr('text-anchor','middle')
+      .attr('fill','var(--text-dim)').style('font-size','9px').style('letter-spacing','1px').text(t);
+  });
+
+  // Token indicator
+  g.append('text').attr('x',colX[0]+10).attr('y',inputY+22)
+    .attr('fill','var(--accent2)').style('font-size','8px').attr('text-anchor','middle')
+    .text(`"${TOKENS[selToken].trim()}" (${selToken}/${TOKENS.length-1})`);
+
+  // Default detail
+  showCircuitDetail(CIRCUIT_HEADS[0]);
+}
+
+function showCircuitDetail(ch){
+  const el=d3.select('#circuit-detail').html('');
+  const panel=el.append('div').attr('class','panel').style('margin','16px').style('border-color',ch.color);
+  panel.append('div').attr('class','panel-header').style('border-color',ch.color)
+    .html(`L${ch.l}/H${ch.h} <span class="badge badge-${ch.type==='mono'?'mono':'poly'}">${ch.type}</span>`);
+  const body=panel.append('div').attr('class','panel-body');
+
+  body.append('div').style('font-size','14px').style('color',ch.color).style('font-weight','600')
+    .style('margin-bottom','8px').text(ch.role);
+  body.append('div').style('font-size','10px').style('color','var(--text-dim)').style('margin-bottom','12px')
+    .text(`Probes: ${ch.probes.join(', ')}`);
+
+  // Simulated attention pattern
+  const r2=rng(ch.l*14+ch.h);
+  const pat=ch.role==='adjacency'?'stripe':ch.role==='state_type'?'diag':ch.role==='tree_structure'?'tree':'struct';
+  const map=genAttnMap(16,pat,r2);
+  const cellSz=14,sz=16;
+  const svg=body.append('svg').attr('width',sz*cellSz+4).attr('height',sz*cellSz+4).append('g').attr('transform','translate(2,2)');
+  const mx2=d3.max(map.flat());
+  const color=d3.scaleSequential(d3.interpolateViridis).domain([0,mx2]);
+  for(let i=0;i<sz;i++)for(let j=0;j<sz;j++){
+    svg.append('rect').attr('x',j*cellSz).attr('y',i*cellSz)
+      .attr('width',cellSz-1).attr('height',cellSz-1).attr('fill',color(map[i][j])).attr('rx',1);
+  }
+
+  body.append('div').style('margin-top','12px').style('font-size','10px').style('color','var(--text-dim)')
+    .text(`Attention pattern: ${pat}`);
+
+  // Transplant info
+  body.append('div').style('margin-top','16px').style('padding','10px').style('background','var(--bg)')
+    .style('border-radius','4px').style('font-size','10px').style('line-height','1.8')
+    .html(`<div style="color:var(--accent3);font-weight:600;margin-bottom:4px;">Transplant Candidate</div>
+      <div>Q/K/V dims: 64 &times; 14 heads</div>
+      <div>o_proj slice: cols [${ch.h*64}:${(ch.h+1)*64}]</div>
+      <div>Projection: 64 &rarr; student_dim (learned)</div>
+      <div style="color:var(--text-dim);margin-top:6px;">This head can be surgically transferred to a smaller model via circuit distillation.</div>`);
+}
+
+// ════════════════════════════════════════════════════════════
+// COMPARE
+// ════════════════════════════════════════════════════════════
+
+function renderCompare(){
+  const fi=+d3.select('#cmp-feat').node().value;
+  const mode=d3.select('#cmp-mode').node().value;
+
+  if(mode==='rys'){
+    renderCmpGrid('#cmp-left',profiles15,fi,'Original (28 layers)',null);
+    // Build RYS: duplicate layers 12-18
+    const dup=profiles15.slice(12,19).map(layer=>layer.map(head=>{
+      const r2=rng(head.l*100+head.h*7+999);
+      return{...head,feats:head.feats.map((f,i)=>{
+        if(i===0)return f*(0.82+r2()*0.1); // entropy drops → H1 refinement
+        if(i===3)return Math.min(1,f*(1.15+r2()*0.3)); // high-freq up
+        if(i===9)return f*(0.88+r2()*0.1);
+        return f+(r2()-0.5)*0.04;
+      })};
+    }));
+    const rys=[...profiles15.slice(0,19),...dup,...profiles15.slice(19)];
+    renderCmpGrid('#cmp-right',rys,fi,'RYS (35 layers)',{start:19,end:26});
+  }else{
+    renderCmpGrid('#cmp-left',profiles05,fi,'Qwen 0.5B (24L × 14H)',null);
+    renderCmpGrid('#cmp-right',profiles15,fi,'Qwen 1.5B (28L × 12H)',null);
+  }
+}
+
+function renderCmpGrid(sel,profiles,fi,title,dupRegion){
+  const el=d3.select(sel).html('');
+  const nL=profiles.length,nH=profiles[0].length;
+  const mg={t:30,r:16,b:16,l:36};
+  const maxW=el.node().clientWidth-mg.l-mg.r-20;
+  const cw=Math.min(28,maxW/nH),ch=Math.min(16,400/nL);
+  const W=nH*cw+mg.l+mg.r, H=nL*ch+mg.t+mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  const vals=profiles.flat().map(h=>h.feats[fi]);
+  const color=d3.scaleSequential(d3.interpolateViridis).domain([d3.min(vals),d3.max(vals)]);
+
+  svg.append('text').attr('x',nH*cw/2).attr('y',-14).attr('text-anchor','middle')
+    .attr('fill','var(--text)').style('font-size','10px').text(title);
+  svg.append('text').attr('x',nH*cw).attr('y',-4).attr('text-anchor','end')
+    .attr('fill','var(--accent2)').style('font-size','7px')
+    .text(`"${TOKENS[selToken].trim()}" conf=${confidence[selToken].toFixed(2)}`);
+
+  for(let l=0;l<nL;l++)for(let h=0;h<nH;h++){
+    svg.append('rect').attr('x',h*cw).attr('y',l*ch).attr('width',cw-1).attr('height',ch-1)
+      .attr('fill',color(profiles[l][h].feats[fi])).attr('rx',1)
+      .on('mouseover',function(e){
+        tt.style('display','block').style('left',(e.pageX+10)+'px').style('top',(e.pageY-10)+'px')
+          .text(`L${l} H${h}: ${FEAT[fi]} = ${profiles[l][h].feats[fi].toFixed(3)}`);
+      })
+      .on('mouseout',()=>tt.style('display','none'));
+  }
+  if(dupRegion){
+    svg.append('rect').attr('x',-3).attr('y',dupRegion.start*ch-2)
+      .attr('width',nH*cw+6).attr('height',(dupRegion.end-dupRegion.start)*ch+4)
+      .attr('fill','none').attr('stroke','var(--danger)').attr('stroke-width',1.5)
+      .attr('stroke-dasharray','5,3').attr('rx',4);
+    svg.append('text').attr('x',nH*cw+6).attr('y',(dupRegion.start+dupRegion.end)/2*ch+3)
+      .attr('fill','var(--danger)').style('font-size','8px').style('font-weight','700').text('DUP');
+  }
+  for(let l=0;l<nL;l+=Math.max(1,Math.floor(nL/12))){
+    svg.append('text').attr('x',-4).attr('y',l*ch+ch/2+3).attr('text-anchor','end')
+      .attr('fill','var(--text-dim)').style('font-size','7px').text(l);
+  }
+
+  // Show circuit head positions (scaled to grid size)
+  if(playInterval){
+    CIRCUIT_HEADS.forEach(circ=>{
+      const sl=Math.round(circ.l*nL/N_LAYERS);
+      const sh=Math.round(circ.h*nH/N_HEADS);
+      if(sl<nL&&sh<nH){
+        svg.append('circle').attr('cx',sh*cw+cw/2).attr('cy',sl*ch+ch/2)
+          .attr('r',Math.min(cw,ch)*0.6).attr('fill','none')
+          .attr('stroke',circ.color).attr('stroke-width',1.5).attr('stroke-opacity',0)
+          .transition().duration(200).attr('stroke-opacity',0.8)
+          .transition().duration(400).attr('stroke-opacity',0.3);
+      }
+    });
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// RESIDUAL STREAM
+// ════════════════════════════════════════════════════════════
+
+// Simulate residual stream data
+function genResidualData(){
+  const r=rng(137);
+  const norms=[], trajectory=[], headWrites=[], logitLens=[];
+  const vocabSample=['state','chart','hierarchy','transition','parallel','event','guard','action',
+    'initial','final','deep','shallow','history','enter','exit','the','is','a','to','of'];
+
+  for(let l=0;l<N_LAYERS;l++){
+    // Residual norm: grows through network, inflects at circuit layers
+    let norm=2.5+l*0.35+r()*0.3;
+    if(l===8)norm+=1.2; // L08/H03 state_type head adds big write
+    if(l===13)norm+=1.8; // L13/H03 position polyspecialist
+    if(l===14)norm+=0.9; // L14/H01 tree structure
+    norms.push(norm);
+
+    // PCA trajectory: 2D projection of hidden state
+    const angle=l/N_LAYERS*Math.PI*1.8-0.3;
+    const radius=1.5+l*0.3;
+    let px=Math.cos(angle)*radius + r()*0.4;
+    let py=Math.sin(angle)*radius + r()*0.4;
+    // Circuit layers cause trajectory bends
+    if(l>=8&&l<=10){px+=1.5;py-=0.5;}
+    if(l>=13&&l<=15){px-=1.0;py+=2.5;}
+    trajectory.push({x:px,y:py,l});
+
+    // Per-head write magnitude: how much each head's output contributes to residual
+    const writes=[];
+    for(let h=0;h<N_HEADS;h++){
+      let w=0.05+r()*0.15;
+      const circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===h);
+      if(circ)w=0.6+r()*0.3; // circuit heads have large writes
+      // Near-circuit layers have moderate writes for neighboring heads
+      const nearCirc=CIRCUIT_HEADS.find(c=>Math.abs(c.l-l)<=1&&c.h===h);
+      if(nearCirc&&!circ)w=0.25+r()*0.15;
+      writes.push(w);
+    }
+    headWrites.push(writes);
+
+    // Logit lens: top predicted token at each layer
+    let topIdx,topProb;
+    if(l<6){topIdx=Math.floor(r()*vocabSample.length);topProb=0.03+r()*0.05;}
+    else if(l<12){topIdx=r()>0.5?0:3;topProb=0.08+r()*0.12;} // starts resolving to 'state'/'transition'
+    else if(l<18){topIdx=r()>0.7?0:2;topProb=0.2+r()*0.2;} // 'state' or 'hierarchy'
+    else{topIdx=0;topProb=0.4+r()*0.35;} // final layers converge
+    logitLens.push({token:vocabSample[topIdx],prob:topProb,
+      top3:[{t:vocabSample[topIdx],p:topProb},
+            {t:vocabSample[(topIdx+3)%vocabSample.length],p:topProb*0.4+r()*0.05},
+            {t:vocabSample[(topIdx+7)%vocabSample.length],p:topProb*0.2+r()*0.03}]
+    });
+  }
+  return {norms,trajectory,headWrites,logitLens};
+}
+
+const residualData=genResidualData();
+
+function renderResidual(){
+  renderResNorms();
+  renderResTrajectory();
+  renderResWrites();
+  renderResLogitLens();
+}
+
+function renderResNorms(){
+  const el=d3.select('#res-norms').html('');
+  const W=el.node().clientWidth||400, H=el.node().clientHeight||250;
+  const mg={t:16,r:20,b:28,l:44};
+  const w=W-mg.l-mg.r, h=H-mg.t-mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  // Token-dependent perturbation of norms
+  const r2=rng(selToken*73+999);
+  const norms=residualData.norms.map((n,l)=>{
+    let perturb=r2()*0.6-0.3;
+    // Structure tokens boost circuit layer norms
+    if(TOKENS[selToken].match(/hierarch|state|transition|child|parent|depth/i)){
+      const circ=CIRCUIT_HEADS.find(c=>c.l===l);
+      if(circ)perturb+=0.8;
+    }
+    return n+perturb;
+  });
+  const x=d3.scaleLinear().domain([0,N_LAYERS-1]).range([0,w]);
+  const y=d3.scaleLinear().domain([0,d3.max(norms)*1.1]).range([h,0]);
+
+  // Token label
+  svg.append('text').attr('x',w).attr('y',8).attr('text-anchor','end')
+    .attr('fill','var(--accent2)').style('font-size','8px')
+    .text(`"${TOKENS[selToken].trim()}" (${selToken})`);
+
+  // Grid lines
+  y.ticks(5).forEach(t=>{
+    svg.append('line').attr('x1',0).attr('x2',w).attr('y1',y(t)).attr('y2',y(t))
+      .attr('stroke','var(--border)').attr('stroke-width',0.5);
+  });
+
+  // Circuit layer highlights
+  CIRCUIT_HEADS.forEach(ch=>{
+    svg.append('rect').attr('x',x(ch.l)-6).attr('y',0).attr('width',12).attr('height',h)
+      .attr('fill',ch.color).attr('fill-opacity',0.06);
+    svg.append('text').attr('x',x(ch.l)).attr('y',-4).attr('text-anchor','middle')
+      .attr('fill',ch.color).style('font-size','7px').style('font-weight','600')
+      .text(`L${ch.l}`);
+  });
+
+  // Norm bars
+  const barW=Math.max(4,w/N_LAYERS*0.7);
+  norms.forEach((n,l)=>{
+    const circ=CIRCUIT_HEADS.find(c=>c.l===l);
+    svg.append('rect').attr('x',x(l)-barW/2).attr('y',y(n)).attr('width',barW).attr('height',h-y(n))
+      .attr('fill',circ?circ.color:'var(--accent)').attr('fill-opacity',circ?0.8:0.35).attr('rx',2)
+      .on('mouseover',function(e){
+        const delta=l>0?(n-norms[l-1]).toFixed(2):'—';
+        tt.style('display','block').style('left',(e.pageX+10)+'px').style('top',(e.pageY-10)+'px')
+          .text(`Layer ${l}\nNorm: ${n.toFixed(2)}\nΔ: ${delta}${circ?'\n★ '+circ.role:''}`);
+      })
+      .on('mouseout',()=>tt.style('display','none'));
+  });
+
+  // Delta line (norm difference between layers)
+  const deltas=norms.map((n,i)=>i>0?n-norms[i-1]:0);
+  const yD=d3.scaleLinear().domain([d3.min(deltas),d3.max(deltas)*1.2]).range([h,0]);
+  const line=d3.line().x((_,i)=>x(i)).y(d=>yD(d)).curve(d3.curveMonotoneX);
+  svg.append('path').datum(deltas).attr('fill','none').attr('stroke','var(--warn)')
+    .attr('stroke-width',1).attr('stroke-dasharray','3,2').attr('d',line);
+
+  // Axes
+  svg.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(12).tickFormat(d=>`L${d}`))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','7px');
+  svg.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.1f')))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','7px');
+  svg.selectAll('.domain,.tick line').attr('stroke','var(--border)');
+
+  // Legend
+  svg.append('text').attr('x',w-4).attr('y',12).attr('text-anchor','end')
+    .attr('fill','var(--warn)').style('font-size','8px').text('— Δnorm');
+}
+
+function renderResTrajectory(){
+  const el=d3.select('#res-trajectory').html('');
+  const W=el.node().clientWidth||400, H=el.node().clientHeight||250;
+  const mg={t:20,r:20,b:28,l:40};
+  const w=W-mg.l-mg.r, h=H-mg.t-mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  const traj=residualData.trajectory;
+  const x=d3.scaleLinear().domain([d3.min(traj,d=>d.x)-0.5,d3.max(traj,d=>d.x)+0.5]).range([0,w]);
+  const y=d3.scaleLinear().domain([d3.min(traj,d=>d.y)-0.5,d3.max(traj,d=>d.y)+0.5]).range([h,0]);
+
+  // Phase regions
+  const phaseColors=[{name:'Encode',range:[0,7],c:'rgba(122,162,247,0.04)'},
+    {name:'Reason',range:[8,18],c:'rgba(187,154,247,0.04)'},
+    {name:'Decode',range:[19,23],c:'rgba(158,206,106,0.04)'}];
+
+  // Path through layers
+  const line=d3.line().x(d=>x(d.x)).y(d=>y(d.y)).curve(d3.curveNatural);
+  svg.append('path').datum(traj).attr('fill','none').attr('stroke','var(--text-dim)')
+    .attr('stroke-width',1).attr('stroke-opacity',0.4).attr('d',line);
+
+  // Points colored by phase
+  const phaseColor=l=>{
+    if(l<8)return'#7aa2f7'; if(l<19)return'#bb9af7'; return'#9ece6a';
+  };
+
+  traj.forEach((p,l)=>{
+    const circ=CIRCUIT_HEADS.find(c=>c.l===l);
+    const r=circ?7:3.5;
+    svg.append('circle').attr('cx',x(p.x)).attr('cy',y(p.y)).attr('r',r)
+      .attr('fill',circ?circ.color:phaseColor(l))
+      .attr('fill-opacity',circ?1:0.5)
+      .attr('stroke',circ?'#fff':'none').attr('stroke-width',circ?1.5:0)
+      .style('cursor','pointer')
+      .on('mouseover',function(e){
+        let text=`Layer ${l}\nPC1: ${p.x.toFixed(2)}, PC2: ${p.y.toFixed(2)}`;
+        if(circ)text+=`\n★ ${circ.role} (${circ.type})`;
+        text+=`\nPhase: ${l<8?'Encode':l<19?'Reason':'Decode'}`;
+        tt.style('display','block').style('left',(e.pageX+10)+'px').style('top',(e.pageY-10)+'px').text(text);
+      })
+      .on('mouseout',()=>tt.style('display','none'));
+
+    // Label circuit heads
+    if(circ){
+      svg.append('text').attr('x',x(p.x)+10).attr('y',y(p.y)+3)
+        .attr('fill',circ.color).style('font-size','8px').style('font-weight','600')
+        .text(`L${l}`);
+    }
+  });
+
+  // Layer number annotations for start/end
+  svg.append('text').attr('x',x(traj[0].x)-8).attr('y',y(traj[0].y)+3)
+    .attr('fill','var(--text-dim)').style('font-size','8px').text('L0');
+  svg.append('text').attr('x',x(traj[N_LAYERS-1].x)+8).attr('y',y(traj[N_LAYERS-1].y)+3)
+    .attr('fill','var(--text-dim)').style('font-size','8px').text(`L${N_LAYERS-1}`);
+
+  // Axes
+  svg.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(6).tickFormat(d3.format('.1f')))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','7px');
+  svg.append('g').call(d3.axisLeft(y).ticks(6).tickFormat(d3.format('.1f')))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','7px');
+  svg.selectAll('.domain,.tick line').attr('stroke','var(--border)');
+  svg.append('text').attr('x',w/2).attr('y',h+22).attr('text-anchor','middle')
+    .attr('fill','var(--text-dim)').style('font-size','8px').text('PC1');
+  svg.append('text').attr('x',-h/2).attr('y',-30).attr('text-anchor','middle')
+    .attr('fill','var(--text-dim)').style('font-size','8px').attr('transform','rotate(-90)').text('PC2');
+
+  // Phase legend
+  const lg=svg.append('g').attr('transform',`translate(${w-90},4)`);
+  phaseColors.forEach((ph,i)=>{
+    const pc=ph.name==='Encode'?'#7aa2f7':ph.name==='Reason'?'#bb9af7':'#9ece6a';
+    lg.append('circle').attr('cx',0).attr('cy',i*14).attr('r',4).attr('fill',pc);
+    lg.append('text').attr('x',8).attr('y',i*14+3).attr('fill',pc).style('font-size','8px').text(ph.name);
+  });
+}
+
+function renderResWrites(){
+  const el=d3.select('#res-writes').html('');
+  const W=el.node().clientWidth||400, H=el.node().clientHeight||250;
+  const mg={t:20,r:12,b:24,l:36};
+  const w=W-mg.l-mg.r, h=H-mg.t-mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  const writes=residualData.headWrites;
+  const cellW=Math.max(2,w/N_LAYERS-1), cellH=Math.max(2,h/N_HEADS-1);
+
+  const color=d3.scaleSequential(d3.interpolateMagma).domain([0,1]);
+
+  for(let l=0;l<N_LAYERS;l++){
+    for(let hd=0;hd<N_HEADS;hd++){
+      const v=writes[l][hd];
+      const circ=CIRCUIT_HEADS.find(c=>c.l===l&&c.h===hd);
+      svg.append('rect')
+        .attr('x',l*(cellW+1)).attr('y',hd*(cellH+1))
+        .attr('width',cellW).attr('height',cellH)
+        .attr('fill',color(v)).attr('rx',1)
+        .attr('stroke',circ?'#fff':'none').attr('stroke-width',circ?1.5:0)
+        .on('mouseover',function(e){
+          let text=`L${l}/H${hd}\nWrite magnitude: ${v.toFixed(3)}`;
+          if(circ)text+=`\n★ ${circ.role}`;
+          text+=`\n${v>0.4?'HIGH — significant residual contribution':v>0.2?'MODERATE':'low — mostly pass-through'}`;
+          tt.style('display','block').style('left',(e.pageX+10)+'px').style('top',(e.pageY-10)+'px').text(text);
+        })
+        .on('mouseout',()=>tt.style('display','none'));
+    }
+  }
+
+  // Axes
+  for(let l=0;l<N_LAYERS;l+=2){
+    svg.append('text').attr('x',l*(cellW+1)+cellW/2).attr('y',N_HEADS*(cellH+1)+12).attr('text-anchor','middle')
+      .attr('fill','var(--text-dim)').style('font-size','6px').text(l);
+  }
+  for(let hd=0;hd<N_HEADS;hd+=2){
+    svg.append('text').attr('x',-4).attr('y',hd*(cellH+1)+cellH/2+3).attr('text-anchor','end')
+      .attr('fill','var(--text-dim)').style('font-size','6px').text(`H${hd}`);
+  }
+  svg.append('text').attr('x',N_LAYERS*(cellW+1)/2).attr('y',N_HEADS*(cellH+1)+20).attr('text-anchor','middle')
+    .attr('fill','var(--text-dim)').style('font-size','8px').text('Layer');
+  svg.append('text').attr('x',-28).attr('y',N_HEADS*(cellH+1)/2).attr('text-anchor','middle')
+    .attr('fill','var(--text-dim)').style('font-size','8px').attr('transform',`rotate(-90,-28,${N_HEADS*(cellH+1)/2})`).text('Head');
+}
+
+function renderResLogitLens(){
+  const el=d3.select('#res-logitlens').html('');
+  const W=el.node().clientWidth||400, H=el.node().clientHeight||250;
+  const mg={t:16,r:16,b:24,l:44};
+  const w=W-mg.l-mg.r, h=H-mg.t-mg.b;
+  const svg=el.append('svg').attr('width',W).attr('height',H).append('g').attr('transform',`translate(${mg.l},${mg.t})`);
+
+  const lens=residualData.logitLens;
+  const x=d3.scaleLinear().domain([0,N_LAYERS-1]).range([0,w]);
+  const y=d3.scaleLinear().domain([0,1]).range([h,0]);
+  const barW=Math.max(8,w/N_LAYERS*0.8);
+
+  // Grid
+  [0.25,0.5,0.75].forEach(t=>{
+    svg.append('line').attr('x1',0).attr('x2',w).attr('y1',y(t)).attr('y2',y(t))
+      .attr('stroke','var(--border)').attr('stroke-width',0.5);
+  });
+
+  // Confidence bars for top prediction
+  const tokenColors=d3.scaleOrdinal()
+    .domain(['state','chart','hierarchy','transition','parallel','event'])
+    .range(['#7aa2f7','#bb9af7','#9ece6a','#e0af68','#f7768e','#73daca']);
+
+  lens.forEach((d,l)=>{
+    const circ=CIRCUIT_HEADS.find(c=>c.l===l);
+
+    // Stacked bars for top 3
+    let cumY=h;
+    d.top3.forEach((t,i)=>{
+      const bh=h-y(t.p);
+      svg.append('rect').attr('x',x(l)-barW/2).attr('y',cumY-bh)
+        .attr('width',barW).attr('height',bh)
+        .attr('fill',tokenColors(t.t)||'var(--text-dim)')
+        .attr('fill-opacity',i===0?0.7:0.25)
+        .attr('rx',i===0?2:0)
+        .on('mouseover',function(e){
+          let text=`Layer ${l} — Logit Lens\n`;
+          d.top3.forEach((tt2,j)=>{text+=`${j===0?'►':' '} "${tt2.t}" → ${(tt2.p*100).toFixed(1)}%\n`;});
+          if(circ)text+=`\n★ ${circ.role} head active here`;
+          tt.style('display','block').style('left',(e.pageX+10)+'px').style('top',(e.pageY-10)+'px').text(text);
+        })
+        .on('mouseout',()=>tt.style('display','none'));
+      cumY-=bh;
+    });
+
+    // Token label for top prediction
+    if(l%3===0||d.prob>0.3){
+      svg.append('text').attr('x',x(l)).attr('y',y(d.prob)-6).attr('text-anchor','middle')
+        .attr('fill',tokenColors(d.token)||'var(--text-dim)')
+        .style('font-size','7px').style('font-weight',d.prob>0.3?'600':'400')
+        .text(d.token);
+    }
+  });
+
+  // Axes
+  svg.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(12).tickFormat(d=>`L${d}`))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','7px');
+  svg.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(d3.format('.0%')))
+    .selectAll('text').attr('fill','var(--text-dim)').style('font-size','7px');
+  svg.selectAll('.domain,.tick line').attr('stroke','var(--border)');
+
+  // Legend - unique tokens
+  const uniqToks=[...new Set(lens.map(d=>d.token))];
+  const lg=svg.append('g').attr('transform',`translate(${w-80},4)`);
+  uniqToks.slice(0,5).forEach((t,i)=>{
+    lg.append('rect').attr('x',0).attr('y',i*12).attr('width',8).attr('height',8)
+      .attr('fill',tokenColors(t)||'var(--text-dim)').attr('rx',1);
+    lg.append('text').attr('x',12).attr('y',i*12+7).attr('fill','var(--text)').style('font-size','8px').text(t);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// ACTIVE VIEW TRACKING + UNIFIED RENDER
+// ════════════════════════════════════════════════════════════
+
+let activeView='inspector';
+
+function getActiveView(){ return activeView; }
+
+// Render whichever view is currently active (called on each play step)
+function renderActiveView(){
+  renderTokens(); // always update tokens
+  switch(activeView){
+    case 'inspector':
+      renderConfidence();renderHeatmap();renderSpotlight();
+      break;
+    case 'atlas':
+      renderAtlas();
+      break;
+    case 'circuit':
+      renderCircuit();
+      break;
+    case 'compare':
+      renderCompare();
+      break;
+    case 'residual':
+      renderResidual();
+      break;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+
+// Tab switching — now also tracks activeView
+d3.selectAll('.tab').on('click',function(){
+  const v=this.dataset.v;
+  activeView=v;
+  d3.selectAll('.tab').classed('active',false);d3.select(this).classed('active',true);
+  d3.selectAll('.view').classed('active',false);d3.select('#'+v).classed('active',true);
+  // Render the newly active view with current token state
+  setTimeout(()=>renderActiveView(),50);
+});
+
+d3.select('#gen-btn').on('click',()=>renderActiveView());
+
+// Play animation
+let playInterval=null;
+d3.select('#play-btn').on('click',function(){
+  if(playInterval){
+    clearInterval(playInterval);
+    playInterval=null;
+    d3.select(this).text('▶ Play').style('background','var(--accent3)');
+    return;
+  }
+  d3.select(this).text('■ Stop').style('background','var(--danger)');
+  // Init AudioContext on user gesture (required by Chrome autoplay policy)
+  if(playSoundEnabled){const c=getAudioCtx();if(c.state==='suspended')c.resume();}
+  selToken=0;
+  radarInitialized=false; // reset radar for fresh animation
+  const stepMs=+d3.select('#play-speed').node().value;
+  function step(){
+    renderActiveView();
+    if(playSoundEnabled)sonifyToken(selToken,stepMs);
+    selToken++;
+    if(selToken>=TOKENS.length){
+      clearInterval(playInterval);
+      playInterval=null;
+      d3.select('#play-btn').text('▶ Play').style('background','var(--accent3)');
+      selToken=TOKENS.length-1;
+    }
+  }
+  step();
+  playInterval=setInterval(step,stepMs);
+});
+d3.select('#atlas-feat').on('change',renderAtlas);
+d3.select('#atlas-overlay').on('change',renderAtlas);
+d3.select('#cmp-feat').on('change',renderCompare);
+d3.select('#cmp-mode').on('change',renderCompare);
+
+renderTokens();renderConfidence();renderHeatmap();renderSpotlight();
+</script>
+</body>
+</html>
