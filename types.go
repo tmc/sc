@@ -53,11 +53,11 @@ const (
 	StateTypeBasic       = v1.StateType_STATE_TYPE_BASIC
 	StateTypeOR          = v1.StateType_STATE_TYPE_OR
 	StateTypeAND         = v1.StateType_STATE_TYPE_AND
-	
+
 	// Academic terminology aliases [H87] for backward compatibility
-	StateTypeNormal      = v1.StateType_STATE_TYPE_NORMAL      // Alias for OR
-	StateTypeParallel    = v1.StateType_STATE_TYPE_PARALLEL    // Alias for AND
-	StateTypeOrthogonal  = v1.StateType_STATE_TYPE_ORTHOGONAL  // Alias for AND (Harel's term)
+	StateTypeNormal     = v1.StateType_STATE_TYPE_NORMAL     // Alias for OR
+	StateTypeParallel   = v1.StateType_STATE_TYPE_PARALLEL   // Alias for AND
+	StateTypeOrthogonal = v1.StateType_STATE_TYPE_ORTHOGONAL // Alias for AND (Harel's term)
 )
 
 const (
@@ -71,6 +71,19 @@ const (
 	HistoryType_HISTORY_TYPE_UNSPECIFIED = v1.HistoryType_HISTORY_TYPE_UNSPECIFIED
 	HistoryType_HISTORY_TYPE_SHALLOW     = v1.HistoryType_HISTORY_TYPE_SHALLOW
 	HistoryType_HISTORY_TYPE_DEEP        = v1.HistoryType_HISTORY_TYPE_DEEP
+)
+
+// Expression defines an evaluatable expression.
+type Expression = v1.Expression
+
+// ExpressionType classifies expression syntax and evaluation semantics.
+type ExpressionType = v1.ExpressionType
+
+const (
+	ExpressionTypeUnspecified = v1.ExpressionType_EXPRESSION_TYPE_UNSPECIFIED
+	ExpressionTypeRaw         = v1.ExpressionType_EXPRESSION_TYPE_RAW
+	ExpressionTypeCEL         = v1.ExpressionType_EXPRESSION_TYPE_CEL
+	ExpressionTypeStarlark    = v1.ExpressionType_EXPRESSION_TYPE_STARLARK
 )
 
 // EventType, TransitionType, ActionType, and BroadcastSpec constants removed
