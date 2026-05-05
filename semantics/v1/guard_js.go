@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/tmc/sc"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // JavaScriptGuardEvaluator provides JavaScript-compatible guard evaluation
