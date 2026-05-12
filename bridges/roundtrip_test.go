@@ -3,6 +3,7 @@ package bridges
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/tmc/sc"
@@ -39,7 +40,7 @@ func TestHarelXStateHarelRoundTrip(t *testing.T) {
 			Statechart:  createTrafficLightStatechart(),
 		},
 		{
-			Name:        "Hierarchical State Machine", 
+			Name:        "Hierarchical State Machine",
 			Description: "Nested states with guards and actions",
 			Statechart:  createHierarchicalStatechart(),
 		},
@@ -93,9 +94,9 @@ func TestHarelSCXMLHarelRoundTrip(t *testing.T) {
 			Statechart:  createHierarchicalStatechart(),
 		},
 		{
-			Name:        "Parallel State Machine",
-			Description: "SCXML parallel regions",
-			Statechart:  createParallelStatechart(),
+			Name:                 "Parallel State Machine",
+			Description:          "SCXML parallel regions",
+			Statechart:           createParallelStatechart(),
 			AllowSemanticMapping: true, // SCXML handles parallel differently
 		},
 	}
@@ -132,9 +133,9 @@ func TestHarelSCXMLHarelRoundTrip(t *testing.T) {
 // TestXStateSCXMLCrossFormat tests XState ↔ SCXML cross-format conversion.
 func TestXStateSCXMLCrossFormat(t *testing.T) {
 	tests := []struct {
-		Name        string
+		Name          string
 		XStateMachine xstate.Machine
-		Description string
+		Description   string
 	}{
 		{
 			Name: "Simple XState to SCXML",
@@ -195,7 +196,7 @@ func TestXStateSCXMLCrossFormat(t *testing.T) {
 			}
 
 			if len(xstateMachine2.States) != len(tt.XStateMachine.States) {
-				t.Errorf("State count mismatch: original %d, converted %d", 
+				t.Errorf("State count mismatch: original %d, converted %d",
 					len(tt.XStateMachine.States), len(xstateMachine2.States))
 			}
 		})
@@ -215,7 +216,7 @@ func TestSemanticPreservation(t *testing.T) {
 			Semantics:  []string{"parent-child", "initial-states", "transitions"},
 		},
 		{
-			Name:       "Parallel Semantics", 
+			Name:       "Parallel Semantics",
 			Statechart: createParallelStatechart(),
 			Semantics:  []string{"orthogonal-regions", "concurrent-execution"},
 		},
@@ -227,11 +228,11 @@ func TestSemanticPreservation(t *testing.T) {
 
 			// Test semantic preservation through multiple conversions
 			formats := []string{"xstate", "scxml"}
-			
+
 			for _, format := range formats {
 				t.Run(format, func(t *testing.T) {
 					converted := roundTripThroughFormat(t, original, format)
-					
+
 					// Verify core semantics are preserved
 					for _, semantic := range tc.Semantics {
 						if !verifySemanticProperty(original, converted, semantic) {
@@ -275,8 +276,8 @@ func createHierarchicalStatechart() *sc.Statechart {
 			Type:  sc.StateTypeNormal,
 			Children: []*sc.State{
 				{
-					Label: "operating",
-					Type:  sc.StateTypeNormal,
+					Label:     "operating",
+					Type:      sc.StateTypeNormal,
 					IsInitial: true,
 					Children: []*sc.State{
 						{Label: "idle", Type: sc.StateTypeBasic, IsInitial: true},
@@ -305,8 +306,8 @@ func createParallelStatechart() *sc.Statechart {
 			Type:  sc.StateTypeNormal,
 			Children: []*sc.State{
 				{
-					Label: "parallel_system",
-					Type:  sc.StateTypeParallel,
+					Label:     "parallel_system",
+					Type:      sc.StateTypeParallel,
 					IsInitial: true,
 					Children: []*sc.State{
 						{
@@ -318,7 +319,7 @@ func createParallelStatechart() *sc.Statechart {
 							},
 						},
 						{
-							Label: "region_b", 
+							Label: "region_b",
 							Type:  sc.StateTypeNormal,
 							Children: []*sc.State{
 								{Label: "b1", Type: sc.StateTypeBasic, IsInitial: true},
@@ -342,7 +343,7 @@ func createParallelStatechart() *sc.Statechart {
 func checkSemanticEquivalence(original, restored *sc.Statechart, test RoundTripTest) SemanticEquivalence {
 	equiv := SemanticEquivalence{
 		StatesMatch:      true,
-		TransitionsMatch: true, 
+		TransitionsMatch: true,
 		EventsMatch:      true,
 		StructureMatch:   true,
 	}
@@ -353,7 +354,7 @@ func checkSemanticEquivalence(original, restored *sc.Statechart, test RoundTripT
 
 	if len(originalStates) != len(restoredStates) {
 		equiv.StatesMatch = false
-		equiv.Details = append(equiv.Details, 
+		equiv.Details = append(equiv.Details,
 			fmt.Sprintf("State count mismatch: original %d, restored %d", len(originalStates), len(restoredStates)))
 	}
 
@@ -362,9 +363,9 @@ func checkSemanticEquivalence(original, restored *sc.Statechart, test RoundTripT
 		if restoredState, exists := restoredStates[label]; exists {
 			if originalState.Type != restoredState.Type && !test.AllowSemanticMapping {
 				equiv.StatesMatch = false
-				equiv.Details = append(equiv.Details, 
-					fmt.Sprintf("State type mismatch for '%s': original %v, restored %v", 
-					label, originalState.Type, restoredState.Type))
+				equiv.Details = append(equiv.Details,
+					fmt.Sprintf("State type mismatch for '%s': original %v, restored %v",
+						label, originalState.Type, restoredState.Type))
 			}
 		} else {
 			equiv.StatesMatch = false
@@ -375,9 +376,9 @@ func checkSemanticEquivalence(original, restored *sc.Statechart, test RoundTripT
 	// Check transition count and semantics
 	if len(original.Transitions) != len(restored.Transitions) && !test.AllowStructuralChange {
 		equiv.TransitionsMatch = false
-		equiv.Details = append(equiv.Details, 
-			fmt.Sprintf("Transition count mismatch: original %d, restored %d", 
-			len(original.Transitions), len(restored.Transitions)))
+		equiv.Details = append(equiv.Details,
+			fmt.Sprintf("Transition count mismatch: original %d, restored %d",
+				len(original.Transitions), len(restored.Transitions)))
 	}
 
 	// Check event preservation
@@ -464,14 +465,14 @@ func verifySemanticProperty(original, converted *sc.Statechart, property string)
 func verifyParentChildRelationships(original, converted *sc.Statechart) bool {
 	originalHierarchy := buildHierarchy(original.RootState)
 	convertedHierarchy := buildHierarchy(converted.RootState)
-	
+
 	return reflect.DeepEqual(originalHierarchy, convertedHierarchy)
 }
 
 func verifyInitialStates(original, converted *sc.Statechart) bool {
 	originalInitial := findInitialStates(original.RootState)
 	convertedInitial := findInitialStates(converted.RootState)
-	
+
 	return reflect.DeepEqual(originalInitial, convertedInitial)
 }
 
@@ -482,20 +483,20 @@ func verifyTransitionSemantics(original, converted *sc.Statechart) bool {
 		key := t.Event + ":" + t.From[0]
 		originalTransMap[key] = t.To
 	}
-	
+
 	convertedTransMap := make(map[string][]string)
 	for _, t := range converted.Transitions {
 		key := t.Event + ":" + t.From[0]
 		convertedTransMap[key] = t.To
 	}
-	
+
 	return reflect.DeepEqual(originalTransMap, convertedTransMap)
 }
 
 func verifyOrthogonalRegions(original, converted *sc.Statechart) bool {
 	originalParallel := findParallelStates(original.RootState)
 	convertedParallel := findParallelStates(converted.RootState)
-	
+
 	return len(originalParallel) == len(convertedParallel)
 }
 
@@ -514,6 +515,9 @@ func buildHierarchy(root *sc.State) map[string][]string {
 		}
 	}
 	visit(root)
+	for parent := range hierarchy {
+		sort.Strings(hierarchy[parent])
+	}
 	return hierarchy
 }
 

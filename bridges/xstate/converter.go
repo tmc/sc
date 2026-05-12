@@ -10,29 +10,29 @@ import (
 
 // Machine represents an XState machine definition.
 type Machine struct {
-	ID       string                 `json:"id"`
-	Initial  string                 `json:"initial,omitempty"`
-	States   map[string]*State      `json:"states"`
-	Context  map[string]interface{} `json:"context,omitempty"`
-	Meta     map[string]interface{} `json:"meta,omitempty"`
-	Version  string                 `json:"version,omitempty"`
+	ID      string                 `json:"id"`
+	Initial string                 `json:"initial,omitempty"`
+	States  map[string]*State      `json:"states"`
+	Context map[string]interface{} `json:"context,omitempty"`
+	Meta    map[string]interface{} `json:"meta,omitempty"`
+	Version string                 `json:"version,omitempty"`
 }
 
 // State represents an XState state definition.
 type State struct {
-	Type     string                 `json:"type,omitempty"`
-	Initial  string                 `json:"initial,omitempty"`
-	States   map[string]*State      `json:"states,omitempty"`
-	On       map[string]*Transition `json:"on,omitempty"`
-	Entry    []string               `json:"entry,omitempty"`
-	Exit     []string               `json:"exit,omitempty"`
-	Meta     map[string]interface{} `json:"meta,omitempty"`
-	Tags     []string               `json:"tags,omitempty"`
+	Type    string                 `json:"type,omitempty"`
+	Initial string                 `json:"initial,omitempty"`
+	States  map[string]*State      `json:"states,omitempty"`
+	On      map[string]*Transition `json:"on,omitempty"`
+	Entry   []string               `json:"entry,omitempty"`
+	Exit    []string               `json:"exit,omitempty"`
+	Meta    map[string]interface{} `json:"meta,omitempty"`
+	Tags    []string               `json:"tags,omitempty"`
 }
 
 // Transition represents an XState transition definition.
 type Transition struct {
-	Target  interface{}            `json:"target,omitempty"`  // string or []string
+	Target  interface{}            `json:"target,omitempty"` // string or []string
 	Cond    string                 `json:"cond,omitempty"`
 	Actions []string               `json:"actions,omitempty"`
 	Meta    map[string]interface{} `json:"meta,omitempty"`
@@ -48,11 +48,11 @@ func NewConverter() *Converter {
 	return &Converter{
 		mapping: &common.SemanticMapping{
 			StateTypeMapping: map[string]sc.StateType{
-				"atomic":     sc.StateTypeBasic,
-				"compound":   sc.StateTypeNormal,
-				"parallel":   sc.StateTypeParallel,
-				"final":      sc.StateTypeBasic,
-				"history":    sc.StateTypeBasic, // Simplified mapping
+				"atomic":   sc.StateTypeBasic,
+				"compound": sc.StateTypeNormal,
+				"parallel": sc.StateTypeParallel,
+				"final":    sc.StateTypeBasic,
+				"history":  sc.StateTypeBasic, // Simplified mapping
 			},
 			EventMapping:  make(map[string]string),
 			ActionMapping: make(map[string]string),
@@ -66,7 +66,7 @@ func NewConverter() *Converter {
 // Import converts an XState machine to Harel core semantics.
 func (c *Converter) Import(xstateMachine Machine) (*sc.Statechart, error) {
 	if xstateMachine.ID == "" {
-		return nil, common.NewConversionError("xstate", "import", "id", 
+		return nil, common.NewConversionError("xstate", "import", "id",
 			fmt.Errorf("machine ID is required"))
 	}
 
@@ -83,6 +83,13 @@ func (c *Converter) Import(xstateMachine Machine) (*sc.Statechart, error) {
 	}
 
 	rootState.Children = states
+	if xstateMachine.Initial == "" {
+		if len(states) > 1 {
+			rootState.Type = sc.StateTypeParallel
+		} else if len(states) == 1 {
+			states[0].IsInitial = true
+		}
+	}
 
 	// Create statechart
 	statechart := &sc.Statechart{
@@ -261,7 +268,7 @@ func (c *Converter) exportStates(states []*sc.State, xstates map[string]*State, 
 		// Handle child states
 		if len(state.Children) > 0 {
 			xstate.States = make(map[string]*State)
-			
+
 			// Find initial state
 			for _, child := range state.Children {
 				if child.IsInitial {
