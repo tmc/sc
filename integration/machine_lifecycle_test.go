@@ -46,7 +46,7 @@ func TestMachineLifecycleIntegration(t *testing.T) {
 				if !foundB {
 					t.Errorf("Expected final configuration to contain state 'B', got %v", config.States)
 				}
-				
+
 				// Verify step history contains start, event, and stop
 				if len(history) < 3 {
 					t.Errorf("Expected at least 3 steps (start, event, stop), got %d", len(history))
@@ -54,7 +54,7 @@ func TestMachineLifecycleIntegration(t *testing.T) {
 			},
 		},
 		{
-			name:        "HierarchicalLifecycle", 
+			name:        "HierarchicalLifecycle",
 			description: "Machine lifecycle with hierarchical statechart",
 			setupChart: func() *sc.Statechart {
 				return testutil.CreateHierarchicalStatechart()
@@ -80,7 +80,7 @@ func TestMachineLifecycleIntegration(t *testing.T) {
 		},
 		{
 			name:        "OrthogonalLifecycle",
-			description: "Machine lifecycle with orthogonal statechart", 
+			description: "Machine lifecycle with orthogonal statechart",
 			setupChart: func() *sc.Statechart {
 				return testutil.CreateOrthogonalStatechart()
 			},
@@ -104,7 +104,7 @@ func TestMachineLifecycleIntegration(t *testing.T) {
 				if !hasRegionA || !hasRegionB {
 					t.Errorf("Expected both RegionA and RegionB in final configuration, got %v", config.States)
 				}
-				
+
 				// Verify that step history shows transitions occurred
 				if len(history) < 3 { // start + 2 events
 					t.Errorf("Expected at least 3 steps, got %d", len(history))
@@ -384,7 +384,13 @@ func TestMachineLifecycleErrorRecovery(t *testing.T) {
 
 	// Verify still in Start state
 	config := machine.GetCurrentConfiguration()
-	if len(config.States) != 1 || config.States[0].Label != "Start" {
+	hasStart := false
+	for _, state := range config.States {
+		if state.Label == "Start" {
+			hasStart = true
+		}
+	}
+	if !hasStart {
 		t.Errorf("Expected to remain in Start state, got %v", config.States)
 	}
 
@@ -414,4 +420,3 @@ func TestMachineLifecycleErrorRecovery(t *testing.T) {
 		t.Errorf("Expected no errors after reset, got %d", len(errors))
 	}
 }
-

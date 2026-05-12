@@ -124,8 +124,8 @@ func testECommerceWorkflow(t *testing.T, statechart *sc.Statechart) {
 	wrapper := semantics.NewStatechart(statechart)
 	machine, err := semantics.NewMachine(wrapper, "ecommerce-test", &structpb.Struct{
 		Fields: map[string]*structpb.Value{
-			"cartTotal":   structpb.NewNumberValue(99.99),
-			"customerID":  structpb.NewStringValue(""),
+			"cartTotal":     structpb.NewNumberValue(99.99),
+			"customerID":    structpb.NewStringValue(""),
 			"paymentMethod": structpb.NewStringValue(""),
 		},
 	})
@@ -140,10 +140,10 @@ func testECommerceWorkflow(t *testing.T, statechart *sc.Statechart) {
 
 	// Test successful checkout flow
 	events := []string{
-		"PROCEED",        // CartReview -> CustomerInfo
-		"GUEST_CHECKOUT", // -> GuestCheckout
-		"CONTINUE",       // CustomerInfo -> Payment
-		"SUBMIT_PAYMENT", // PaymentMethodSelection -> PaymentProcessing
+		"PROCEED",         // CartReview -> CustomerInfo
+		"GUEST_CHECKOUT",  // -> GuestCheckout
+		"CONTINUE",        // CustomerInfo -> Payment
+		"SUBMIT_PAYMENT",  // PaymentMethodSelection -> PaymentProcessing
 		"PAYMENT_SUCCESS", // PaymentProcessing -> OrderConfirmation
 	}
 
@@ -271,7 +271,7 @@ func testAuthenticationWorkflow(t *testing.T, statechart *sc.Statechart) {
 	hasLoggedIn := false
 	hasActive := false
 	hasNormal := false
-	
+
 	for _, state := range config.States {
 		switch state.Label {
 		case "LoggedIn":
@@ -289,32 +289,32 @@ func testAuthenticationWorkflow(t *testing.T, statechart *sc.Statechart) {
 
 	// Test security event
 	machine.Step("SUSPICIOUS_ACTIVITY")
-	
+
 	// Test inactivity
 	machine.Step("INACTIVITY_TIMEOUT")
-	
+
 	// Test force logout
 	machine.Step("FORCE_LOGOUT")
-	
+
 	// Should be back to initial state
 	config = machine.GetCurrentConfiguration()
 	hasLoggedOut := false
-	hasNormalAgain := false
-	
+	hasSuspicious := false
+
 	for _, state := range config.States {
 		if state.Label == "LoggedOut" {
 			hasLoggedOut = true
 		}
-		if state.Label == "Normal" {
-			hasNormalAgain = true
+		if state.Label == "Suspicious" {
+			hasSuspicious = true
 		}
 	}
 
 	if !hasLoggedOut {
 		t.Error("Expected to be logged out after force logout")
 	}
-	if !hasNormalAgain {
-		t.Error("Expected security monitor to remain in normal state")
+	if !hasSuspicious {
+		t.Error("Expected security monitor to preserve suspicious state")
 	}
 }
 
@@ -403,13 +403,13 @@ func testMediaPlayerWorkflow(t *testing.T, statechart *sc.Statechart) {
 
 	// Test normal playback flow
 	events := []string{
-		"LOAD_MEDIA",    // Stopped -> Loading
-		"LOAD_SUCCESS",  // Loading -> Playing
-		"FAST_FORWARD",  // Normal -> FastForward
-		"NORMAL_SPEED",  // FastForward -> Normal
-		"PAUSE",         // Playing -> Paused
-		"PLAY",          // Paused -> Playing
-		"STOP",          // Playing -> Stopped
+		"LOAD_MEDIA",   // Stopped -> Loading
+		"LOAD_SUCCESS", // Loading -> Playing
+		"FAST_FORWARD", // Normal -> FastForward
+		"NORMAL_SPEED", // FastForward -> Normal
+		"PAUSE",        // Playing -> Paused
+		"PLAY",         // Paused -> Playing
+		"STOP",         // Playing -> Stopped
 	}
 
 	for i, event := range events {
@@ -420,7 +420,7 @@ func testMediaPlayerWorkflow(t *testing.T, statechart *sc.Statechart) {
 		if !triggered {
 			t.Logf("Event '%s' did not trigger any transitions", event)
 		}
-		
+
 		// Validate state after each step
 		if err := machine.Validate(); err != nil {
 			t.Errorf("Machine validation failed after event '%s': %v", event, err)
@@ -527,9 +527,9 @@ func testGameWorkflow(t *testing.T, statechart *sc.Statechart) {
 	wrapper := semantics.NewStatechart(statechart)
 	machine, err := semantics.NewMachine(wrapper, "game-test", &structpb.Struct{
 		Fields: map[string]*structpb.Value{
-			"score":  structpb.NewNumberValue(0),
-			"lives":  structpb.NewNumberValue(3),
-			"level":  structpb.NewNumberValue(1),
+			"score": structpb.NewNumberValue(0),
+			"lives": structpb.NewNumberValue(3),
+			"level": structpb.NewNumberValue(1),
 		},
 	})
 	if err != nil {
@@ -543,7 +543,7 @@ func testGameWorkflow(t *testing.T, statechart *sc.Statechart) {
 
 	// Test game session
 	machine.Step("START_GAME")
-	
+
 	// Should be in Playing+Alive states
 	config := machine.GetCurrentConfiguration()
 	hasPlaying := false
@@ -564,17 +564,17 @@ func testGameWorkflow(t *testing.T, statechart *sc.Statechart) {
 	machine.Step("PLAYER_DEATH")
 	machine.Step("RESPAWN")
 	machine.Step("RESPAWN_COMPLETE")
-	
+
 	// Test pause/resume
 	machine.Step("PAUSE")
 	machine.Step("RESUME")
-	
+
 	// Test game over
 	machine.Step("GAME_OVER")
-	
+
 	// Exit to menu
 	machine.Step("EXIT_TO_MENU")
-	
+
 	// Should be back in main menu
 	config = machine.GetCurrentConfiguration()
 	hasMainMenu := false
@@ -654,9 +654,9 @@ func testWorkflowEngineFlow(t *testing.T, statechart *sc.Statechart) {
 	wrapper := semantics.NewStatechart(statechart)
 	machine, err := semantics.NewMachine(wrapper, "workflow-test", &structpb.Struct{
 		Fields: map[string]*structpb.Value{
-			"workflowId":   structpb.NewStringValue("WF-001"),
-			"currentStep":  structpb.NewNumberValue(0),
-			"totalSteps":   structpb.NewNumberValue(5),
+			"workflowId":  structpb.NewStringValue("WF-001"),
+			"currentStep": structpb.NewNumberValue(0),
+			"totalSteps":  structpb.NewNumberValue(5),
 		},
 	})
 	if err != nil {
@@ -671,11 +671,11 @@ func testWorkflowEngineFlow(t *testing.T, statechart *sc.Statechart) {
 	// Test successful workflow
 	t.Run("SuccessfulWorkflow", func(t *testing.T) {
 		events := []string{
-			"START_WORKFLOW",     // Idle -> ProcessingWorkflow
-			"TASK_COMPLETE",      // TaskExecution -> WaitingForApproval
-			"APPROVED",           // WaitingForApproval -> TaskExecution
-			"WORKFLOW_COMPLETE",  // TaskExecution -> WorkflowComplete
-			"RESET",              // WorkflowComplete -> Idle
+			"START_WORKFLOW",    // Idle -> ProcessingWorkflow
+			"TASK_COMPLETE",     // TaskExecution -> WaitingForApproval
+			"APPROVED",          // WaitingForApproval -> TaskExecution
+			"WORKFLOW_COMPLETE", // TaskExecution -> WorkflowComplete
+			"RESET",             // WorkflowComplete -> Idle
 		}
 
 		for i, event := range events {
@@ -705,12 +705,12 @@ func testWorkflowEngineFlow(t *testing.T, statechart *sc.Statechart) {
 	// Test workflow with error handling
 	t.Run("ErrorHandlingWorkflow", func(t *testing.T) {
 		events := []string{
-			"START_WORKFLOW",    // Idle -> ProcessingWorkflow
-			"TASK_ERROR",        // TaskExecution -> ErrorHandling
-			"ERROR_RESOLVED",    // ErrorHandling -> TaskExecution
-			"TASK_COMPLETE",     // TaskExecution -> WaitingForApproval
-			"DENIED",            // WaitingForApproval -> WorkflowFailed
-			"RESET",             // WorkflowFailed -> Idle
+			"START_WORKFLOW", // Idle -> ProcessingWorkflow
+			"TASK_ERROR",     // TaskExecution -> ErrorHandling
+			"ERROR_RESOLVED", // ErrorHandling -> TaskExecution
+			"TASK_COMPLETE",  // TaskExecution -> WaitingForApproval
+			"DENIED",         // WaitingForApproval -> WorkflowFailed
+			"RESET",          // WorkflowFailed -> Idle
 		}
 
 		for i, event := range events {
@@ -759,7 +759,7 @@ func TestExampleStatecharts(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping Hotel Evanstonian test in short mode")
 	}
-	
+
 	t.Run("HotelEvanstonianExample", func(t *testing.T) {
 		statechart := examples.HotelEvanstonianStatechart()
 		testExampleHotelEvanstonian(t, statechart)
@@ -831,8 +831,8 @@ func testExampleOrthogonal(t *testing.T, statechart *semantics.Statechart) {
 	}
 
 	// Test independent region transitions
-	machine.Step("switch_a")
-	machine.Step("switch_b")
+	machine.Step("PLAY")
+	machine.Step("MUTE")
 
 	// Verify both regions have changed
 	finalConfig := machine.GetCurrentConfiguration()

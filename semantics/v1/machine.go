@@ -435,8 +435,9 @@ func (m *MachineWrapper) executeTransitions(transitions []*sc.Transition) error 
 		return fmt.Errorf("failed to enter states: %w", err)
 	}
 
-	// Update configuration with the new states
-	m.updateConfiguration(statesToEnter)
+	// Update configuration with the new states while preserving unaffected
+	// orthogonal regions.
+	m.updateConfiguration(statesToExit, statesToEnter)
 
 	return nil
 }
@@ -645,11 +646,40 @@ func (m *MachineWrapper) enterStates(states []string) error {
 	return nil
 }
 
-// updateConfiguration updates the machine's configuration with the new states.
-func (m *MachineWrapper) updateConfiguration(newStates []string) {
+// updateConfiguration updates the machine configuration after a transition set.
+func (m *MachineWrapper) updateConfiguration(exitStates, enterStates []string) {
+	next := make(map[string]bool)
+	if m.Configuration != nil {
+		for _, state := range m.Configuration.States {
+			if state != nil {
+				next[state.Label] = true
+			}
+		}
+	}
+
+	for _, label := range exitStates {
+		next[label] = false
+		exitState, err := m.statechart.findState(StateLabel(label))
+		if err != nil {
+			continue
+		}
+		for activeLabel := range next {
+			activeState, err := m.statechart.findState(StateLabel(activeLabel))
+			if err == nil && m.isDescendant(activeState, exitState) {
+				next[activeLabel] = false
+			}
+		}
+	}
+
+	for _, state := range enterStates {
+		next[state] = true
+	}
+
 	var stateRefs []*sc.StateRef
-	for _, state := range newStates {
-		stateRefs = append(stateRefs, &sc.StateRef{Label: state})
+	for label, active := range next {
+		if active {
+			stateRefs = append(stateRefs, &sc.StateRef{Label: label})
+		}
 	}
 
 	// Compute default completion

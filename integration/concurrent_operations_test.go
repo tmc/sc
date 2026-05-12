@@ -92,7 +92,7 @@ func TestConcurrentMachineOperations(t *testing.T) {
 		numGoroutines := 10
 		numStepsPerGoroutine := 5
 		var wg sync.WaitGroup
-		
+
 		// Channel to collect results
 		results := make(chan bool, numGoroutines*numStepsPerGoroutine)
 		errors := make(chan error, numGoroutines*numStepsPerGoroutine)
@@ -177,7 +177,7 @@ func TestConcurrentMachineOperations(t *testing.T) {
 					_ = machine.IsStopped()
 					_ = machine.GetStepHistory()
 					_ = machine.GetErrors()
-					
+
 					// Small yield to other goroutines
 					runtime.Gosched()
 				}
@@ -208,7 +208,7 @@ func TestConcurrentMachineOperations(t *testing.T) {
 		// Test concurrent start/stop operations
 		numMachines := 10
 		var wg sync.WaitGroup
-		
+
 		startErrors := make(chan error, numMachines)
 		stopErrors := make(chan error, numMachines)
 
@@ -216,7 +216,7 @@ func TestConcurrentMachineOperations(t *testing.T) {
 			wg.Add(1)
 			go func(machineID int) {
 				defer wg.Done()
-				
+
 				wrapper := semantics.NewStatechart(statechart)
 				machine, err := semantics.NewMachine(wrapper, "lifecycle-test", nil)
 				if err != nil {
@@ -233,7 +233,7 @@ func TestConcurrentMachineOperations(t *testing.T) {
 				// Do some work
 				machine.Step("START")
 				machine.Step("FINISH")
-				
+
 				// Stop machine
 				if err := machine.Stop(); err != nil {
 					stopErrors <- err
@@ -336,7 +336,7 @@ func TestConcurrentEventProcessing(t *testing.T) {
 		numSenders := 10
 		eventsPerSender := 20
 		var wg sync.WaitGroup
-		
+
 		events := []string{"GO_B", "GO_C", "GO_A"}
 		errors := make(chan error, numSenders*eventsPerSender)
 
@@ -356,10 +356,10 @@ func TestConcurrentEventProcessing(t *testing.T) {
 		}
 
 		wg.Wait()
-		
+
 		// Wait for processing to complete
 		time.Sleep(100 * time.Millisecond)
-		
+
 		close(errors)
 
 		// Check for errors
@@ -382,10 +382,10 @@ func TestConcurrentEventProcessing(t *testing.T) {
 
 	t.Run("PriorityEventHandling", func(t *testing.T) {
 		processor.ClearTrace()
-		
+
 		numEvents := 30
 		var wg sync.WaitGroup
-		
+
 		priorities := []semantics.EventPriority{
 			semantics.PriorityLow,
 			semantics.PriorityNormal,
@@ -406,7 +406,7 @@ func TestConcurrentEventProcessing(t *testing.T) {
 		}
 
 		wg.Wait()
-		
+
 		// Wait for processing
 		time.Sleep(100 * time.Millisecond)
 
@@ -456,7 +456,7 @@ func TestConcurrentValidation(t *testing.T) {
 			statechart := tc.createChart()
 			numValidators := 20
 			var wg sync.WaitGroup
-			
+
 			errors := make(chan error, numValidators)
 
 			// Run concurrent validations
@@ -464,20 +464,20 @@ func TestConcurrentValidation(t *testing.T) {
 				wg.Add(1)
 				go func(validatorID int) {
 					defer wg.Done()
-					
+
 					// Validate using semantic wrapper
 					wrapper := semantics.NewStatechart(statechart)
 					if err := wrapper.Validate(); err != nil {
 						errors <- err
 					}
-					
+
 					// Also test machine validation
 					machine, err := semantics.NewMachine(wrapper, "validation-test", nil)
 					if err != nil {
 						errors <- err
 						return
 					}
-					
+
 					if err := machine.Validate(); err != nil {
 						errors <- err
 					}
@@ -533,13 +533,13 @@ func TestConcurrentConfigurationAccess(t *testing.T) {
 					configErrors <- fmt.Errorf("reader %d: got nil configuration", readerID)
 					return
 				}
-				
+
 				// Verify configuration has states
 				if len(config.States) == 0 {
 					configErrors <- fmt.Errorf("reader %d: configuration has no states", readerID)
 					return
 				}
-				
+
 				// Small delay
 				time.Sleep(time.Millisecond)
 			}
@@ -686,8 +686,14 @@ func TestRaceConditionDetection(t *testing.T) {
 	}
 
 	config := machine.GetCurrentConfiguration()
-	if len(config.States) != 1 {
-		t.Errorf("Expected exactly 1 state in final configuration, got %d", len(config.States))
+	activeToggleStates := 0
+	for _, state := range config.States {
+		if state.Label == "State1" || state.Label == "State2" {
+			activeToggleStates++
+		}
+	}
+	if activeToggleStates != 1 {
+		t.Errorf("Expected exactly 1 toggle state in final configuration, got %v", config.States)
 	}
 
 	context := machine.GetContext()

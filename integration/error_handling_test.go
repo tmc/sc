@@ -309,9 +309,9 @@ func TestErrorRecoveryMechanisms(t *testing.T) {
 
 		// Create progressively invalid statecharts
 		testCases := []struct {
-			name        string
-			statechart  *sc.Statechart
-			shouldFail  string
+			name       string
+			statechart *sc.Statechart
+			shouldFail string
 		}{
 			{
 				name: "EmptyRootState",
@@ -441,14 +441,14 @@ func TestErrorRecoveryMechanisms(t *testing.T) {
 		for i := 0; i < numGoroutines; i++ {
 			go func(id int) {
 				defer func() { done <- true }()
-				
+
 				// Each goroutine tries various operations
 				for j := 0; j < 5; j++ {
 					// Some operations might fail
 					machine.Step("RISKY_EVENT")
 					machine.GetCurrentConfiguration()
 					machine.Validate()
-					
+
 					// Small delay
 					time.Sleep(time.Millisecond)
 				}
@@ -482,7 +482,7 @@ func TestErrorBoundaries(t *testing.T) {
 		// Test that errors in one part of the system don't corrupt other parts
 		statechart := testutil.CreateHierarchicalStatechart()
 		wrapper := semantics.NewStatechart(statechart)
-		
+
 		// Create multiple machines from the same statechart
 		machine1, err := semantics.NewMachine(wrapper, "machine1", nil)
 		if err != nil {
@@ -536,14 +536,14 @@ func TestErrorBoundaries(t *testing.T) {
 	t.Run("StatechartIsolation", func(t *testing.T) {
 		// Test that modifications to one statechart don't affect others
 		original := testutil.CreateSimpleStatechart()
-		
+
 		// Create machines from the same statechart definition
 		wrapper1 := semantics.NewStatechart(original)
 		wrapper2 := semantics.NewStatechart(original)
-		
+
 		machine1, _ := semantics.NewMachine(wrapper1, "isolated1", nil)
 		machine2, _ := semantics.NewMachine(wrapper2, "isolated2", nil)
-		
+
 		machine1.Start()
 		machine2.Start()
 		defer machine1.Stop()
@@ -557,17 +557,21 @@ func TestErrorBoundaries(t *testing.T) {
 		config2 := machine2.GetCurrentConfiguration()
 
 		// Verify they have different states
-		state1 := ""
-		state2 := ""
-		if len(config1.States) > 0 {
-			state1 = config1.States[0].Label
+		hasB := false
+		for _, state := range config1.States {
+			if state.Label == "B" {
+				hasB = true
+			}
 		}
-		if len(config2.States) > 0 {
-			state2 = config2.States[0].Label
+		hasA := false
+		for _, state := range config2.States {
+			if state.Label == "A" {
+				hasA = true
+			}
 		}
 
-		if state1 == state2 {
-			t.Errorf("Expected machines to have different states, both have: %s", state1)
+		if !hasB || !hasA {
+			t.Errorf("Expected machine1 in B and machine2 in A, got %v and %v", config1.States, config2.States)
 		}
 
 		// Both should be valid
@@ -634,7 +638,7 @@ func TestGracefulDegradation(t *testing.T) {
 
 		// Test degradation path
 		machine.Step("PARTIAL_FAILURE")
-		
+
 		config := machine.GetCurrentConfiguration()
 		hasDegraded := false
 		for _, state := range config.States {
@@ -654,7 +658,7 @@ func TestGracefulDegradation(t *testing.T) {
 
 		// Test recovery
 		machine.Step("RECOVERY")
-		
+
 		config = machine.GetCurrentConfiguration()
 		hasHealthy := false
 		for _, state := range config.States {
@@ -670,7 +674,7 @@ func TestGracefulDegradation(t *testing.T) {
 		// Test complete failure and recovery
 		machine.Step("COMPLETE_FAILURE")
 		machine.Step("RECOVERY")
-		
+
 		// Should be healthy again
 		config = machine.GetCurrentConfiguration()
 		hasHealthyAgain := false
@@ -689,7 +693,7 @@ func TestGracefulDegradation(t *testing.T) {
 		// Test behavior under resource constraints (simulated)
 		statechart := testutil.CreateLargeStatechart(50, 100) // Large statechart
 		wrapper := semantics.NewStatechart(statechart)
-		
+
 		// Create many machines to simulate resource pressure
 		machines := make([]*semantics.MachineWrapper, 20)
 		for i := 0; i < 20; i++ {
@@ -699,7 +703,7 @@ func TestGracefulDegradation(t *testing.T) {
 				continue
 			}
 			machines[i] = machine
-			
+
 			if err := machine.Start(); err != nil {
 				t.Logf("Failed to start machine %d: %v", i, err)
 				continue
