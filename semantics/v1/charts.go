@@ -2,7 +2,7 @@ package semantics
 
 import (
 	"fmt"
-	
+
 	"github.com/tmc/sc"
 )
 
@@ -20,13 +20,14 @@ func (s *Statechart) Normalize() (*Statechart, error) {
 // It sets the state type of each state based on the state's children
 func normalizeStateTypes(s *sc.Statechart) error {
 	return visitStates(s.RootState, func(state *sc.State) error {
+		if state.Type != sc.StateTypeUnspecified {
+			return nil
+		}
 		if len(state.Children) == 0 {
 			state.Type = sc.StateTypeBasic
-		} else {
-			if state.Type == sc.StateTypeUnspecified {
-				state.Type = sc.StateTypeNormal
-			}
+			return nil
 		}
+		state.Type = sc.StateTypeNormal
 		return nil
 	})
 }
@@ -141,12 +142,12 @@ func (s *Statechart) InitialConfiguration() (*sc.Configuration, error) {
 	if s.RootState == nil {
 		return nil, fmt.Errorf("root state is nil")
 	}
-	
+
 	// Start with just the root state
 	config := &sc.Configuration{
 		States: []*sc.StateRef{{Label: s.RootState.Label}},
 	}
-	
+
 	// Compute default completion to get all initial states
 	return DefaultCompletion(s, config)
 }

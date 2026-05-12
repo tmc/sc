@@ -154,7 +154,7 @@ func TestValidationToExecutionWorkflow(t *testing.T) {
 				}
 			},
 			expectedValid:   false,
-			expectedErrors:  []string{"single", "default"},
+			expectedErrors:  []string{"exactly one initial child"},
 			testExecution:   false,
 			executionEvents: nil,
 		},
@@ -189,7 +189,7 @@ func TestValidationToExecutionWorkflow(t *testing.T) {
 				errorMessage := err.Error()
 				for _, expectedError := range tc.expectedErrors {
 					if !contains(errorMessage, expectedError) {
-						t.Errorf("Expected validation error containing '%s', but not found in: %s", 
+						t.Errorf("Expected validation error containing '%s', but not found in: %s",
 							expectedError, errorMessage)
 					}
 				}
@@ -299,7 +299,7 @@ func TestValidationRuleIntegration(t *testing.T) {
 		t.Run("AllRulesEnabled", func(t *testing.T) {
 			wrapper := semantics.NewStatechart(statechart)
 			err := wrapper.Validate()
-			
+
 			if err == nil {
 				t.Error("Expected validation to fail due to multiple rule violations")
 			} else {
@@ -308,7 +308,7 @@ func TestValidationRuleIntegration(t *testing.T) {
 				errorMsg := err.Error()
 				hasBasicError := contains(errorMsg, "basic") || contains(errorMsg, "children")
 				hasDuplicateError := contains(errorMsg, "duplicate") || contains(errorMsg, "unique")
-				
+
 				if !hasBasicError && !hasDuplicateError {
 					t.Errorf("Expected validation error to mention basic/children or duplicate/unique violations, got: %v", err)
 				}
@@ -319,7 +319,7 @@ func TestValidationRuleIntegration(t *testing.T) {
 		t.Run("SemanticValidationBehavior", func(t *testing.T) {
 			wrapper := semantics.NewStatechart(statechart)
 			err := wrapper.Validate()
-			
+
 			if err == nil {
 				t.Error("Expected validation to fail")
 			} else {
@@ -408,7 +408,7 @@ func TestValidationWithSemanticExecution(t *testing.T) {
 			wrapper := semantics.NewStatechart(statechart)
 			err := wrapper.Validate()
 			hasErrors := err != nil
-			
+
 			if hasErrors {
 				t.Logf("Validation error: %v", err)
 			}
@@ -420,7 +420,7 @@ func TestValidationWithSemanticExecution(t *testing.T) {
 			if !tc.shouldPass && !hasErrors {
 				// If validation didn't catch the error, execution should fail
 				t.Log("Validation didn't catch error, testing execution failure")
-				
+
 				wrapper := semantics.NewStatechart(statechart)
 				machine, err := semantics.NewMachine(wrapper, "error-test", nil)
 				if err != nil {

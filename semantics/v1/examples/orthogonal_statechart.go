@@ -32,7 +32,8 @@ func OrthogonalStatechart() *semantics.Statechart {
 			Label: "MediaPlayer",
 			Children: []*sc.State{
 				{
-					Label: "PlaybackControl",
+					Label:     "PlaybackControl",
+					IsInitial: true,
 					// Use the ORTHOGONAL alias for demonstrating academic terminology compatibility
 					Type: sc.StateTypeOrthogonal,
 					Children: []*sc.State{

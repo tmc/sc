@@ -11,6 +11,9 @@ type Statechart struct {
 
 // NewStatechart creates a new statechart from a statechart definition.
 func NewStatechart(statechart *sc.Statechart) *Statechart {
+	if statechart == nil {
+		statechart = &sc.Statechart{}
+	}
 	s := &Statechart{
 		Statechart: statechart,
 	}
@@ -20,5 +23,18 @@ func NewStatechart(statechart *sc.Statechart) *Statechart {
 	}
 	// Ensures the label of the root state is expected:
 	s.RootState.Label = RootState.String()
+	_ = normalizeStateTypes(s.Statechart)
+	if s.RootState.Type == sc.StateTypeNormal && len(s.RootState.Children) == 1 && !hasInitialChild(s.RootState) {
+		s.RootState.Children[0].IsInitial = true
+	}
 	return s
+}
+
+func hasInitialChild(state *sc.State) bool {
+	for _, child := range state.Children {
+		if child.IsInitial {
+			return true
+		}
+	}
+	return false
 }
